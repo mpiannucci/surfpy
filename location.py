@@ -3,10 +3,6 @@ import units
 
 
 class Location:
-    latitude = 0
-    longitude = 0
-    altitude = 0
-    name = ''
 
     def __init__(self, lat, lon, name='', alt=0):
         self.latitude = lat
