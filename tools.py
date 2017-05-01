@@ -235,3 +235,11 @@ def peakdetect(y_axis, x_axis = None, lookahead = 200, delta=0):
         pass
         
     return [max_peaks, min_peaks]
+
+def parse_float(raw_value):
+    value = float('nan')
+    try:
+        value = float(raw_value)
+    except:
+        pass
+    return value
