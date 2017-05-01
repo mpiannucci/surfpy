@@ -6,26 +6,26 @@ from basedata import BaseData
 
 class Swell(BaseData):
 
-    def __init__(self, unit, wave_height, period, direction=None, compass_direction=None):
+    def __init__(self, unit, wave_height=float('nan'), period=float('nan'), direction=float('nan'), compass_direction=None):
         super(Swell, self).__init__(unit)
 
         self.wave_height = wave_height
         self.period = period
-        if direction is not None:
+        if not math.isnan(direction):
             self.direction = direction
             self.compass_direction = units.degree_to_direction(direction)
         elif compass_direction is not None:
             self.compass_direction = compass_direction
             self.direction = units.direction_to_degree(compass_direction)
         else:
-            self.direction = -1.0
+            self.direction = float('nan')
             self.compass_direction = ''
 
         self._max_energy = 0.0
         self._frequency_index = 0.0
 
     def is_valid(self):
-        return len(self.compass_direction) > 0 and self.direction > 0
+        return not math.isnan(self.wave_height) and not math.isnan(self.period) and len(self.compass_direction) > 0 and not math.isnan(self.direction)
 
     def change_units(self, new_units):
         old_units = self.unit
@@ -36,9 +36,11 @@ class Swell(BaseData):
     def breaking_wave_estimate(self, beach_angle, depth, beach_slope):
         # Interpolates the approximate breaking wave heights using the contained swell data. Data must
         # be in metric units prior to calling this function. The depth argument must be in meters.
+    
         if self.is_valid() is not True:
             return
 
+        self.change_units(units.Units.metric) 
         wave_breaking_height = 0.0
 
         if self.wave_height < 1000:
