@@ -10,12 +10,14 @@ class Location(object):
         self.altitude = alt
         self.name = name
 
+    @property
     def adjusted_longitude(self):
         if self.longitude > 180:
             return self.longitude - 360.0
         else:
             return self.longitude
 
+    @property
     def adjusted_latitude(self):
         if self.latitude > 90:
             return self.latitude - 180.0

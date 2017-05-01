@@ -12,6 +12,7 @@ class BuoySpectra(object):
         self.angle = []
         self.seperation_frequency = float('nan')
 
+    @property
     def average_period(self):
         zero_moment = 0.0
         second_moment = 0.0
@@ -31,6 +32,7 @@ class BuoySpectra(object):
 
         return math.sqrt(zero_moment/second_moment)
 
+    @property
     def wave_summary(self):
         if len(self.frequency) < 1 or len(self.energy) < 1:
             return None
@@ -61,6 +63,7 @@ class BuoySpectra(object):
         primary_swell.compass_direction = degree_to_direction(primary_swell.direction)
         return primary_swell
 
+    @property
     def swell_components(self):
         if len(self.frequency) < 1 or len(self.energy) < 1:
             return []

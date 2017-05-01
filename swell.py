@@ -33,6 +33,7 @@ class Swell(BaseData):
 
         self.wave_height = units.convert(self.wave_height, units.Measurement.length, old_units, self.unit)
 
+    @property
     def breaking_wave_estimate(self, beach_angle, depth, beach_slope):
         # Interpolates the approximate breaking wave heights using the contained swell data. Data must
         # be in metric units prior to calling this function. The depth argument must be in meters.
