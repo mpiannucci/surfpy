@@ -1,5 +1,6 @@
 import units
 from swell import Swell
+from buoyspectra import BuoySpectra
 from basedata import BaseData
 
 
@@ -22,6 +23,7 @@ class BuoyData(BaseData):
         self.swell_components = []
         self.steepness = ''
         self.average_period = float('nan')
+        self.wave_spectra = BuoySpectra()
 
         # Meterology
         self.pressure = float('nan')
