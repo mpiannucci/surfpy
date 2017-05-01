@@ -205,14 +205,17 @@ class Buoy(object):
             raw_energy = energy_data[i].strip().replace(')', '').replace('(', '').split()
             raw_directional = directional_data[i].strip().replace(')', '').replace('(', '').split()
 
+            print(len(raw_energy))
+            print(len(raw_directional))
+
             spectra = BuoySpectra()
             data = BuoyData(units.Units.metric)
             data.date = datetime(*[int(x) for x in raw_energy[0:5]])
 
-            for j in range(5, len(raw_energy), 2):
+            for j in range(5, len(raw_directional), 2):
                 spectra.frequency.append(parse_float(raw_directional[j+1]))
                 spectra.angle.append(parse_float(raw_directional[j]))
-                spectra.angle.append(parse_float(raw_energy[j+1]))
+                spectra.energy.append(parse_float(raw_energy[j+1]))
 
             spectra.seperation_frequency = parse_float(raw_energy[5])
 
