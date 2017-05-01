@@ -151,8 +151,42 @@ class Buoy(object):
         return True
 
     def parse_detailed_wave_reading_data(self, raw_data, count_limit):
-        # TODO
-        return False
+        raw_data = raw_data.split('\n')
+        if len(raw_data) < 2:
+            return False
+
+        header_lines = 2
+        data_lines = len(raw_data) - header_lines
+        if data_lines > count_limit and count_limit > 0:
+            data_lines = count_limit
+
+        for i in range(header_lines, header_lines + data_lines):
+            raw_data_line = raw_data[i].split()
+            data = BuoyData(units.Units.metric)
+            swell_component = Swell(units.Units.metric)
+            wind_wave_component = Swell(units.Units.metric)
+            data.date = datetime(*[int(x) for x in raw_data_line[0:5]])
+            data.wave_summary.wave_height = parse_float(raw_data_line[5])
+            swell_component.wave_height = parse_float(raw_data_line[6])
+            swell_component.period = parse_float(raw_data_line[7])
+            wind_wave_component.wave_height = parse_float(raw_data_line[8])
+            wind_wave_component.period = parse_float(raw_data_line[9])
+            swell_component.compass_direction = raw_data_line[10]
+            swell_component.direction = units.direction_to_degree(swell_component.compass_direction)
+            wind_wave_component.compass_direction = raw_data_line[11]
+            wind_wave_component.direction = units.direction_to_degree(wind_wave_component.compass_direction)
+            data.steepness = raw_data_line[12]
+            data.average_period = parse_float(raw_data_line[13])
+            data.wave_summary.direction = parse_float(raw_data_line[14])
+            data.wave_summary.compass_direction = units.degree_to_direction(data.wave_summary.direction)
+
+            data.swell_components.append(swell_component)
+            data.swell_components.append(wind_wave_component)
+            data.interpolate_dominant_wave_period()
+            data.interpolate_dominant_wave_direction()
+            self.data.append(data)
+        
+        return True
 
     def parse_wave_spectra_reading_data(self, energy_data, directional_data, count_limit):
         # TODO
@@ -169,3 +203,9 @@ class Buoy(object):
         if len(response.text) < 1:
             return False
         return self.parse_meteorological_reading_data(response.text, data_count)
+
+    def fetch_detailed_wave_reading(self, data_count=20):
+        response = requests.get(self.detailed_wave_reading_url)
+        if len(response.text) < 1:
+            return False
+        return self.parse_detailed_wave_reading_data(response.text, data_count)
