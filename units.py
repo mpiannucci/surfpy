@@ -1,11 +1,9 @@
-import math
-
 
 wind_directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
 
 def degree_to_direction(degree):
     # Normalize to a positive float
-    degree = math.abs(degree)
+    degree = abs(degree)
 
     # ake sure its in the range
     if degree > 361:

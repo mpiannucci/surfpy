@@ -2,7 +2,7 @@ import math
 import units
 
 
-class Location:
+class Location(object):
 
     def __init__(self, lat, lon, name='', alt=0):
         self.latitude = lat

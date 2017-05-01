@@ -1,7 +1,7 @@
 from buoydata import BuoyData
 from buoyspectra import BuoySpectra
 
-class Buoy:
+class Buoy(object):
 
     def __init__(self, station_id, location):
         self.station_id = station_id

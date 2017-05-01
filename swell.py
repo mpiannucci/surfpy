@@ -44,7 +44,7 @@ class Swell(BaseData):
         wave_breaking_height = 0.0
 
         if self.wave_height < 1000:
-            incident_angle = math.abs(self.direction - beach_angle) % 360
+            incident_angle = abs(self.direction - beach_angle) % 360
             if incident_angle < 90:
                 wave_breaking_height, _ = tools.breaking_characteristics(self.period, incident_angle, self.wave_height, beach_slope, depth)
 

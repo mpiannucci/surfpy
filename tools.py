@@ -3,7 +3,7 @@ import math
 def scalar_from_uv(ucomponent, vcomponent):
     # Computes speed and heading given the u and vvector components
     heading = math.modf((270.0 - (math.atan2(vcomponent, ucomponent) * (180 / math.pi))), 360)
-    speed = math.sqrt(math.pow(math.abs(vcomponent), 2) + math.pow(math.abs(ucomponent), 2))
+    speed = math.sqrt(math.pow(abs(vcomponent), 2) + math.pow(abs(ucomponent), 2))
     return speed, heading
 
 def ldis(period, depth):
@@ -34,7 +34,7 @@ def ldis(period, depth):
         F = Xo - (D / math.tanh(Xo))
         DF = 1 + (D / math.pow(math.sinh(Xo), 2))
         Xf = Xo - (F / DF)
-        err = math.abs((Xf - Xo) / Xo)
+        err = abs((Xf - Xo) / Xo)
         Xo = Xf
         iteration += 1
 

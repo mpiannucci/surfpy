@@ -1,7 +1,7 @@
 from buoy import Buoy
 
 
-class BuoyStations:
+class BuoyStations(object):
 
     active_buoys_url="http://www.ndbc.noaa.gov/activestations.xml"
 

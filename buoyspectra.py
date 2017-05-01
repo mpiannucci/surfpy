@@ -4,7 +4,7 @@ from units import Units, degree_to_direction
 from swell import Swell
 
 
-class BuoySpectra:
+class BuoySpectra(object):
 
     def __init__(self):
         self.frequency= []
@@ -22,9 +22,9 @@ class BuoySpectra:
         for i in range(0, len(self.frequency)):
             bandwidth = 0.01
             if i > 0:
-                bandwidth = math.abs(self.frequency[i] - self.frequency[i-1])
+                bandwidth = abs(self.frequency[i] - self.frequency[i-1])
             else:
-                bandwidth = math.abs(self.frequency[i+1] - self.frequency[i])
+                bandwidth = abs(self.frequency[i+1] - self.frequency[i])
 
             zero_moment += tools.zero_spectral_moment(self.energy[i], bandwidth)
             second_moment += tools.second_spectral_moment(self.energy[i], bandwidth, self.frequency[i])
@@ -44,9 +44,9 @@ class BuoySpectra:
         for i in range(0, len(self.frequency)):
             bandwidth = 0.01
             if i > 0:
-                bandwidth = math.abs(self.frequency[i] - self.frequency[i-1])
+                bandwidth = abs(self.frequency[i] - self.frequency[i-1])
             else:
-                bandwidth = math.abs(self.frequency[i+1] - self.frequency[i])
+                bandwidth = abs(self.frequency[i+1] - self.frequency[i])
 
             zero_moment += tools.zero_spectral_moment(self.energy[i], bandwidth)
 
@@ -80,9 +80,9 @@ class BuoySpectra:
             for i in range(prev_index, min_index):
                 bandwidth = 0.01
                 if i > 0:
-                    bandwidth = math.abs(self.frequency[i] - self.frequency[i-1])
+                    bandwidth = abs(self.frequency[i] - self.frequency[i-1])
                 else:
-                    bandwidth = math.abs(self.frequency[i+1] - self.frequency[i])
+                    bandwidth = abs(self.frequency[i+1] - self.frequency[i])
 
                 zero_moment += tools.zero_spectral_moment(self.energy[i], bandwidth)
 

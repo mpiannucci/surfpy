@@ -1,4 +1,4 @@
-class BaseData:
+class BaseData(object):
 
     def __init__(self, unit):
         self.unit = unit
