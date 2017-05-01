@@ -2,7 +2,7 @@ from buoydata import BuoyData
 from buoyspectra import BuoySpectra
 from swell import Swell
 from datetime import datetime
-from tools import parse_float
+from tools import parse_float, steepness
 import units
 import re
 import requests
@@ -189,8 +189,42 @@ class Buoy(object):
         return True
 
     def parse_wave_spectra_reading_data(self, energy_data, directional_data, count_limit):
-        # TODO
-        return False
+        energy_data = energy_data.split('\n')
+        directional_data = directional_data.split('\n')
+        if len(energy_data) != len(directional_data):
+            return False
+        elif len(energy_data) < 2:
+            return False
+
+        header_lines = 1
+        data_lines = len(energy_data) - header_lines
+        if data_lines > count_limit and count_limit > 0:
+            data_lines = count_limit
+
+        for i in range(header_lines, header_lines + data_lines):
+            raw_energy = energy_data[i].strip().replace(')', '').replace('(', '').split()
+            raw_directional = directional_data[i].strip().replace(')', '').replace('(', '').split()
+
+            spectra = BuoySpectra()
+            data = BuoyData(units.Units.metric)
+            data.date = datetime(*[int(x) for x in raw_energy[0:5]])
+
+            for j in range(5, len(raw_energy), 2):
+                spectra.frequency.append(parse_float(raw_directional[j+1]))
+                spectra.angle.append(parse_float(raw_directional[j]))
+                spectra.angle.append(parse_float(raw_energy[j+1]))
+
+            spectra.seperation_frequency = parse_float(raw_energy[5])
+
+            data.wave_spectra = spectra
+            data.wave_summary = spectra.wave_summary
+            data.swell_components = spectra.swell_components
+            data.steepness = steepness(data.wave_summary.wave_height, data.wave_summary.period)
+            data.average_period = spectra.average_period
+
+            self.data.append(data)
+
+        return True
 
     def fetch_latest_wave_reading(self):
         response = requests.get(self.latest_reading_url)
@@ -209,3 +243,10 @@ class Buoy(object):
         if len(response.text) < 1:
             return False
         return self.parse_detailed_wave_reading_data(response.text, data_count)
+
+    def fetch_wave_spectra_reading(self, data_count=20):
+        energy_response = requests.get(self.wave_energy_reading_url)
+        directional_response = requests.get(self.directional_wave_reading_url)
+        if len(energy_response.text) < 1 or len(directional_response.text) < 1:
+            return False
+        return self.parse_wave_spectra_reading_data(energy_response.text, directional_response.text, data_count)
