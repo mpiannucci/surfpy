@@ -1,6 +1,4 @@
-import math
 import units
-import datetime
 from swell import Swell
 from basedata import BaseData
 
