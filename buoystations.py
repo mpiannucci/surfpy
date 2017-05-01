@@ -1,4 +1,7 @@
 from buoy import Buoy
+from location import Location
+import xml.etree.ElementTree as ET
+import requests
 
 
 class BuoyStations(object):
@@ -26,7 +29,7 @@ class BuoyStations(object):
             if not station.active:
                 continue
             if len(buoy_type) > 0:
-                if station.type is not buoy_type:
+                if station.type != buoy_type:
                     continue
 
             dist = location.distance(station.location)
@@ -37,7 +40,34 @@ class BuoyStations(object):
         return closest_buoy
 
     def fetch_buoy_stations(self):
-        return False
+        response = requests.get(self.active_buoys_url)
+        if not len(response.content):
+            print(response.content)
+            return False
+        return self.parse_buoy_stations(response.content)
 
     def parse_buoy_stations(self, rawData):
-        return False
+        stations = ET.fromstring(rawData)
+        if stations.tag != 'stations':
+            return False
+
+        for station in stations:
+            attribs = station.attrib
+            station_id = attribs['id']
+            loc = Location(float(attribs['lat']), float(attribs['lon']), name=attribs['name'])
+            if 'elev' in attribs:
+                loc.altitude = float(attribs['elev'])
+            buoy = Buoy(station_id, loc)
+            buoy.owner = attribs['owner']
+            buoy.program = attribs['pgm']
+            buoy.type = attribs['type']
+            if 'met' in attribs:
+                buoy.active = 'y' in attribs['met']
+            if 'currents' in attribs:
+                buoy.currents = 'y' in attribs['currents']
+            if 'waterquality' in attribs:
+                buoy.water_quality = 'y' in attribs['waterquality']
+            if 'dart' in attribs:
+                buoy.dart = 'y' in attribs['dart']
+            self.stations.append(buoy)
+        return True
