@@ -41,10 +41,9 @@ class BuoyStations(object):
 
     def fetch_buoy_stations(self):
         response = requests.get(self.active_buoys_url)
-        if not len(response.content):
-            print(response.content)
+        if not len(response.text):
             return False
-        return self.parse_buoy_stations(response.content)
+        return self.parse_buoy_stations(response.text)
 
     def parse_buoy_stations(self, rawData):
         stations = ET.fromstring(rawData)

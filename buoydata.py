@@ -49,3 +49,20 @@ class BuoyData(BaseData):
         self.pressure = units.convert(self.pressure, units.Measurement.pressure, old_unit, self.unit)
         self.pressure_tendency = units.convert(self.pressure_tendency, units.Measurement.pressure, old_unit, self.unit)
         self.water_level = units.convert(self.water_level, units.Measurement.length, old_unit, self.unit)
+
+    def interpolate_dominant_wave_direction(self):
+        min_diff = float('inf')
+        for swell in self.swell_components:
+            diff = abs(swell.period - self.wave_summary.period)
+            if diff < min_diff:
+                min_diff = diff
+                self.wave_summary.compass_direction = swell.compass_direction
+                self.wave_summary.direction = swell.direction
+
+    def interpolate_dominant_wave_period(self):
+        min_diff = float('inf')
+        for swell in self.swell_components:
+            diff = abs(swell.wave_height - self.wave_summary.wave_height)
+            if diff < min_diff:
+                min_diff = diff
+                self.wave_summary.period = swell.period
