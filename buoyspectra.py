@@ -68,16 +68,16 @@ class BuoySpectra(object):
         if len(self.frequency) < 1 or len(self.energy) < 1:
             return []
 
-        min_peaks, max_peaks = tools.peakdetect(self.energy, delta=0.01)
+        min_indexes, min_values, max_indexes, max_values = tools.peakdetect(self.energy, delta=0.01)
 
         components = []
         prev_index = 0
-        for i in range(0, len(max_peaks)):
+        for i in range(0, len(max_values)):
             min_index = prev_index
-            if i >= len(min_peaks):
+            if i >= len(min_indexes):
                 min_index = len(self.energy)
             else:
-                min_index = min_peaks[i][0]
+                min_index = min_indexes[i]
 
             zero_moment = 0.0
             for j in range(prev_index, min_index):
@@ -91,11 +91,11 @@ class BuoySpectra(object):
 
             component = Swell(Units.metric)
             component.wave_height = 4.0 * math.sqrt(zero_moment)
-            component.period = 1.0 / self.frequency[max_peaks[i][0]]
-            component.direction = self.angle[max_peaks[i][0]]
+            component.period = 1.0 / self.frequency[max_indexes[i]]
+            component.direction = self.angle[max_indexes[i]]
             component.compass_direction = degree_to_direction(component.direction)
-            component._max_energy = max_peaks[i][1]
-            component._frequency_index = max_peaks[i][0]
+            component._max_energy = max_values[i]
+            component._frequency_index = max_indexes[i]
             components.append(component)
 
         components.sort(key=lambda x: x._max_energy, reverse=True)
