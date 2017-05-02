@@ -1,5 +1,4 @@
 import math
-import numpy as np
 
 
 def scalar_from_uv(ucomponent, vcomponent):
@@ -154,16 +153,14 @@ def peakdetect(v, delta, x = None):
     max_values = []
        
     if x is None:
-        x = np.arange(len(v))
+        x = range(len(v))
     
-    v = np.asarray(v)
-    
-    mn, mx = np.Inf, -np.Inf
-    mnpos, mxpos = np.NaN, np.NaN
+    mn, mx = float('inf'), -float('inf')
+    mnpos, mxpos = float('nan'), float('nan')
     
     lookformax = True
     
-    for i in np.arange(len(v)):
+    for i in range(len(v)):
         this = v[i]
         if this > mx:
             mx = this
