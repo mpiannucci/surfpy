@@ -205,9 +205,6 @@ class Buoy(object):
             raw_energy = energy_data[i].strip().replace(')', '').replace('(', '').split()
             raw_directional = directional_data[i].strip().replace(')', '').replace('(', '').split()
 
-            print(len(raw_energy))
-            print(len(raw_directional))
-
             spectra = BuoySpectra()
             data = BuoyData(units.Units.metric)
             data.date = datetime(*[int(x) for x in raw_energy[0:5]])

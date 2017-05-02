@@ -68,34 +68,34 @@ class BuoySpectra(object):
         if len(self.frequency) < 1 or len(self.energy) < 1:
             return []
 
-        min_indexes, min_energies, max_indexes, max_energies = tools.peakdetect(self.energy, 0.01)
+        min_peaks, max_peaks = tools.peakdetect(self.energy, delta=0.01)
 
         components = []
         prev_index = 0
-        for i in range(0, max_energies):
+        for i in range(0, len(max_peaks)):
             min_index = prev_index
-            if i >= len(min_indexes):
+            if i >= len(min_peaks):
                 min_index = len(self.energy)
             else:
-                min_index = min_indexes[i]
+                min_index = min_peaks[i][0]
 
             zero_moment = 0.0
-            for i in range(prev_index, min_index):
+            for j in range(prev_index, min_index):
                 bandwidth = 0.01
-                if i > 0:
-                    bandwidth = abs(self.frequency[i] - self.frequency[i-1])
+                if j > 0:
+                    bandwidth = abs(self.frequency[j] - self.frequency[j-1])
                 else:
-                    bandwidth = abs(self.frequency[i+1] - self.frequency[i])
+                    bandwidth = abs(self.frequency[j+1] - self.frequency[j])
 
-                zero_moment += tools.zero_spectral_moment(self.energy[i], bandwidth)
+                zero_moment += tools.zero_spectral_moment(self.energy[j], bandwidth)
 
             component = Swell(Units.metric)
             component.wave_height = 4.0 * math.sqrt(zero_moment)
-            component.period = 1.0 / self.frequency[max_indexes[i]]
-            component.direction = self.angle[max_indexes[i]]
+            component.period = 1.0 / self.frequency[max_peaks[i][0]]
+            component.direction = self.angle[max_peaks[i][0]]
             component.compass_direction = degree_to_direction(component.direction)
-            component._max_energy = max_energies[i]
-            component._frequency_index = max_indexes[i]
+            component._max_energy = max_peaks[i][1]
+            component._frequency_index = max_peaks[i][0]
             components.append(component)
 
         components.sort(key=lambda x: x._max_energy, reverse=True)

@@ -1,4 +1,6 @@
 import math
+import numpy as np
+
 
 def scalar_from_uv(ucomponent, vcomponent):
     # Computes speed and heading given the u and vvector components
@@ -166,7 +168,8 @@ def peakdetect(y_axis, x_axis = None, lookahead = 200, delta=0):
     dump = [] 
        
     # check input data
-    # x_axis, y_axis = _datacheck_peakdetect(x_axis, y_axis)
+    if x_axis is None:
+        x_axis = range(len(y_axis))
     # store data length for later use
     length = len(y_axis)
     
