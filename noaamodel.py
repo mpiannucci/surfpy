@@ -3,7 +3,7 @@ import datetime
 
 class NOAAModel(object):
 
-    def __init__(self, name, description, bottom_left, top_right, max_alt, min_alt, alt_res, loc_res, time_res):
+    def __init__(self, name, description, bottom_left, top_right, loc_res, time_res, max_alt=0.0, min_alt=0.0, alt_res=0.0):
         self.name = name
         self.description = description
         self.bottom_left = bottom_left
@@ -44,7 +44,8 @@ class NOAAModel(object):
     def latest_model_time(self):
         current_time = datetime.datetime.utcnow() + datetime.timedelta(hours=-5)
         latest_model_hour = current_time.hour - (current_time.hour % 6)
-        current_time = current_time + datetime.timedelta(current_time.hour - latest_model_hour)
+        current_time = current_time + datetime.timedelta(hours=-(current_time.hour-latest_model_hour))
+        current_time = datetime.datetime(current_time.year, current_time.month, current_time.day, current_time.hour, 0)
         return current_time
 
     def time_index(self, desired_time):
