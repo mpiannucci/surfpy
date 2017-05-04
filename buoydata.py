@@ -29,7 +29,7 @@ class BuoyData(BaseData):
         self.pressure = float('nan')
         self.air_temperature = float('nan')
         self.water_temperature = float('nan')
-        self.dewpoint_temperatures = float('nan')
+        self.dewpoint_temperature = float('nan')
         self.pressure_tendency = float('nan')
         self.water_level = float('nan')
 

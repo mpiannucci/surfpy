@@ -98,5 +98,7 @@ class BuoySpectra(object):
             component._frequency_index = max_indexes[i]
             components.append(component)
 
+            prev_index = min_index
+
         components.sort(key=lambda x: x._max_energy, reverse=True)
         return components
