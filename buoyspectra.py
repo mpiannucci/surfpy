@@ -102,3 +102,7 @@ class BuoySpectra(object):
 
         components.sort(key=lambda x: x._max_energy, reverse=True)
         return components
+
+    @property
+    def period(self):
+        return map(lambda x: float(1.0/float(x)), self.energy)

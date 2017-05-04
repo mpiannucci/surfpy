@@ -33,6 +33,10 @@ class BuoyData(BaseData):
         self.pressure_tendency = float('nan')
         self.water_level = float('nan')
 
+        # Plots
+        self.energy_spectra_plot = ''
+        self.directional_spectra_plot = ''
+
     def change_units(self, new_units):
         old_unit = self.unit
         super(BuoyData, self).change_units(new_units)
