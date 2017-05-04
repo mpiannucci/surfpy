@@ -250,3 +250,18 @@ class Buoy(object):
         if len(energy_response.text) < 1 or len(directional_response.text) < 1:
             return False
         return self.parse_wave_spectra_reading_data(energy_response.text, directional_response.text, data_count)
+
+    def conditions_for_date(self, datetime):
+        if len(self.data) < 1:
+            return None
+
+        min_data = self.data[0]
+        min_duration = (datetime - min_data.date).seconds
+
+        for i in range(1, len(self.data)):
+            duration = (datetime - self.data[i].date).seconds
+            if abs(duration) < min_duration:
+                min_data = self.data[i]
+                min_duration = duration
+
+        return min_data, min_duration
