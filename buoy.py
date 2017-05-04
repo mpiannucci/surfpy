@@ -251,17 +251,17 @@ class Buoy(object):
             return False
         return self.parse_wave_spectra_reading_data(energy_response.text, directional_response.text, data_count)
 
-    def conditions_for_date(self, datetime):
+    def data_index_for_date(self, datetime):
         if len(self.data) < 1:
             return None
 
-        min_data = self.data[0]
-        min_duration = (datetime - min_data.date).seconds
+        min_duration = (datetime - self.data[0].date).seconds
+        min_index = 0
 
         for i in range(1, len(self.data)):
             duration = (datetime - self.data[i].date).seconds
             if abs(duration) < min_duration:
-                min_data = self.data[i]
                 min_duration = duration
+                min_index = i
 
-        return min_data, min_duration
+        return min_index, min_duration
