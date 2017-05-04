@@ -105,4 +105,4 @@ class BuoySpectra(object):
 
     @property
     def period(self):
-        return map(lambda x: float(1.0/float(x)), self.energy)
+        return map(lambda x: float(1.0/float(x)), self.frequency)
