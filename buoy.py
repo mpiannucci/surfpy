@@ -77,12 +77,13 @@ class Buoy(object):
                 data.wave_summary.period = parse_float(raw_value[0])
             elif variable == 'pres':
                 data.pressure = parse_float(raw_value[0])
-                if 'falling' in raw_value[1]:
-                    data.pressure_tendency = -1.0
-                elif 'rising' in raw_value[1]:
-                    data.pressure_tendency = 1.0
-                elif 'steady' in raw_value[1]:
-                    data.pressure_tendency = 0.0
+                if len(raw_value) > 1:
+                    if 'falling' in raw_value[1]:
+                        data.pressure_tendency = -1.0
+                    elif 'rising' in raw_value[1]:
+                        data.pressure_tendency = 1.0
+                    elif 'steady' in raw_value[1]:
+                        data.pressure_tendency = 0.0
             elif variable == 'air temp':
                 data.air_temperature = parse_float(raw_value[0])
             elif variable == 'water temp':
