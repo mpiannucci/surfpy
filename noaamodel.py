@@ -1,4 +1,5 @@
 import datetime
+import requests
 
 
 class NOAAModel(object):
@@ -56,3 +57,41 @@ class NOAAModel(object):
         hours_res = self.time_resolution_hours
         return (diff + (hours_res - (diff % hours_res))) / hours_res
 
+    def create_ascii_url(self, location, start_time_index, end_time_index):
+        return ''
+
+    def fetch_ascii_data(self, location, start_time_index, end_time_index):
+        url = self.create_ascii_url(location, start_time_index, end_time_index)
+        if len(url) < 1:
+            return False
+
+        response = requests.get(url)
+        if not len(response.text):
+            return False
+        return self.parse_ascii_data(response.text)
+
+    def parse_ascii_data(self, raw_data):
+        if len(raw_data) < 1:
+            return False
+
+        split_data = raw_data.split('\n')
+
+        self.data = {}
+        current_var = ''
+
+        for value in split_data:
+            if len(value) < 1:
+                continue
+            elif value[0] == '[':
+                datas = value.split(',')
+                self.data[current_var].append(float(datas[1].strip()))
+            elif value[0] >= '0' and value[0] <= '9':
+                raw_timestamps = value.split(',')
+                for timestamp in raw_timestamps:
+                    self.data[current_var].append(float(timestamp.strip()))
+            else:
+                vars = value.split(',')
+                current_var = vars[0]
+                self.data[current_var] = []
+
+        return True

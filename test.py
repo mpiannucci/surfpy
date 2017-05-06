@@ -22,7 +22,8 @@ class BuoyPlots(object):
         if len(self.stations[station_id].data) < 1:
             return
 
-        ax = plt.subplot(111, projection='polar')
+        fig = plt.figure(figsize=(6, 6), dpi=100)
+        ax = fig.add_subplot(111, projection='polar')
         ax.set_title('Station ' + station_id + ': Directional Wave Spectra\n')
         ax.set_theta_zero_location('N')
         ax.set_theta_direction(-1)
