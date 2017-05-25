@@ -51,7 +51,7 @@ class Buoy(object):
             print(raw_data)
             return False
 
-        data = BuoyData('english')
+        data = BuoyData(units.Units.english)
         data.date = datetime.strptime(raw_data[4], '%H%M %Z %m/%d/%y')
 
         swell_period_read = False
