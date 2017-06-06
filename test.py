@@ -47,6 +47,8 @@ class BuoyPlots(object):
 
         ax = plt.subplot(111)
         ax.set_title('Station ' + station_id + ': ' + self.stations[station_id].data[0].date.strftime('%H:%M UTC') + '\n')
+        ax.set_xlabel('Period (s)')
+        ax.set_ylabel('Energy ($m^2/Hz$)')
         ax.set_xlim(0.0, 20.0)
         ax.set_xticks([0.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0, 21.0])
         ax.plot(self.stations[station_id].data[0].wave_spectra.period, self.stations[station_id].data[0].wave_spectra.energy)
