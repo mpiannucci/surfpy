@@ -1,9 +1,9 @@
 from buoystations import BuoyStations
 
+import datetime
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cm
-
 
 class BuoyPlots(object):
 
@@ -24,7 +24,7 @@ class BuoyPlots(object):
 
         fig = plt.figure(figsize=(6, 6), dpi=100)
         ax = fig.add_subplot(111, projection='polar')
-        ax.set_title('Station ' + station_id + ': Directional Wave Spectra\n')
+        ax.set_title('Station ' + station_id + ': ' + self.stations[station_id].data[0].date.strftime('%H:%M UTC') + '\n')
         ax.set_theta_zero_location('N')
         ax.set_theta_direction(-1)
         bars = ax.bar(self.stations[station_id].data[0].wave_spectra.radian_angle, self.stations[station_id].data[0].wave_spectra.energy, align='center', linewidth=1.0)
@@ -46,7 +46,7 @@ class BuoyPlots(object):
         swell_energies = [x._max_energy for x in self.stations[station_id].data[0].swell_components]
 
         ax = plt.subplot(111)
-        ax.set_title('Station ' + station_id + ': Wave Spectra\n')
+        ax.set_title('Station ' + station_id + ': ' + self.stations[station_id].data[0].date.strftime('%H:%M UTC') + '\n')
         ax.set_xlim(0.0, 20.0)
         ax.set_xticks([0.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0, 21.0])
         ax.plot(self.stations[station_id].data[0].wave_spectra.period, self.stations[station_id].data[0].wave_spectra.energy)
