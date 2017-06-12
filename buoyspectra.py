@@ -68,7 +68,7 @@ class BuoySpectra(object):
         if len(self.frequency) < 1 or len(self.energy) < 1:
             return []
 
-        min_indexes, min_values, max_indexes, max_values = tools.peakdetect(self.energy, delta=0.01)
+        min_indexes, min_values, max_indexes, max_values = tools.peakdetect(self.energy, delta=0.05)
 
         components = []
         prev_index = 0

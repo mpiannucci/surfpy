@@ -44,6 +44,7 @@ class BuoyPlots(object):
 
         swell_indexes = [self.stations[station_id].data[0].wave_spectra.period[i] for i in [x._frequency_index for x in self.stations[station_id].data[0].swell_components]]
         swell_energies = [x._max_energy for x in self.stations[station_id].data[0].swell_components]
+        swell_summaries = [x.summary for x in self.stations[station_id].data[0].swell_components]
 
         ax = plt.subplot(111)
         ax.set_title('Station ' + station_id + ': ' + self.stations[station_id].data[0].date.strftime('%H:%M UTC') + '\n')
@@ -53,6 +54,10 @@ class BuoyPlots(object):
         ax.set_xticks([0.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0, 21.0])
         ax.plot(self.stations[station_id].data[0].wave_spectra.period, self.stations[station_id].data[0].wave_spectra.energy)
         ax.scatter(swell_indexes, swell_energies)
+        for i in range(0, len(swell_indexes)):
+            print(swell_summaries[i])
+            # ax.annotate(swell_summaries[i], (swell_indexes[i],swell_energies[i]))
+
         ax.set_ylim(bottom=0.0)
         plt.grid()
         plt.show()

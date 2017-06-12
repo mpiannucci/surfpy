@@ -24,6 +24,11 @@ class Swell(BaseData):
         self._max_energy = 0.0
         self._frequency_index = 0.0
 
+    @property
+    def summary(self):
+        return '{0:.1f} {1} @ {2:.1f} s {3:.0f}\xb0 {4}'.format(self.wave_height, units.unit_name(self.unit, 
+            units.Measurement.length), self.period, self.direction, self.compass_direction)
+
     def is_valid(self):
         return not math.isnan(self.wave_height) and not math.isnan(self.period) and len(self.compass_direction) > 0 and not math.isnan(self.direction)
 
@@ -33,7 +38,6 @@ class Swell(BaseData):
 
         self.wave_height = units.convert(self.wave_height, units.Measurement.length, old_units, self.unit)
 
-    @property
     def breaking_wave_estimate(self, beach_angle, depth, beach_slope):
         # Interpolates the approximate breaking wave heights using the contained swell data. Data must
         # be in metric units prior to calling this function. The depth argument must be in meters.

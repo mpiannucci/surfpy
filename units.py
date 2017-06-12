@@ -108,3 +108,54 @@ def earths_radius(unit):
         return 3956.0
     else:
         return 1.0
+
+def unit_name(source_unit, source_meas, abbrev=True):
+    if source_unit == Units.metric:
+        if source_meas == Measurement.length:
+            if abbrev:
+                return 'm'
+            else:
+                return 'meters'
+        elif source_meas == Measurement.speed:
+            if abbrev:
+                return 'm/s'
+            else:
+                return 'meters per second'
+        elif source_meas == Measurement.temperature:
+            if abbrev:
+                return u'\xb0C'
+            else:
+                return u'\xb0 celsius'
+        elif source_meas == Measurement.pressure:
+            if abbrev:
+                return 'hPa'
+            else:
+                return 'hecta pascals'
+    elif source_unit == Units.english:
+        if source_meas == Measurement.length:
+            if abbrev:
+                return 'ft'
+            else:
+                return 'feet'
+        elif source_meas == Measurement.speed:
+            if abbrev:
+                return 'mph'
+            else:
+                return 'miles per hour'
+        elif source_meas == Measurement.temperature:
+            if abbrev:
+                return u'\xb0F'
+            else:
+                return u'\xb0 fahrenheit'
+        elif source_meas == Measurement.pressure:
+            if abbrev:
+                return 'in HG'
+            else:
+                return 'inches mercury'
+    elif source_unit == Units.knots:
+        if source_meas == Measurement.speed:
+            if abbrev:
+                return 'knt'
+            else:
+                return 'knots'
+    return ''
