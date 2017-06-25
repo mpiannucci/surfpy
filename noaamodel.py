@@ -14,6 +14,7 @@ class NOAAModel(object):
         self.altitude_resolution = alt_res
         self.location_resolution = loc_res
         self.time_resolution = time_res
+        self.data = {}
 
     @property
     def time_resolution_hours(self):
@@ -95,3 +96,6 @@ class NOAAModel(object):
                 self.data[current_var] = []
 
         return True
+
+    def to_buoy_data(self):
+        return []

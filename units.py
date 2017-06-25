@@ -1,5 +1,6 @@
 
 wind_directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+epoch_days_since_zero = 719529
 
 def degree_to_direction(degree):
     # Normalize to a positive float
@@ -159,3 +160,4 @@ def unit_name(source_unit, source_meas, abbrev=True):
             else:
                 return 'knots'
     return ''
+

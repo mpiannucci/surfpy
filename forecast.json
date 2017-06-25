@@ -1,0 +1,262 @@
+[
+    {
+        "unit": "english",
+        "date": "2016-06-24T18:00:00",
+        "wind_direction": 262.28,
+        "wind_speed": 14.6523493289,
+        "wind_gust": null,
+        "wave_summary": {
+            "unit": "english",
+            "wave_height": 5.4776,
+            "period": 7.68,
+            "direction": 188.76999,
+            "compass_direction": "S",
+            "_max_energy": 0.0,
+            "_frequency_index": 0.0
+        },
+        "swell_components": [
+            {
+                "unit": "english",
+                "wave_height": 5.411999999999999,
+                "period": 7.66,
+                "direction": 193.55,
+                "compass_direction": "SSW",
+                "_max_energy": 0.0,
+                "_frequency_index": 0.0
+            },
+            {
+                "unit": "english",
+                "wave_height": 0.9511999999999998,
+                "period": 9.58,
+                "direction": 131.61,
+                "compass_direction": "SE",
+                "_max_energy": 0.0,
+                "_frequency_index": 0.0
+            }
+        ],
+        "steepness": "",
+        "average_period": null,
+        "wave_spectra": {
+            "frequency": [],
+            "energy": [],
+            "angle": [],
+            "seperation_frequency": null
+        },
+        "pressure": null,
+        "air_temperature": null,
+        "water_temperature": null,
+        "dewpoint_temperature": null,
+        "pressure_tendency": null,
+        "water_level": null,
+        "energy_spectra_plot": "",
+        "directional_spectra_plot": ""
+    },
+    {
+        "unit": "english",
+        "date": "2016-06-24T21:00:00",
+        "wind_direction": 263.81,
+        "wind_speed": 14.6523493289,
+        "wind_gust": null,
+        "wave_summary": {
+            "unit": "english",
+            "wave_height": 5.247999672,
+            "period": 7.85,
+            "direction": 188.47,
+            "compass_direction": "S",
+            "_max_energy": 0.0,
+            "_frequency_index": 0.0
+        },
+        "swell_components": [
+            {
+                "unit": "english",
+                "wave_height": 5.182399672,
+                "period": 7.83,
+                "direction": 191.89,
+                "compass_direction": "SSW",
+                "_max_energy": 0.0,
+                "_frequency_index": 0.0
+            },
+            {
+                "unit": "english",
+                "wave_height": 0.7871999999999999,
+                "period": 8.5199995,
+                "direction": 128.68,
+                "compass_direction": "SE",
+                "_max_energy": 0.0,
+                "_frequency_index": 0.0
+            }
+        ],
+        "steepness": "",
+        "average_period": null,
+        "wave_spectra": {
+            "frequency": [],
+            "energy": [],
+            "angle": [],
+            "seperation_frequency": null
+        },
+        "pressure": null,
+        "air_temperature": null,
+        "water_temperature": null,
+        "dewpoint_temperature": null,
+        "pressure_tendency": null,
+        "water_level": null,
+        "energy_spectra_plot": "",
+        "directional_spectra_plot": ""
+    },
+    {
+        "unit": "english",
+        "date": "2016-06-25T00:00:00",
+        "wind_direction": 271.49,
+        "wind_speed": 15.122119552600001,
+        "wind_gust": null,
+        "wave_summary": {
+            "unit": "english",
+            "wave_height": 4.9528,
+            "period": 7.8599997,
+            "direction": 186.98,
+            "compass_direction": "S",
+            "_max_energy": 0.0,
+            "_frequency_index": 0.0
+        },
+        "swell_components": [
+            {
+                "unit": "english",
+                "wave_height": 4.8544,
+                "period": 7.8399997,
+                "direction": 193.09999,
+                "compass_direction": "SSW",
+                "_max_energy": 0.0,
+                "_frequency_index": 0.0
+            },
+            {
+                "unit": "english",
+                "wave_height": 0.9184,
+                "period": 8.599999,
+                "direction": 133.14,
+                "compass_direction": "SE",
+                "_max_energy": 0.0,
+                "_frequency_index": 0.0
+            }
+        ],
+        "steepness": "",
+        "average_period": null,
+        "wave_spectra": {
+            "frequency": [],
+            "energy": [],
+            "angle": [],
+            "seperation_frequency": null
+        },
+        "pressure": null,
+        "air_temperature": null,
+        "water_temperature": null,
+        "dewpoint_temperature": null,
+        "pressure_tendency": null,
+        "water_level": null,
+        "energy_spectra_plot": "",
+        "directional_spectra_plot": ""
+    },
+    {
+        "unit": "english",
+        "date": "2016-06-25T03:00:00",
+        "wind_direction": 268.56,
+        "wind_speed": 12.661420000000001,
+        "wind_gust": null,
+        "wave_summary": {
+            "unit": "english",
+            "wave_height": 4.788799672,
+            "period": 8.0,
+            "direction": 186.84,
+            "compass_direction": "S",
+            "_max_energy": 0.0,
+            "_frequency_index": 0.0
+        },
+        "swell_components": [
+            {
+                "unit": "english",
+                "wave_height": 4.6903999999999995,
+                "period": 7.97,
+                "direction": 192.86,
+                "compass_direction": "SSW",
+                "_max_energy": 0.0,
+                "_frequency_index": 0.0
+            },
+            {
+                "unit": "english",
+                "wave_height": 0.9184,
+                "period": 8.599999,
+                "direction": 133.20999,
+                "compass_direction": "SE",
+                "_max_energy": 0.0,
+                "_frequency_index": 0.0
+            }
+        ],
+        "steepness": "",
+        "average_period": null,
+        "wave_spectra": {
+            "frequency": [],
+            "energy": [],
+            "angle": [],
+            "seperation_frequency": null
+        },
+        "pressure": null,
+        "air_temperature": null,
+        "water_temperature": null,
+        "dewpoint_temperature": null,
+        "pressure_tendency": null,
+        "water_level": null,
+        "energy_spectra_plot": "",
+        "directional_spectra_plot": ""
+    },
+    {
+        "unit": "english",
+        "date": "2016-06-25T06:00:00",
+        "wind_direction": 304.85,
+        "wind_speed": 10.402050000000001,
+        "wind_gust": null,
+        "wave_summary": {
+            "unit": "english",
+            "wave_height": 4.4936,
+            "period": 8.26,
+            "direction": 186.51999,
+            "compass_direction": "S",
+            "_max_energy": 0.0,
+            "_frequency_index": 0.0
+        },
+        "swell_components": [
+            {
+                "unit": "english",
+                "wave_height": 4.3951996719999995,
+                "period": 8.25,
+                "direction": 192.53,
+                "compass_direction": "SSW",
+                "_max_energy": 0.0,
+                "_frequency_index": 0.0
+            },
+            {
+                "unit": "english",
+                "wave_height": 0.8855999343999998,
+                "period": 8.57,
+                "direction": 132.69,
+                "compass_direction": "SE",
+                "_max_energy": 0.0,
+                "_frequency_index": 0.0
+            }
+        ],
+        "steepness": "",
+        "average_period": null,
+        "wave_spectra": {
+            "frequency": [],
+            "energy": [],
+            "angle": [],
+            "seperation_frequency": null
+        },
+        "pressure": null,
+        "air_temperature": null,
+        "water_temperature": null,
+        "dewpoint_temperature": null,
+        "pressure_tendency": null,
+        "water_level": null,
+        "energy_spectra_plot": "",
+        "directional_spectra_plot": ""
+    }
+]

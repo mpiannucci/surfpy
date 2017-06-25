@@ -1,4 +1,6 @@
 import math
+import json
+import datetime
 
 
 def scalar_from_uv(ucomponent, vcomponent):
@@ -193,3 +195,13 @@ def parse_float(raw_value):
     except:
         pass
     return value
+
+def simple_serialize(obj):
+    if isinstance(obj, datetime.datetime):
+        serial = obj.isoformat()
+        return serial
+
+    return obj.__dict__
+
+def dump_json(obj):
+    return json.dumps(obj, default=simple_serialize).replace('NaN', 'null')
