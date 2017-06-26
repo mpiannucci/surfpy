@@ -1,6 +1,8 @@
 from noaamodel import NOAAModel
 from location import Location
 import tools
+import units
+from datetime import datetime
 
 
 class GFSModel(NOAAModel):
@@ -14,10 +16,10 @@ class GFSModel(NOAAModel):
 
         lat_index, lon_index = self.location_index(location)
         alt_index = self.altitude_index(location.altitude)
-        url = self._base_gfs_url.format(datestring, hourstring, alt_index, lat_index, lon_index, start_time_index, end_time_index)
+        url = self._base_gfs_url.format(self.name, datestring, hourstring, alt_index, lat_index, lon_index, start_time_index, end_time_index)
         return url
 
-    def _to_buoy_data(self):
+    def _to_buoy_data(self, buoy_data_point, i):
         if buoy_data_point.unit != units.Units.metric:
             buoy_data_point.change_units(units.Units.metric)
 
@@ -29,9 +31,8 @@ class GFSModel(NOAAModel):
         elif buoy_data_point.date != raw_date:
             return False
 
-        buoy_data_point.wind_speed, buoy_data_point.wind_direction = 
-            tools.scalar_from_uv(self.data['ugrd10m'][i], self.data['vgrd10m'][i])
-        buoy_data_point.wind_gust = self.data['gustsfc']
+        buoy_data_point.wind_speed, buoy_data_point.wind_direction = tools.scalar_from_uv(self.data['ugrd10m'][i], self.data['vgrd10m'][i])
+        buoy_data_point.wind_gust = self.data['gustsfc'][i]
         return True
 
 
@@ -50,4 +51,4 @@ class NAMModel(NOAAModel):
         return url
 
 def global_gfs_model():
-    return GFSModel('gfs_0p50', 'Global GFS 0.5 deg', Location(-90.00000, 0.00000), Location(90.0000, 359.5000), 0.5, 0.125, min_alt=1000.0, max_altitude=1.0, alt_res=21.717)
+    return GFSModel('gfs_0p50', 'Global GFS 0.5 deg', Location(-90.00000, 0.00000), Location(90.0000, 359.5000), 0.5, 0.125, min_alt=1000.0, max_alt=1.0, alt_res=21.717)
