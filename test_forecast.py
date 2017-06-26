@@ -7,7 +7,7 @@ from location import Location
 if __name__=='__main__':
     ri_wave_location = Location(41.323, 360-71.396, alt=30.0, name='Block Island Sound')
     ec_wave_model = wavemodel.us_east_coast_wave_model()
-    if ec_wave_model.fetch_ascii_data(ri_wave_location, 0, 4):
+    if ec_wave_model.fetch_ascii_data(ri_wave_location, 0, 0):
         data = ec_wave_model.to_buoy_data()
         for dat in data:
             dat.change_units(units.Units.english)

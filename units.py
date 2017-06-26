@@ -1,6 +1,6 @@
 
 wind_directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
-epoch_days_since_zero = 719529
+epoch_days_since_zero = 719164
 
 def degree_to_direction(degree):
     # Normalize to a positive float
