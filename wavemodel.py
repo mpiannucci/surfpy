@@ -62,21 +62,7 @@ class WaveModel(NOAAModel):
         buoy_data_point.wind_direction = self.data['wdirsfc'][i]
         buoy_data_point.wind_speed = self.data['windsfc'][i]
         return True
-
-    def to_buoy_data(self):
-        buoy_data = []
-        if not self.data:
-            return buoy_data
-        elif len(self.data['time']) < 1:
-            return buoy_data
-
-        for i in range(0, len(self.data['time'])):
-            buoy_data_point = BuoyData(units.Units.metric)
-            self._to_buoy_data(buoy_data_point, i)
-            buoy_data.append(buoy_data_point)
-
-        return buoy_data
-
+        
 
 def us_east_coast_wave_model():
     return WaveModel('multi_1.at_10m', 'Multi-grid wave model: US East Coast 10 arc-min grid', Location(0.00, 260.00), Location(55.00011, 310.00011), 0.167, 0.125)

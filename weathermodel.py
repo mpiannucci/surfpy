@@ -35,18 +35,6 @@ class GFSModel(NOAAModel):
         return True
 
 
-    def to_buoy_data(self):
-        buoy_data = []
-        if not self.data:
-            return buoy_data
-        elif len(self.data['time']) < 1:
-            return buoy_data
-
-        for i in range(0, len(self.data['time'])):
-            buoy_data_point = BuoyData(units.Units.metric)
-            self._to_buoy_data(buoy_data_point, i)
-            buoy_data.append(buoy_data)
-
 class NAMModel(NOAAModel):
 
     _base_nam_url = 'http://nomads.ncep.noaa.gov:9090/dods/nam/nam{1}/{0}_{2}.ascii?time[{6}:{7}],ugrd10m[{6}:{7}][{4}][{5}],vgrd10m[{6}:{7}][{4}][{5}],gustsfc[{6}:{7}][{4}][{5}]'

@@ -1,6 +1,7 @@
 import datetime
 import requests
-
+import units
+from buoydata import BuoyData
 
 class NOAAModel(object):
 
@@ -101,7 +102,18 @@ class NOAAModel(object):
         return False
 
     def to_buoy_data(self):
-        return []
+        buoy_data = []
+        if not self.data:
+            return buoy_data
+        elif len(self.data['time']) < 1:
+            return buoy_data
+
+        for i in range(0, len(self.data['time'])):
+            buoy_data_point = BuoyData(units.Units.metric)
+            if self._to_buoy_data(buoy_data_point, i):
+                buoy_data.append(buoy_data_point)
+
+        return buoy_data
 
     def fill_buoy_data(self, buoy_data):
         return False
