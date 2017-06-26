@@ -17,6 +17,24 @@ class GFSModel(NOAAModel):
         url = self._base_gfs_url.format(datestring, hourstring, alt_index, lat_index, lon_index, start_time_index, end_time_index)
         return url
 
+    def _to_buoy_data(self):
+        if buoy_data_point.unit != units.Units.metric:
+            buoy_data_point.change_units(units.Units.metric)
+
+        # Make sure the timestamp exists and is the same as the data we are trying to fill
+        raw_time = (self.data['time'][i] - units.epoch_days_since_zero) * 24 * 60 * 60
+        raw_date = datetime.utcfromtimestamp(raw_time)
+        if buoy_data_point.date == None:
+            buoy_data_point.date = raw_date
+        elif buoy_data_point.date != raw_date:
+            return False
+
+        buoy_data_point.wind_speed, buoy_data_point.wind_direction = 
+            tools.scalar_from_uv(self.data['ugrd10m'][i], self.data['vgrd10m'][i])
+        buoy_data_point.wind_gust = self.data['gustsfc']
+        return True
+
+
     def to_buoy_data(self):
         buoy_data = []
         if not self.data:
@@ -26,11 +44,8 @@ class GFSModel(NOAAModel):
 
         for i in range(0, len(self.data['time'])):
             buoy_data_point = BuoyData(units.Units.metric)
-            buoy_data_point.wind_speed, buoy_data_point.wind_direction = 
-                tools.scalar_from_uv(self.data['ugrd10m'][i], self.data['vgrd10m'][i])
-            buoy_data_point.wind_gust = self.data['gustsfc']
-
-        buoy_data.append(buoy_data)
+            self._to_buoy_data(buoy_data_point, i)
+            buoy_data.append(buoy_data)
 
 class NAMModel(NOAAModel):
 

@@ -97,5 +97,11 @@ class NOAAModel(object):
 
         return True
 
+    def _to_buoy_data(self, buoy_data_point, i):
+        return False
+
     def to_buoy_data(self):
         return []
+
+    def fill_buoy_data(self, buoy_data):
+        return False
