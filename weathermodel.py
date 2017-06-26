@@ -1,5 +1,6 @@
 from noaamodel import NOAAModel
 from location import Location
+import tools
 
 
 class GFSModel(NOAAModel):
@@ -15,6 +16,21 @@ class GFSModel(NOAAModel):
         alt_index = self.altitude_index(location.altitude)
         url = self._base_gfs_url.format(datestring, hourstring, alt_index, lat_index, lon_index, start_time_index, end_time_index)
         return url
+
+    def to_buoy_data(self):
+        buoy_data = []
+        if not self.data:
+            return buoy_data
+        elif len(self.data['time']) < 1:
+            return buoy_data
+
+        for i in range(0, len(self.data['time'])):
+            buoy_data_point = BuoyData(units.Units.metric)
+            buoy_data_point.wind_speed, buoy_data_point.wind_direction = 
+                tools.scalar_from_uv(self.data['ugrd10m'][i], self.data['vgrd10m'][i])
+            buoy_data_point.wind_gust = self.data['gustsfc']
+
+        buoy_data.append(buoy_data)
 
 class NAMModel(NOAAModel):
 

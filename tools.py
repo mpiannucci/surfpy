@@ -124,6 +124,13 @@ def steepness(significant_wave_height, dominant_period):
     else:
         return 'Swell'
 
+def scalar_from_uv(ucomponent, vcomponent):
+    # Calculates the scalar magnitude and heading angle from uv vector components
+    angle = (270.0 - (math.atan2(vcomponent, ucomponent) * (180.0 / math.pi))) % 360
+    speed = math.sqrt(math.pow(abs(vcomponent), 2) + math.pow(abs(ucomponent), 2))
+    return speed, heading
+
+
 def peakdetect(v, delta, x = None):
     """
     Converted from MATLAB script at http://billauer.co.il/peakdet.html
