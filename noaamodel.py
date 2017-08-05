@@ -59,6 +59,31 @@ class NOAAModel(object):
         hours_res = self.time_resolution_hours
         return (diff + (hours_res - (diff % hours_res))) / hours_res
 
+    def create_grib_url(self, location, time_index):
+        return ''
+
+    def create_grib_urls(self, location, start_time_index, end_time_index):
+        urls = []
+        for i in range(start_time_index, end_time_index):
+            urls.append(self.create_grib_url(location, i))
+        return urls
+
+    def fetch_grib_data(self, location, time_index):
+        # TODO
+        return False
+
+    def fetch_grib_datas(self, location, start_time_index, end_time_index):
+        # TODO
+        return False
+
+    def parse_grib_data(self, raw_data):
+        # TODO
+        return False
+
+    def parse_grib_datas(self, raw_data):
+        # TODO
+        return False
+
     def create_ascii_url(self, location, start_time_index, end_time_index):
         return ''
 
