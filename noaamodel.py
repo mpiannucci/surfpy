@@ -2,6 +2,16 @@ import datetime
 import requests
 import units
 from buoydata import BuoyData
+import multiprocessing
+import grippy
+
+def __download_data(url):
+    if not len(url):
+        return None
+    response = requests.get(url)
+    if not len(response.text):
+        return False
+    return response.text
 
 class NOAAModel(object):
 
@@ -69,36 +79,59 @@ class NOAAModel(object):
         return urls
 
     def fetch_grib_data(self, location, time_index):
-        # TODO
-        return False
+        url = self.create_grib_url(location, time_index)
+        if not len(url):
+            return False
+
+        data = __download_data(url)
+        if data is None:
+            return False
+        return self.parse_grib_data(data)
 
     def fetch_grib_datas(self, location, start_time_index, end_time_index):
-        # TODO
-        return False
+        urls = self.create_grib_urls(location, start_time_index, end_time_index)
+        if not len(urls):
+            return False
+
+        pool = multiprocessing.Pool(processes=8)
+        result = pool.map(__download_data, urls)
+        if not len(result):
+            return False
+
+        return self.fetch_grib_datas(result)
 
     def parse_grib_data(self, raw_data):
-        # TODO
+        if not len(raw_data):
+            return False
+
+        messages = grippy.read_messages_raw(raw_data)
+        if not len(messages):
+            return False
+
         return False
 
     def parse_grib_datas(self, raw_data):
-        # TODO
-        return False
+        if not len(raw_data):
+            return False
+
+        map(raw_data, self.parse_grib_data)
+        return len(self.data.keys()) > 0
 
     def create_ascii_url(self, location, start_time_index, end_time_index):
         return ''
 
     def fetch_ascii_data(self, location, start_time_index, end_time_index):
         url = self.create_ascii_url(location, start_time_index, end_time_index)
-        if len(url) < 1:
+        if not len(url):
             return False
 
-        response = requests.get(url)
-        if not len(response.text):
+        data = __download_data(url)
+        if url is None:
             return False
-        return self.parse_ascii_data(response.text)
+        return self.parse_ascii_data(data)
 
     def parse_ascii_data(self, raw_data):
-        if len(raw_data) < 1:
+        if not len(raw_data):
             return False
 
         split_data = raw_data.split('\n')
