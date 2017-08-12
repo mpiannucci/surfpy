@@ -22,6 +22,38 @@ class WaveGribMessage(grippy.Message):
         return self.sections[self.PRODUCT_DEFINITION_SECTION_INDEX].template.first_fixed_surface_scaled_value
 
     @property
+    def lat_count(self):
+        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.meridian_point_count
+
+    @property 
+    def lon_count(self):
+        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.parallel_point_count
+
+    @property
+    def start_lat(self):
+        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.start_latitude
+
+    @property
+    def start_lon(self):
+        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.start_longitude
+
+    @property
+    def lat_step(self):
+        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.meridian_point_count
+
+    @property
+    def lon_step(self):
+        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.parallel_point_count
+
+    @property
+    def end_lat(self):
+        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.end_latitude
+
+    @property
+    def end_lon(self):
+        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.end_longitude
+
+    @property
     def lat_indices(self):
         return None
 
