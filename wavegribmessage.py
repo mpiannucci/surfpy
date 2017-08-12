@@ -1,4 +1,5 @@
 import grippy
+from location import Location
 
 
 class WaveGribMessage(grippy.Message):
@@ -55,12 +56,27 @@ class WaveGribMessage(grippy.Message):
 
     @property
     def lat_indices(self):
-        return None
+        start = self.start_lat
+        step = self.lat_step
+        count = self.lat_count
+        return list([start + x*step for x in range(0, count+1)])
 
     @property
     def lon_indices(self):
-        return None
+        start = self.start_lon
+        step = self.lon_step
+        count = self.lon_count
+        return list([start + x*step for x in range(0, count+1)])
 
     @property
     def data(self):
         return self.sections[self.DATA_SECTION_INDEX].all_scaled_values(self.sections[self.BITMAP_SECTION_INDEX].all_bit_truths)
+
+    def location_for_index(self, index):
+        if index >= self.lat_count*self.lon_count:
+            return Location(float('NaN'), float('NaN'), 'invalid')
+
+        lat_index = int(index/self.lat_count)
+        lon_index = index % self.lat_count
+
+        return Location(self.start_lat + (lat_index*self.lat_step), self.start_lon + (lon_index*self.lon_step))
