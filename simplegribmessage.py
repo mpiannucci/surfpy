@@ -2,7 +2,7 @@ import grippy
 from location import Location
 
 
-class WaveGribMessage(grippy.Message):
+class SimpleGribMessage(grippy.Message):
 
     @property
     def hour(self):
@@ -80,3 +80,17 @@ class WaveGribMessage(grippy.Message):
         lon_index = index % self.lat_count
 
         return Location(self.start_lat + (lat_index*self.lat_step), self.start_lon + (lon_index*self.lon_step))
+
+
+def read_simple_grib_messages_raw(all_data, count=-1):
+    messages = []
+
+    offset = 0
+    while offset < len(all_data):
+        messages.append(SimpleGribMessage(all_data, offset))
+        offset = offset + messages[-1].length
+
+        if count > 0 and len(messages) == count:
+            break
+
+    return messages

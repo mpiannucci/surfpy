@@ -3,7 +3,7 @@ import requests
 import units
 from buoydata import BuoyData
 import multiprocessing
-import grippy
+import simplegribmessages
 
 def __download_data(url):
     if not len(url):
@@ -104,9 +104,11 @@ class NOAAModel(object):
         if not len(raw_data):
             return False
 
-        messages = grippy.read_messages_raw(raw_data)
+        messages = simplegribmessages.read_simple_grib_messages_raw(raw_data)
         if not len(messages):
             return False
+
+        # TODO: Parse out the data into the map
 
         return False
 
