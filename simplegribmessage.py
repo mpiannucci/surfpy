@@ -4,6 +4,9 @@ from location import Location
 
 class SimpleGribMessage(Message):
 
+    def __init__(self, data, offset):
+        super(SimpleGribMessage, self).__init__(data, offset)
+
     @property
     def model_time(self):
         return self.sections[self.IDENTIFICATION_SECTION_INDEX].reference_date
@@ -113,5 +116,8 @@ def read_simple_grib_messages_raw(all_data, count=-1):
 
         if count > 0 and len(messages) == count:
             break
+
+        print(len(all_data))
+        print(offset)
 
     return messages

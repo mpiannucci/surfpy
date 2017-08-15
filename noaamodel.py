@@ -98,6 +98,7 @@ class NOAAModel(object):
             return False
 
         messages = simplegribmessage.read_simple_grib_messages_raw(raw_data)
+
         if not len(messages):
             return False
 
