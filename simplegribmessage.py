@@ -1,5 +1,6 @@
 from grippy.message import Message
 from location import Location
+import math
 
 
 class SimpleGribMessage(Message):
@@ -101,10 +102,10 @@ class SimpleGribMessage(Message):
 
     @property
     def data_mean(self):
-        all_data = self.data
-        if not len(all_data) > 0:
+        all_data = [x for x in self.data if not math.isnan(x)]
+        if len(all_data) < 1:
             return 0
-        return sum(all_data) / float(len(all_data))
+        return sum(all_data)/float(len(all_data))
 
 
 def read_simple_grib_messages_raw(all_data, count=-1):

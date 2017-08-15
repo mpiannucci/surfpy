@@ -9,7 +9,7 @@ from location import Location
 
 
 if __name__=='__main__':
-    ri_wave_location = Location(41.323, 360-71.396, alt=30.0, name='Block Island Sound')
+    ri_wave_location = Location(41.323, -71.396, alt=30.0, name='Block Island Sound')
     #ri_wind_location = Location()
     ec_wave_model = wavemodel.us_east_coast_wave_model()
     if ec_wave_model.fetch_grib_datas(ri_wave_location, 0, 2):
