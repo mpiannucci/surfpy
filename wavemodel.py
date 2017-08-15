@@ -27,7 +27,7 @@ class WaveModel(NOAAModel):
         url = self._base_multigrid_grib_url.format(model_run_str, hour_str, date_str, float(math.floor(location.longitude)), float(math.ceil(location.longitude)), float(math.ceil(location.latitude)), float(math.floor(location.latitude)))
         return url
 
-    def _to_buoy_data(self, buoy_data_point, i):
+    def _to_buoy_data_ascii(self, buoy_data_point, i):
         if buoy_data_point.unit != units.Units.metric:
             buoy_data_point.change_units(units.Units.metric)
 

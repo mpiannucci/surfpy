@@ -19,7 +19,7 @@ class GFSModel(NOAAModel):
         url = self._base_gfs_url.format(self.name, datestring, hourstring, alt_index, lat_index, lon_index, start_time_index, end_time_index)
         return url
 
-    def _to_buoy_data(self, buoy_data_point, i):
+    def _to_buoy_data_ascii(self, buoy_data_point, i):
         if buoy_data_point.unit != units.Units.metric:
             buoy_data_point.change_units(units.Units.metric)
 

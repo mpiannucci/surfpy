@@ -176,20 +176,30 @@ class NOAAModel(object):
 
         return True
 
-    def _to_buoy_data(self, buoy_data_point, i):
+    def _to_buoy_data_binary(self, buoy_data_point, i):
         return False
+
+    def _to_buoy_data_ascii(self, buoy_data_point, i):
+        return False
+
 
     def to_buoy_data(self):
         buoy_data = []
         if not self.data:
             return buoy_data
-        elif len(self.data['time']) < 1:
+        elif self.data.get('time') is None and self.data.get('TIME') is None:
             return buoy_data
 
-        for i in range(0, len(self.data['time'])):
-            buoy_data_point = BuoyData(units.Units.metric)
-            if self._to_buoy_data(buoy_data_point, i):
-                buoy_data.append(buoy_data_point)
+        if self.data.get('TIME') is not None:
+            for i in range(0, len(self.data['TIME'])):
+                buoy_data_point = BuoyData(units.Units.metric)
+                if self._to_buoy_data_binary(buoy_data_point, i):
+                    buoy_data.append(buoy_data_point)
+        else:
+            for i in range(0, len(self.data['time'])):
+                buoy_data_point = BuoyData(units.Units.metric)
+                if self._to_buoy_data_ascii(buoy_data_point, i):
+                    buoy_data.append(buoy_data_point)
 
         return buoy_data
 
