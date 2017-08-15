@@ -114,7 +114,7 @@ class NOAAModel(object):
             if mess.is_array_var:
                 var += '_' + str(mess.var_index)
 
-            if self.data.get(mess.var) is None:
+            if self.data.get(var) is None:
                 self.data[var] = [mess.data_mean]
             else:
                 self.data[var].append(mess.data_mean)
