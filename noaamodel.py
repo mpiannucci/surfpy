@@ -91,9 +91,9 @@ class NOAAModel(object):
         if not len(result):
             return False
 
-        return self.parse_grib_datas(result)
+        return self.parse_grib_datas(location, result)
 
-    def parse_grib_data(self, raw_data):
+    def parse_grib_data(self, location, raw_data):
         if not len(raw_data):
             return False
 
@@ -114,19 +114,26 @@ class NOAAModel(object):
             if mess.is_array_var:
                 var += '_' + str(mess.var_index)
 
+            index = mess.index_for_location(location)
+            all_data = mess.data
+
+            value = 0.0
+            if len(all_data) > 0:
+                value = all_data[index]
+
             if self.data.get(var) is None:
-                self.data[var] = [mess.data_mean]
+                self.data[var] = [value]
             else:
-                self.data[var].append(mess.data_mean)
+                self.data[var].append(value)
 
         return True
 
-    def parse_grib_datas(self, raw_data):
+    def parse_grib_datas(self, location, raw_data):
         if not len(raw_data):
             return False
 
         for dat in raw_data:
-            self.parse_grib_data(dat)
+            self.parse_grib_data(location, dat)
 
         return len(self.data.keys()) > 0
 

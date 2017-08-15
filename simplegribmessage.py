@@ -1,6 +1,8 @@
 from grippy.message import Message
 from location import Location
 import math
+import datetime
+import tools
 
 
 class SimpleGribMessage(Message):
@@ -19,7 +21,7 @@ class SimpleGribMessage(Message):
     @property
     def forecast_time(self):
         forc_time = self.model_time
-        return forc_time.replace(hour=forc_time.hour+self.hour)
+        return forc_time + datetime.timedelta(hours=self.hour)
 
     @property
     def var(self):
@@ -95,6 +97,16 @@ class SimpleGribMessage(Message):
         lon_index = index % self.lat_count
 
         return Location(self.start_lat + (lat_index*self.lat_step), self.start_lon + (lon_index*self.lon_step))
+
+    def index_for_location(self, location):
+        if location.absolute_latitude < self.start_lat or location.absolute_latitude > self.end_lat:
+            return -1
+        elif location.absolute_longitude < self.start_lon or location.absolute_longitude > self.end_lon:
+            return -1
+
+        closest_lat_index = tools.closest_index(self.lat_indices, location.absolute_latitude)
+        closest_lon_index = tools.closest_index(self.lon_indices, location.absolute_longitude)
+        return closest_lat_index*self.lon_count+closest_lon_index
 
     @property
     def data(self):

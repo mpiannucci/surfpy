@@ -102,3 +102,6 @@ ENV/
 
 # grippy
 grippy
+
+# Test data
+forecast.json

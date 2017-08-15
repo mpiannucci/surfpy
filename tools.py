@@ -2,6 +2,7 @@ import math
 import json
 import datetime
 import requests
+import bisect
 
 
 def scalar_from_uv(ucomponent, vcomponent):
@@ -221,3 +222,11 @@ def download_data(url):
     if not len(response.content):
         return False
     return response.content
+
+def closest_index(in_list, val):
+    pos = bisect.bisect_left(in_list, val)
+    if pos == 0:
+        return 0
+    if pos == len(in_list):
+        return -1
+    return pos
