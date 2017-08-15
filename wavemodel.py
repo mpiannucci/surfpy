@@ -71,7 +71,49 @@ class WaveModel(NOAAModel):
         buoy_data_point.wind_direction = self.data['wdirsfc'][i]
         buoy_data_point.wind_speed = self.data['windsfc'][i]
         return True
-        
+
+    def _to_buoy_data_binary(self, buoy_data_point, i):
+        if buoy_data_point.unit != units.Units.metric:
+            buoy_data_point.change_units(units.Units.metric)
+
+        raw_date = self.data['TIME'][i]
+        if buoy_data_point.date == None:
+            buoy_data_point.date = raw_date
+        elif buoy_data_point.date != raw_date:
+            return False
+
+        buoy_data_point.wave_summary.direction = self.data['DIRPW'][i]
+        buoy_data_point.wave_summary.compass_direction = units.degree_to_direction(buoy_data_point.wave_summary.direction)
+        buoy_data_point.wave_summary.wave_height = self.data['HTSGW'][i]
+        buoy_data_point.wave_summary.period = self.data['PERPW'][i]
+
+        if self.data['SWELL_1'][i] > 0 and self.data['SWPER_1'][i] > 0 and self.data['SWDIR_1'][i] > 0:
+            swell_1 = Swell(units.Units.metric)
+            swell_1.direction = self.data['SWDIR_1'][i]
+            swell_1.compass_direction = units.degree_to_direction(swell_1.direction)
+            swell_1.wave_height = self.data['SWELL_1'][i]
+            swell_1.period = self.data['SWPER_1'][i]
+            buoy_data_point.swell_components.append(swell_1)
+
+        if self.data['SWELL_2'][i] > 0 and self.data['SWPER_2'][i] > 0 and self.data['SWDIR_2'][i] > 0:
+            swell_2 = Swell(units.Units.metric)
+            swell_2.direction = self.data['SWDIR_2'][i]
+            swell_2.compass_direction = units.degree_to_direction(swell_2.direction)
+            swell_2.wave_height = self.data['SWELL_2'][i]
+            swell_2.period = self.data['SWPER_2'][i]
+            buoy_data_point.swell_components.append(swell_2)
+
+        if self.data['WVHGT'][i] > 0 and self.data['WVPER'][i] > 0 and self.data['WVDIR'][i] > 0:
+            wind_swell = Swell(units.Units.metric)
+            wind_swell.direction = self.data['WVDIR'][i]
+            wind_swell.compass_direction = units.degree_to_direction(wind_swell.direction)
+            wind_swell.wave_height = self.data['WVHGT'][i]
+            wind_swell.period = self.data['WVPER'][i]
+            buoy_data_point.swell_components.append(wind_swell)
+
+        buoy_data_point.wind_direction = self.data['WDIR'][i]
+        buoy_data_point.wind_speed = self.data['WIND'][i]
+        return True
 
 def us_east_coast_wave_model():
     return WaveModel('multi_1.at_10m', 'Multi-grid wave model: US East Coast 10 arc-min grid', Location(0.00, 260.00), Location(55.00011, 310.00011), 0.167, 0.125)

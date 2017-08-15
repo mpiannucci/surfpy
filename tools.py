@@ -229,4 +229,4 @@ def closest_index(in_list, val):
         return 0
     if pos == len(in_list):
         return -1
-    return pos
+    return pos-1

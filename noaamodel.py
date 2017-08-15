@@ -182,7 +182,6 @@ class NOAAModel(object):
     def _to_buoy_data_ascii(self, buoy_data_point, i):
         return False
 
-
     def to_buoy_data(self):
         buoy_data = []
         if not self.data:
