@@ -2,6 +2,7 @@ import units
 from swell import Swell
 from buoyspectra import BuoySpectra
 from basedata import BaseData
+from operator import itemgetter
 
 
 class BuoyData(BaseData):
@@ -24,6 +25,8 @@ class BuoyData(BaseData):
         self.steepness = ''
         self.average_period = float('nan')
         self.wave_spectra = BuoySpectra()
+        self.minimum_breaking_height = float('nan')
+        self.maximum_breaking_height = float('nan')
 
         # Meterology
         self.pressure = float('nan')
@@ -45,6 +48,8 @@ class BuoyData(BaseData):
         for swell in self.swell_components:
             swell.change_units(new_units)
 
+        self.minimum_breaking_height = units.convert(self.minimum_breaking_height, units.Measurement.length, old_unit, self.unit)
+        self.maximum_breaking_height = units.convert(self.maximum_breaking_height, units.Measurement.length, old_unit, self.unit)
         self.wind_speed = units.convert(self.wind_speed, units.Measurement.speed, old_unit, self.unit)
         self.wind_gust = units.convert(self.wind_gust, units.Measurement.speed, old_unit, self.unit)
         self.air_temperature = units.convert(self.air_temperature, units.Measurement.temperature, old_unit, self.unit)
@@ -70,3 +75,16 @@ class BuoyData(BaseData):
             if diff < min_diff:
                 min_diff = diff
                 self.wave_summary.period = swell.period
+
+    def solve_breaking_wave_heights(self, location):
+        old_unit = self.unit
+        if self.unit != units.Units.metric:
+            self.change_units(units.Units.metric)
+
+        all_heights = [x.breaking_wave_estimate(location.angle, location.depth, location.slope) for x in self.swell_components]
+        heights = max(all_heights, key=itemgetter(1))
+        self.minimum_breaking_height = heights[0]
+        self.maximum_breaking_height = heights[1]
+
+        if old_unit != self.unit:
+            self.change_units(old_unit)

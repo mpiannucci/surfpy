@@ -10,6 +10,10 @@ class Location(object):
         self.altitude = alt
         self.name = name
 
+        self.depth = 0.0
+        self.angle = 0.0
+        self.slope = 0.0
+
     @property
     def adjusted_longitude(self):
         if self.longitude > 180:

@@ -47,7 +47,7 @@ def ldis(period, depth):
     if iteration >= max_iteration:
         return -1.0
 
-    return 2 * math.Pi * depth / Xf
+    return 2 * math.pi * depth / Xf
 
 def breaking_characteristics(period, incident_angle, deep_wave_height, beach_slope, water_depth):
     # Solves for the Breaking Wave Height and Breaking Water Depth given a swell and beach conditions.

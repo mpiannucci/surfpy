@@ -1,3 +1,4 @@
+import math
 
 wind_directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
 epoch_days_since_zero = 719164
@@ -64,6 +65,9 @@ class Measurement:
     pressure = 'pressure'
 
 def convert(value, measure, source_unit, dest_unit):
+    if math.isnan(value):
+        return value
+
     if source_unit == Units.metric:
         if measure == Measurement.length:
             if dest_unit == Units.english:

@@ -10,6 +10,9 @@ from location import Location
 
 if __name__=='__main__':
     ri_wave_location = Location(41.323, -71.396, alt=30.0, name='Block Island Sound')
+    ri_wave_location.depth = 30.0
+    ri_wave_location.angle = 145.0
+    ri_wave_location.slope = 0.02
     ec_wave_model = wavemodel.us_east_coast_wave_model()
     if ec_wave_model.fetch_grib_datas(ri_wave_location, 0, 60):
         data = ec_wave_model.to_buoy_data()
@@ -23,7 +26,10 @@ if __name__=='__main__':
     # else:
     #     print('Failed to fetch wind forecast data')
     
+
+    
     for dat in data:
+        dat.solve_breaking_wave_heights(ri_wave_location)
         dat.change_units(units.Units.english)
     json_data = tools.dump_json(data)
     with open('forecast.json', 'w') as outfile:
