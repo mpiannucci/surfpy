@@ -24,8 +24,9 @@ class WaveModel(NOAAModel):
         model_run_str = str(model_run_time.hour).rjust(2, '0')
         hour_str = str(time_index*self.time_resolution_hours).rjust(3, '0')
         date_str = model_run_time.strftime('%Y%m%d')
-        return self._base_multigrid_grib_url.format(model_run_str, hour_str, date_str, math.floor(location.longitude),
-            math.ceil(location.longitude), math.ceil(location.latitude), math.floor(location.latitude))
+        # return self._base_multigrid_grib_url.format(model_run_str, hour_str, date_str, math.floor(location.longitude),
+        #     math.ceil(location.longitude), math.ceil(location.latitude), math.floor(location.latitude))
+        return 'http://nomads.ncep.noaa.gov/cgi-bin/filter_wave_multi.pl?file=multi_1.at_10m.t18z.f000.grib2&all_lev=on&all_var=on&subregion=&leftlon=-71&rightlon=-70&toplat=41&bottomlat=40&dir=%2Fmulti_1.20170814'
 
     def _to_buoy_data(self, buoy_data_point, i):
         if buoy_data_point.unit != units.Units.metric:
