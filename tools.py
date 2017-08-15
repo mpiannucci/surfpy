@@ -218,6 +218,6 @@ def download_data(url):
     if not len(url):
         return None
     response = requests.get(url)
-    if not len(response.text):
+    if not len(response.content):
         return False
-    return response.text
+    return response.content

@@ -125,11 +125,8 @@ class NOAAModel(object):
         if not len(raw_data):
             return False
 
-        i = 1
         for dat in raw_data:
-            print('Parsing ' + str(i))
             self.parse_grib_data(dat)
-            i += 1
 
         return len(self.data.keys()) > 0
 

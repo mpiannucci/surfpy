@@ -17,9 +17,8 @@ class SimpleGribMessage(Message):
 
     @property
     def forecast_time(self):
-        forc_time = self.model_run
-        forc_time.hour = forc_time.hour + self.hour
-        return forc_time
+        forc_time = self.model_time
+        return forc_time.replace(hour=forc_time.hour+self.hour)
 
     @property
     def var(self):
@@ -103,6 +102,8 @@ class SimpleGribMessage(Message):
     @property
     def data_mean(self):
         all_data = self.data
+        if not len(all_data) > 0:
+            return 0
         return sum(all_data) / float(len(all_data))
 
 
@@ -117,7 +118,19 @@ def read_simple_grib_messages_raw(all_data, count=-1):
         if count > 0 and len(messages) == count:
             break
 
-        print(len(all_data))
-        print(offset)
+    return messages
+
+def read_simple_grib_messages(filename, count=-1):
+    messages = []
+    with open(filename, 'rb') as stream:
+        all_data = stream.read()
+ 
+    offset = 0
+    while offset < len(all_data):
+        messages.append(SimpleGribMessage(all_data, offset))
+        offset = offset + messages[-1].length
+
+        if count > 0 and len(messages) == count:
+            break
 
     return messages
