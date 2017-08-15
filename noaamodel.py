@@ -1,17 +1,10 @@
 import datetime
-import requests
 import units
 from buoydata import BuoyData
 import multiprocessing
-import simplegribmessages
+import simplegribmessage
+import tools
 
-def __download_data(url):
-    if not len(url):
-        return None
-    response = requests.get(url)
-    if not len(response.text):
-        return False
-    return response.text
 
 class NOAAModel(object):
 
@@ -83,7 +76,7 @@ class NOAAModel(object):
         if not len(url):
             return False
 
-        data = __download_data(url)
+        data = tools.download_data(url)
         if data is None:
             return False
         return self.parse_grib_data(data)
@@ -94,29 +87,49 @@ class NOAAModel(object):
             return False
 
         pool = multiprocessing.Pool(processes=8)
-        result = pool.map(__download_data, urls)
+        result = pool.map(tools.download_data, urls)
         if not len(result):
             return False
 
-        return self.fetch_grib_datas(result)
+        return self.parse_grib_datas(result)
 
     def parse_grib_data(self, raw_data):
         if not len(raw_data):
             return False
 
-        messages = simplegribmessages.read_simple_grib_messages_raw(raw_data)
+        messages = simplegribmessage.read_simple_grib_messages_raw(raw_data)
         if not len(messages):
             return False
 
-        # TODO: Parse out the data into the map
+        # Parse out the timestamp first
+        if self.data.get('TIME') is None:
+            self.data['TIME'] = [messages[0].forecast_time]
+        else:
+            self.data['TIME'].append(messages[0].forecast_time)
 
-        return False
+        # Parse all of the variables into the map
+        for mess in messages:
+            var = mess.var
+            if mess.is_array_var:
+                var += '_' + str(mess.var_index)
+
+            if self.data.get(mess.var) is None:
+                self.data[var] = [mess.data_mean]
+            else:
+                self.data[var].append(mess.data_mean)
+
+        return True
 
     def parse_grib_datas(self, raw_data):
         if not len(raw_data):
             return False
 
-        map(raw_data, self.parse_grib_data)
+        i = 1
+        for dat in raw_data:
+            print('Parsing ' + str(i))
+            self.parse_grib_data(dat)
+            i += 1
+
         return len(self.data.keys()) > 0
 
     def create_ascii_url(self, location, start_time_index, end_time_index):
@@ -127,7 +140,7 @@ class NOAAModel(object):
         if not len(url):
             return False
 
-        data = __download_data(url)
+        data = tools.download_data(url)
         if url is None:
             return False
         return self.parse_ascii_data(data)

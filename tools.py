@@ -1,6 +1,7 @@
 import math
 import json
 import datetime
+import requests
 
 
 def scalar_from_uv(ucomponent, vcomponent):
@@ -212,3 +213,11 @@ def simple_serialize(obj):
 
 def dump_json(obj):
     return json.dumps(obj, default=simple_serialize).replace('NaN', 'null')
+
+def download_data(url):
+    if not len(url):
+        return None
+    response = requests.get(url)
+    if not len(response.text):
+        return False
+    return response.text

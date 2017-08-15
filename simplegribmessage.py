@@ -1,12 +1,22 @@
-import grippy
+from grippy.message import Message
 from location import Location
 
 
-class SimpleGribMessage(grippy.Message):
+class SimpleGribMessage(Message):
+
+    @property
+    def model_time(self):
+        return self.sections[self.IDENTIFICATION_SECTION_INDEX].reference_date
 
     @property
     def hour(self):
-        return self.sections[3].template.forecast_time
+        return self.sections[self.PRODUCT_DEFINITION_SECTION_INDEX].template.forecast_time
+
+    @property
+    def forecast_time(self):
+        forc_time = self.model_run
+        forc_time.hour = forc_time.hour + self.hour
+        return forc_time
 
     @property
     def var(self):
@@ -69,8 +79,10 @@ class SimpleGribMessage(grippy.Message):
         return list([start + x*step for x in range(0, count+1)])
 
     @property
-    def data(self):
-        return self.sections[self.DATA_SECTION_INDEX].all_scaled_values(self.sections[self.BITMAP_SECTION_INDEX].all_bit_truths)
+    def origin_location(self):
+        lat = (self.start_lat + self.end_lat) * 0.5
+        lon = (self.start_lon + self.end_lon) * 0.5
+        return Location(lat, lon)
 
     def location_for_index(self, index):
         if index >= self.lat_count*self.lon_count:
@@ -80,6 +92,15 @@ class SimpleGribMessage(grippy.Message):
         lon_index = index % self.lat_count
 
         return Location(self.start_lat + (lat_index*self.lat_step), self.start_lon + (lon_index*self.lon_step))
+
+    @property
+    def data(self):
+        return self.sections[self.DATA_SECTION_INDEX].all_scaled_values(self.sections[self.BITMAP_SECTION_INDEX].all_bit_truths)
+
+    @property
+    def data_mean(self):
+        all_data = self.data
+        return sum(all_data) / float(len(all_data))
 
 
 def read_simple_grib_messages_raw(all_data, count=-1):
