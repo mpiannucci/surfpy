@@ -6,7 +6,6 @@ from . import weathermodel
 from . import tools
 from . import units
 from .location import Location
-import matplotlib.pyplot as plt
 
 
 if __name__=='__main__':
