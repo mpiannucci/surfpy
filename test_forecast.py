@@ -1,11 +1,12 @@
 import sys
 sys.path.insert(0, "/Users/matthew/Development/surfpy/lib")
 
-import wavemodel
-import weathermodel
-import tools
-import units
-from location import Location
+from . import wavemodel
+from . import weathermodel
+from . import tools
+from . import units
+from .location import Location
+import matplotlib.pyplot as plt
 
 
 if __name__=='__main__':

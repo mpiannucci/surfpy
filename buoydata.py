@@ -1,7 +1,7 @@
-import units
-from swell import Swell
-from buoyspectra import BuoySpectra
-from basedata import BaseData
+from . import units
+from .swell import Swell
+from .buoyspectra import BuoySpectra
+from .basedata import BaseData
 from operator import itemgetter
 
 

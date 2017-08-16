@@ -1,5 +1,5 @@
 import math
-import units
+from . import units
 
 
 class Location(object):

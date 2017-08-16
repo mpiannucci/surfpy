@@ -1,7 +1,7 @@
-import units
-import tools
+from . import units
+from . import tools
 import math
-from basedata import BaseData
+from .basedata import BaseData
 
 
 class Swell(BaseData):

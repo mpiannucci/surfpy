@@ -1,7 +1,7 @@
-from noaamodel import NOAAModel
-from location import Location
-from swell import Swell
-import units
+from .noaamodel import NOAAModel
+from .location import Location
+from .swell import Swell
+from . import units
 from datetime import datetime
 import math
 

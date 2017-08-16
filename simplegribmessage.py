@@ -1,8 +1,8 @@
 from grippy.message import Message
-from location import Location
+from .location import Location
 import math
 import datetime
-import tools
+from . import tools
 
 
 class SimpleGribMessage(Message):

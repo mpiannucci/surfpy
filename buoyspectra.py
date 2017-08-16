@@ -1,7 +1,7 @@
 import math
-import tools
-from units import Units, degree_to_direction
-from swell import Swell
+from . import tools
+from .units import Units, degree_to_direction
+from .swell import Swell
 
 
 class BuoySpectra(object):

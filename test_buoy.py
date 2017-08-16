@@ -1,6 +1,5 @@
-from buoystations import BuoyStations
+from .buoystations import BuoyStations
 
-import datetime
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cm

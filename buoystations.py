@@ -1,5 +1,5 @@
-from buoy import Buoy
-from location import Location
+from .buoy import Buoy
+from .location import Location
 import xml.etree.ElementTree as ET
 import requests
 
