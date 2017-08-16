@@ -7,6 +7,8 @@ from . import tools
 from . import units
 from .location import Location
 
+import matplotlib.pyplot as plt
+
 
 if __name__=='__main__':
     ri_wave_location = Location(41.323, -71.396, alt=30.0, name='Block Island Sound')
@@ -34,3 +36,15 @@ if __name__=='__main__':
     json_data = tools.dump_json(data)
     with open('forecast.json', 'w') as outfile:
         outfile.write(json_data)
+
+    maxs =[x.maximum_breaking_height for x in data]
+    mins = [x.minimum_breaking_height for x in data]
+    times = [x.date for x in data]
+
+    plt.plot(times, maxs, c='green')
+    plt.plot(times, mins, c='blue')
+    plt.xlabel('Hours')
+    plt.ylabel('Breaking Wave Height (ft)')
+    plt.grid(True)
+    plt.title('WaveWatch III: ' + ec_wave_model.latest_model_time().strftime('%d/%m/%Y %Hz'))
+    plt.show()
