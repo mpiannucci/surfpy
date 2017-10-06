@@ -1,7 +1,10 @@
 from .buoy import Buoy
 from .location import Location
 import xml.etree.ElementTree as ET
-import requests
+try:
+    import requests
+except:
+    pass
 
 
 class BuoyStations(object):

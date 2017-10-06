@@ -1,9 +1,11 @@
 import math
 import json
 import datetime
-import requests
 import bisect
-
+try:
+    import requests
+except:
+    pass
 
 def scalar_from_uv(ucomponent, vcomponent):
     # Computes speed and heading given the u and vvector components

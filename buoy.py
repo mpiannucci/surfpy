@@ -5,7 +5,10 @@ from datetime import datetime
 from .tools import parse_float, steepness
 from . import units
 import re
-import requests
+try:
+    import requests
+except:
+    pass
 
 class Buoy(object):
 
