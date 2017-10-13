@@ -42,6 +42,43 @@ class BuoyStations(object):
 
         return closest_buoy
 
+    def find_closest_buoys(self, location, count, buoy_type=''):
+        if len(self.stations) < 1:
+            return None
+        elif count < 1:
+            return None
+
+        closest_buoys = [None for x in range(0, count)]
+        closest_distances = [float('inf') for x in range(0, count)]
+
+        for station in self.stations:
+            if not station.active:
+                continue
+            if len(buoy_type) > 0:
+                if station.type != buoy_type:
+                    continue
+
+            dist = location.distance(station.location)
+            max_index = -1
+            max_distance = float('inf')
+            added = False
+            for i in range(0, count):
+                added = False
+                if closest_buoys[i] is None:
+                    closest_buoys[i] = station
+                    closest_distances[i] = dist
+                    added = True
+                    break
+                if dist < closest_distances[i]:
+                    if max_distance > closest_distances[i]:
+                        max_index = i
+
+            if max_index >= 0 and not added:
+                closest_buoys[max_index] = station
+                closest_distances[max_index] = dist
+
+        return closest_buoys
+
     def fetch_buoy_stations(self):
         response = requests.get(self.active_buoys_url)
         if not len(response.text):

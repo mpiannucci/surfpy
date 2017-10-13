@@ -43,7 +43,7 @@ class Location(object):
             return self.latitude
 
     def distance(self, other_location, unit=units.Units.metric):
-        lon1, lat1, lon2, lat2 = map(math.radians, [self.longitude, self.latitude, other_location.latitude, other_location.longitude])
+        lon1, lat1, lon2, lat2 = map(math.radians, [self.longitude, self.latitude, other_location.longitude, other_location.latitude])
 
         # haversine formula 
         dlon = lon2 - lon1 
