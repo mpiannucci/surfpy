@@ -21,7 +21,7 @@ class BuoyStations(object):
                 return station
         return None
 
-    def find_closest_buoy(self, location, buoy_type=''):
+    def find_closest_buoy(self, location, active=False, buoy_type=''):
         if len(self.stations) < 1:
             return None
 
@@ -29,7 +29,7 @@ class BuoyStations(object):
         closest_distance = float('inf')
 
         for station in self.stations:
-            if not station.active:
+            if active and not station.active:
                 continue
             if len(buoy_type) > 0:
                 if station.type != buoy_type:
@@ -42,7 +42,7 @@ class BuoyStations(object):
 
         return closest_buoy
 
-    def find_closest_buoys(self, location, count, buoy_type=''):
+    def find_closest_buoys(self, location, count, active=False, buoy_type=''):
         if len(self.stations) < 1:
             return None
         elif count < 1:
@@ -52,7 +52,7 @@ class BuoyStations(object):
         closest_distances = [float('inf') for x in range(0, count)]
 
         for station in self.stations:
-            if not station.active:
+            if active and not station.active:
                 continue
             if len(buoy_type) > 0:
                 if station.type != buoy_type:
