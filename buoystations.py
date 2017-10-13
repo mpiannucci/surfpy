@@ -77,6 +77,7 @@ class BuoyStations(object):
                 closest_buoys[max_index] = station
                 closest_distances[max_index] = dist
 
+        closest_buoys = [x for _, x in sorted(zip(closest_distances, closest_buoys), key=lambda pair: pair[0])]
         return closest_buoys
 
     def fetch_buoy_stations(self):
