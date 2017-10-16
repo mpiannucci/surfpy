@@ -13,12 +13,12 @@ except:
 class Buoy(object):
 
     class BuoyType:
-        NONE=''
-        BUOY='buoy'
-        FIXED='fixed'
-        OILRIG='oilrig'
-        DART='dart'
-        OTHER='other'
+        none=''
+        buoy='buoy'
+        fixed='fixed'
+        oilrig='oilrig'
+        dart='dart'
+        other='other'
 
     def __init__(self, station_id, location, owner='', program='', active=False, currents=False, water_quality=False, dart=False, buoy_type=BuoyType.NONE):
         self.station_id = station_id
