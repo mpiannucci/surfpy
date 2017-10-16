@@ -32,6 +32,7 @@ class GFSModel(NOAAModel):
             return False
 
         buoy_data_point.wind_speed, buoy_data_point.wind_direction = tools.scalar_from_uv(self.data['ugrd10m'][i], self.data['vgrd10m'][i])
+        buoy_data_point.wind_compass_direction = units.degree_to_direction(buoy_data_point.wind_direction)
         buoy_data_point.wind_gust = self.data['gustsfc'][i]
         return True
 

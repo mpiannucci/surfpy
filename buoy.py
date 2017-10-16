@@ -79,6 +79,7 @@ class Buoy(object):
 
             if variable == 'wind':
                 data.wind_direction = parse_float(re.findall("\d+", raw_value[1])[0])
+                data.wind_compass_direction = units.degree_to_direction(data.wind_direction)
                 data.wind_speed = units.convert(parse_float(raw_value[2]), units.Measurement.speed, units.Units.knots, units.Units.english)
             elif variable == 'gust':
                 data.wind_gust = units.convert(parse_float(raw_value[0]), units.Measurement.speed, units.Units.knots, units.Units.english)
@@ -145,6 +146,7 @@ class Buoy(object):
             data = BuoyData(units.Units.metric)
             data.date = datetime(*[int(x) for x in raw_data_line[0:5]])
             data.wind_direction = parse_float(raw_data_line[5])
+            data.wind_compass_direction = units.degree_to_direction(data.wind_direction)
             data.wind_speed = parse_float(raw_data_line[6])
             data.wind_gust = parse_float(raw_data_line[7])
             data.wave_summary.wave_height = parse_float(raw_data_line[8])

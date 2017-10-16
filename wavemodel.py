@@ -69,6 +69,7 @@ class WaveModel(NOAAModel):
             buoy_data_point.swell_components.append(wind_swell)
 
         buoy_data_point.wind_direction = self.data['wdirsfc'][i]
+        buoy_data_point.wind_compass_direction = units.degree_to_direction(buoy_data_point.wind_direction)
         buoy_data_point.wind_speed = self.data['windsfc'][i]
         return True
 
@@ -112,6 +113,7 @@ class WaveModel(NOAAModel):
             buoy_data_point.swell_components.append(wind_swell)
 
         buoy_data_point.wind_direction = self.data['WDIR'][i]
+        buoy_data_point.wind_compass_direction = units.degree_to_direction(buoy_data_point.wind_direction)
         buoy_data_point.wind_speed = self.data['WIND'][i]
         return True
 

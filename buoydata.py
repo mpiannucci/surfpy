@@ -16,6 +16,7 @@ class BuoyData(BaseData):
 
         # Wind
         self.wind_direction = float('nan')
+        self.wind_compass_direction = ''
         self.wind_speed = float('nan')
         self.wind_gust = float('nan')
 

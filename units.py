@@ -63,6 +63,8 @@ class Measurement:
     speed = 'speed'
     temperature = 'temperature'
     pressure = 'pressure'
+    visibility = 'visibility'
+    direction = 'direction'
 
 def convert(value, measure, source_unit, dest_unit):
     if math.isnan(value):
@@ -136,6 +138,16 @@ def unit_name(source_unit, source_meas, abbrev=True):
                 return 'hPa'
             else:
                 return 'hecta pascals'
+        elif source_meas == Measurement.visibility:
+            if abbrev:
+                return 'nmi'
+            else:
+                return 'nautical miles'
+        elif source_meas == Measurement.direction:
+            if abbrev:
+                return 'deg'
+            else:
+                return 'degrees'
     elif source_unit == Units.english:
         if source_meas == Measurement.length:
             if abbrev:
@@ -157,6 +169,16 @@ def unit_name(source_unit, source_meas, abbrev=True):
                 return 'in HG'
             else:
                 return 'inches mercury'
+        elif source_meas == Measurement.visibility:
+            if abbrev:
+                return 'nmi'
+            else:
+                return 'nautical miles'
+        elif source_meas == Measurement.direction:
+            if abbrev:
+                return 'deg'
+            else:
+                return 'degrees'
     elif source_unit == Units.knots:
         if source_meas == Measurement.speed:
             if abbrev:
