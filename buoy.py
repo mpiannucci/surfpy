@@ -20,7 +20,7 @@ class Buoy(object):
         dart='dart'
         other='other'
 
-    def __init__(self, station_id, location, owner='', program='', active=False, currents=False, water_quality=False, dart=False, buoy_type=BuoyType.NONE):
+    def __init__(self, station_id, location, owner='', program='', active=False, currents=False, water_quality=False, dart=False, buoy_type=BuoyType.none):
         self.station_id = station_id
         self.location = location
 
