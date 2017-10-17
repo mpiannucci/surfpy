@@ -18,6 +18,7 @@ class Buoy(object):
         fixed='fixed'
         oilrig='oilrig'
         dart='dart'
+        tao='tao'
         other='other'
 
     def __init__(self, station_id, location, owner='', program='', active=False, currents=False, water_quality=False, dart=False, buoy_type=BuoyType.none):
