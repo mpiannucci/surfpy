@@ -145,7 +145,7 @@ def unit_name(source_unit, source_meas, abbrev=True):
                 return 'nautical miles'
         elif source_meas == Measurement.direction:
             if abbrev:
-                return 'deg'
+                return u'\xb0'
             else:
                 return 'degrees'
     elif source_unit == Units.english:
@@ -176,7 +176,7 @@ def unit_name(source_unit, source_meas, abbrev=True):
                 return 'nautical miles'
         elif source_meas == Measurement.direction:
             if abbrev:
-                return 'deg'
+                return u'\xb0'
             else:
                 return 'degrees'
     elif source_unit == Units.knots:
