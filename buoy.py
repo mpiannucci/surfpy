@@ -292,7 +292,7 @@ class Buoy(object):
         if '-' in self.location.name:
             components = self.location.name.split('-')
             for comp in components:
-                if not comp.isdigit():
+                if not comp.strip().isdigit():
                     self.name += ' ' + comp
         else:
             self.name = self.location.name
