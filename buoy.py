@@ -300,4 +300,16 @@ class Buoy(object):
         if '(' in self.name:
             self.name = self.name.split('(')[0]
 
-        self.name = self.name.strip()
+        if 'NM' in self.name:
+            components = self.name.split(' ')
+            self.name = ''
+            for comp in components:
+                if 'NM' in comp:
+                    break
+                elif comp.strip().isdigit():
+                    break
+                if len(self.name) > 0:
+                    self.name += ' '
+                self.name += comp
+
+        self.name = self.name.strip().title()
