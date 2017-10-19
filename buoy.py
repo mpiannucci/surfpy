@@ -24,6 +24,8 @@ class Buoy(object):
     def __init__(self, station_id, location, owner='', program='', active=False, currents=False, water_quality=False, dart=False, buoy_type=BuoyType.none):
         self.station_id = station_id
         self.location = location
+        self.name = ''
+        self._parse_name()
 
         # Attributes
         self.owner = owner
@@ -280,3 +282,22 @@ class Buoy(object):
                 min_index = i
 
         return min_index, min_duration
+
+    def _parse_name(self):
+        if self.location.name == '':
+            return
+
+        self.name = ''
+
+        if '-' in self.location.name:
+            components = self.location.name.split('-')
+            for comp in components:
+                if not comp.isdigit():
+                    self.name += ' ' + comp
+        else:
+            self.name = self.location.name
+
+        if '(' in self.name:
+            self.name = self.name.split('(')[0]
+
+        self.name = self.name.strip()
