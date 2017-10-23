@@ -130,11 +130,9 @@ def unit_name(source_unit, source_meas, abbrev=True):
                 return 'meters per second'
         elif source_meas == Measurement.temperature:
             if abbrev:
-                #return u'\xb0C'
-                return 'deg C'
+                return u'\xb0C'
             else:
-                #return u'\xb0 celsius'
-                return 'degrees celsius'
+                return u'\xb0 celsius'
         elif source_meas == Measurement.pressure:
             if abbrev:
                 return 'hPa'
@@ -147,8 +145,7 @@ def unit_name(source_unit, source_meas, abbrev=True):
                 return 'nautical miles'
         elif source_meas == Measurement.direction:
             if abbrev:
-                #return u'\xb0'
-                return 'deg'
+                return u'\xb0'
             else:
                 return 'degrees'
     elif source_unit == Units.english:
@@ -164,11 +161,9 @@ def unit_name(source_unit, source_meas, abbrev=True):
                 return 'miles per hour'
         elif source_meas == Measurement.temperature:
             if abbrev:
-                #return u'\xb0F'
-                return 'deg F'
+                return u'\xb0F'
             else:
-                #return u'\xb0 fahrenheit'
-                return 'degrees fahrenheit'
+                return u'\xb0 fahrenheit'
         elif source_meas == Measurement.pressure:
             if abbrev:
                 return 'in HG'
@@ -181,8 +176,7 @@ def unit_name(source_unit, source_meas, abbrev=True):
                 return 'nautical miles'
         elif source_meas == Measurement.direction:
             if abbrev:
-                #return u'\xb0'
-                return 'deg'
+                return u'\xb0'
             else:
                 return 'degrees'
     elif source_unit == Units.knots:
