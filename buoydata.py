@@ -39,7 +39,7 @@ class BuoyData(BaseData):
 
         # Plots
         self.energy_spectra_plot = ''
-        self.directional_spectra_plot = ''
+        self.direction_spectra_plot = ''
 
     def change_units(self, new_units):
         old_unit = self.unit
