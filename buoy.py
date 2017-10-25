@@ -9,6 +9,7 @@ try:
     import requests
 except:
     pass
+import math
 
 class Buoy(object):
 
@@ -124,8 +125,12 @@ class Buoy(object):
                     wind_wave_component.compass_direction = raw_value[0]
                     wind_wave_component.direction = units.direction_to_degree(wind_wave_component.compass_direction)
 
-        data.swell_components = [swell_component, wind_wave_component]
-        data.interpolate_dominant_wave_direction()
+        if not math.isnan(swell_component.wave_height):
+            data.swell_components.append(swell_component)
+        if not math.isnan(wind_wave_component.wave_height):
+            data.swell_components.append(wind_wave_component)
+        if not math.isnan(wind_wave_component.wave_height) and not math.isnan(swell_component.wave_height):
+            data.interpolate_dominant_wave_direction()
 
         if len(self.data) > 0:
             self.data[0] = [data] + self.data
