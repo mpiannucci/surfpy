@@ -1,5 +1,6 @@
+import os
 import sys
-sys.path.insert(0, "/Users/matthew/Development/surfpy/lib")
+sys.path.insert(0, os.path.abspath(__file__))
 
 from . import wavemodel
 from . import weathermodel

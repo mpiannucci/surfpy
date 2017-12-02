@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath(__file__))
+
 from .buoystations import BuoyStations
 
 import matplotlib.pyplot as plt
