@@ -8,6 +8,11 @@ from . import tools
 
 class NOAAModel(object):
 
+    class DataMode:
+        no_data_mode='no_data'
+        binary_mode='binary'
+        ascii_mode='ascii'
+
     def __init__(self, name, description, bottom_left, top_right, loc_res, time_res, max_alt=0.0, min_alt=0.0, alt_res=0.0):
         self.name = name
         self.description = description
@@ -24,18 +29,31 @@ class NOAAModel(object):
     def time_resolution_hours(self):
         return self.time_resolution * 24.0
 
+    @property
+    def data_mode(self):
+        if not self.data:
+            return NOAAModel.DataMode.no_data_mode
+        elif self.data.get('time') is None and self.data.get('TIME') is None:
+            return NOAAModel.DataMode.no_data_mode
+
+        if self.data.get('TIME') is not None:
+            return NOAAModel.DataMode.binary_mode
+        else:
+            return NOAAModel.DataMode.ascii_mode
+
     def contains_location(self, location):
         if location.latitude > self.bottom_left.latitude and location.latitude < self.top_right.latitude:
-            if location.longitude > self.bottom_left.longitude and location.longitude < self.top_right.longitude:
+            if location.absolute_longitude > self.bottom_left.absolute_longitude and location.absolute_longitude < self.top_right.absolute_longitude:
                 return True
         return False
 
     def location_index(self, location):
         if not self.contains_location(location):
+            print('Not in the grid')
             return -1, -1
 
         lat_offset = location.latitude - self.bottom_left.latitude
-        lon_offset = location.longitude - self.bottom_left.longitude
+        lon_offset = location.absolute_longitude - self.bottom_left.absolute_longitude
 
         lat_index = int(lat_offset / self.location_resolution)
         lon_index = int(lon_offset / self.location_resolution)
@@ -146,7 +164,7 @@ class NOAAModel(object):
             return False
 
         data = tools.download_data(url)
-        if url is None:
+        if data is None:
             return False
         return self.parse_ascii_data(data)
 
@@ -174,6 +192,9 @@ class NOAAModel(object):
                 current_var = vars[0]
                 self.data[current_var] = []
 
+        if 'time' not in self.data:
+            return False
+
         return True
 
     def _to_buoy_data_binary(self, buoy_data_point, i):
@@ -189,12 +210,15 @@ class NOAAModel(object):
         elif self.data.get('time') is None and self.data.get('TIME') is None:
             return buoy_data
 
-        if self.data.get('TIME') is not None:
+        data_mode = self.data_mode
+        if data_mode == NOAAModel.DataMode.no_data_mode:
+            return buoy_data
+        elif data_mode == NOAAModel.DataMode.binary_mode:
             for i in range(0, len(self.data['TIME'])):
                 buoy_data_point = BuoyData(units.Units.metric)
                 if self._to_buoy_data_binary(buoy_data_point, i):
                     buoy_data.append(buoy_data_point)
-        else:
+        elif data_mode == NOAAModel.DataMode.ascii_mode:
             for i in range(0, len(self.data['time'])):
                 buoy_data_point = BuoyData(units.Units.metric)
                 if self._to_buoy_data_ascii(buoy_data_point, i):
@@ -203,6 +227,12 @@ class NOAAModel(object):
         return buoy_data
 
     def fill_buoy_data(self, buoy_data):
+        data_mode = self.data_mode
         for i in range(0, len(buoy_data)):
-            self._to_buoy_data(buoy_data[i], i)
+            if data_mode == NOAAModel.DataMode.binary_mode:
+                self._to_buoy_data_binary(buoy_data[i], i)
+            elif data_mode == NOAAModel.DataMode.ascii_mode:
+                self._to_buoy_data_ascii(buoy_data[i], i)
+            else:
+                return False
         return True
