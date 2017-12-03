@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 
 
 if __name__=='__main__':
-    ri_wave_location = Location(40.969, -71.127, alt=30.0, name='Block Island Sound')
+    ri_wave_location = Location(41.4, -71.45, alt=30.0, name='Block Island Sound')
     ri_wave_location.depth = 30.0
     ri_wave_location.angle = 145.0
     ri_wave_location.slope = 0.02
     ec_wave_model = wavemodel.us_east_coast_wave_model()
-    if ec_wave_model.fetch_grib_datas(ri_wave_location, 0, 60):
+    if ec_wave_model.fetch_ascii_data(ri_wave_location, 0, 60):
         data = ec_wave_model.to_buoy_data()
     else:
         print('Failed to fetch wave forecast data')
