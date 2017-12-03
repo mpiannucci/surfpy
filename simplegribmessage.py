@@ -55,11 +55,11 @@ class SimpleGribMessage(Message):
 
     @property
     def lat_step(self):
-        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.meridian_point_count
+        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.i_direction_increment
 
     @property
     def lon_step(self):
-        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.parallel_point_count
+        return self.sections[self.GRID_DEFINITION_SECTION_INDEX].template.j_direction_increment
 
     @property
     def end_lat(self):
@@ -74,14 +74,14 @@ class SimpleGribMessage(Message):
         start = self.start_lat
         step = self.lat_step
         count = self.lat_count
-        return list([start + x*step for x in range(0, count+1)])
+        return list([start + x*step for x in range(0, count)])
 
     @property
     def lon_indices(self):
         start = self.start_lon
         step = self.lon_step
         count = self.lon_count
-        return list([start + x*step for x in range(0, count+1)])
+        return list([start + x*step for x in range(0, count)])
 
     @property
     def origin_location(self):
@@ -99,13 +99,14 @@ class SimpleGribMessage(Message):
         return Location(self.start_lat + (lat_index*self.lat_step), self.start_lon + (lon_index*self.lon_step))
 
     def index_for_location(self, location):
-        if location.absolute_latitude < self.start_lat or location.absolute_latitude > self.end_lat:
+        if location.latitude < self.start_lat or location.latitude > self.end_lat:
             return -1
         elif location.absolute_longitude < self.start_lon or location.absolute_longitude > self.end_lon:
             return -1
 
-        closest_lat_index = tools.closest_index(self.lat_indices, location.absolute_latitude)
+        closest_lat_index = tools.closest_index(self.lat_indices, location.latitude)
         closest_lon_index = tools.closest_index(self.lon_indices, location.absolute_longitude)
+
         return closest_lat_index*self.lon_count+closest_lon_index
 
     @property

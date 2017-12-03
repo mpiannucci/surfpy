@@ -112,7 +112,9 @@ class NOAAModel(object):
         return self.parse_grib_datas(location, result)
 
     def parse_grib_data(self, location, raw_data):
-        if not len(raw_data):
+        if not raw_data:
+            return False
+        elif not len(raw_data):
             return False
 
         messages = simplegribmessage.read_simple_grib_messages_raw(raw_data)
