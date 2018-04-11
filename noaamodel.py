@@ -1,9 +1,13 @@
 import datetime
 from . import units
 from .buoydata import BuoyData
-import multiprocessing
 from . import simplegribmessage
 from . import tools
+
+try:
+    import multiprocessing
+except:
+    pass
 
 
 class NOAAModel(object):
