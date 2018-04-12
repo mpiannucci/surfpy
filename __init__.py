@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*
+
 from .buoystations import BuoyStations
 from .buoy import Buoy
 from .swell import Swell

@@ -3,6 +3,7 @@ from .location import Location
 from . import tools
 from . import units
 from datetime import datetime
+import pytz
 
 
 class GFSModel(NOAAModel):
@@ -25,7 +26,7 @@ class GFSModel(NOAAModel):
 
         # Make sure the timestamp exists and is the same as the data we are trying to fill
         raw_time = (self.data['time'][i] - units.epoch_days_since_zero) * 24 * 60 * 60
-        raw_date = datetime.utcfromtimestamp(raw_time)
+        raw_date = pytz.utc.localize(datetime.utcfromtimestamp(raw_time))
         if buoy_data_point.date == None:
             buoy_data_point.date = raw_date
         elif buoy_data_point.date != raw_date:
