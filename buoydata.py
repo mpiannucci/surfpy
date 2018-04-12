@@ -83,9 +83,9 @@ class BuoyData(BaseData):
             self.change_units(units.Units.metric)
 
         all_heights = [x.breaking_wave_estimate(location.angle, location.depth, location.slope) for x in self.swell_components]
-        heights = max(all_heights, key=itemgetter(1))
-        self.minimum_breaking_height = heights[0]
-        self.maximum_breaking_height = heights[1]
+        all_heights, self.swell_components = zip(*sorted(zip(all_heights, self.swell_components), reverse=True, key=lambda pair: pair[0][1]))
+        self.minimum_breaking_height = all_heights[0][0]
+        self.maximum_breaking_height = all_heights[0][1]
 
         if old_unit != self.unit:
             self.change_units(old_unit)

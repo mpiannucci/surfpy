@@ -8,10 +8,10 @@ except:
     pass
 
 def scalar_from_uv(ucomponent, vcomponent):
-    # Computes speed and heading given the u and vvector components
-    heading = math.modf((270.0 - (math.atan2(vcomponent, ucomponent) * (180 / math.pi))), 360)
+    # Calculates the scalar magnitude and heading angle from uv vector components
+    angle = (270.0 - (math.atan2(vcomponent, ucomponent) * (180.0 / math.pi))) % 360
     speed = math.sqrt(math.pow(abs(vcomponent), 2) + math.pow(abs(ucomponent), 2))
-    return speed, heading
+    return speed, angle
 
 def ldis(period, depth):
     # Computes the wavelength for a wave with the given period
@@ -102,7 +102,7 @@ def shoaling_coefficient(wavelength, depth):
     # Celerity
     initial_celerity = deep_wavelength / period
     celerity = initial_celerity * math.tanh(wavenumber*depth)
-    group_velocity = 0.5 * celerity * (1 + ((2 * wavenumber * depth) / (math.Sinh(2 * wavenumber * depth))))
+    group_velocity = 0.5 * celerity * (1 + ((2 * wavenumber * depth) / (math.sinh(2 * wavenumber * depth))))
 
     return math.sqrt(initial_celerity / (2 * group_velocity))
 
@@ -127,13 +127,6 @@ def steepness(significant_wave_height, dominant_period):
         return 'Average'
     else:
         return 'Swell'
-
-def scalar_from_uv(ucomponent, vcomponent):
-    # Calculates the scalar magnitude and heading angle from uv vector components
-    angle = (270.0 - (math.atan2(vcomponent, ucomponent) * (180.0 / math.pi))) % 360
-    speed = math.sqrt(math.pow(abs(vcomponent), 2) + math.pow(abs(ucomponent), 2))
-    return speed, angle
-
 
 def peakdetect(v, delta, x = None):
     """
