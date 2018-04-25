@@ -8,3 +8,4 @@ from .buoydata import BuoyData
 from .wavemodel import *
 from .weathermodel import *
 from .sun import *
+from .tidestation import TideStation

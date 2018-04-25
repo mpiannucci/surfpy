@@ -12,7 +12,7 @@ class BuoyPlots(object):
 
     def __init__(self):
         _stations = BuoyStations()
-        _stations.fetch_buoy_stations()
+        _stations.fetch_stations(BuoyStations.active_buoys_url)
 
         self.stations = {}
         for station in _stations.stations:

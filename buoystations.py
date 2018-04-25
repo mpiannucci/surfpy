@@ -1,3 +1,4 @@
+from .basestations import BaseStations
 from .buoystation import BuoyStation
 from .location import Location
 import xml.etree.ElementTree as ET
@@ -7,13 +8,12 @@ except:
     pass
 
 
-class BuoyStations(object):
+class BuoyStations(BaseStations):
 
     active_buoys_url="http://www.ndbc.noaa.gov/activestations.xml"
 
     def __init__(self):
-        self.fetch_date = None
-        self.stations = []
+        super(BuoyStations, self).__init__()
 
     def find_buoy(self, station_id):
         for station in self.stations:
@@ -80,13 +80,7 @@ class BuoyStations(object):
         closest_buoys = [x for _, x in sorted(zip(closest_distances, closest_buoys), key=lambda pair: pair[0])]
         return closest_buoys
 
-    def fetch_buoy_stations(self):
-        response = requests.get(self.active_buoys_url)
-        if not len(response.text):
-            return False
-        return self.parse_buoy_stations(response.text)
-
-    def parse_buoy_stations(self, rawData):
+    def parse_stations(self, rawData):
         stations = ET.fromstring(rawData)
         if stations.tag != 'stations':
             return False
