@@ -28,7 +28,7 @@ class Sun:
             when = datetime.datetime.now()  
         self.__preptime(when)  
         self.__calc()  
-        return Sun.__timefromdecimalday(self.sunrise_t)  
+        return Sun.__timefromdecimalday(self.sunrise_t)
     
     def sunset(self,when=None):  
         if when is None: 

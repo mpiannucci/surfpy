@@ -1,4 +1,4 @@
-from .buoy import Buoy
+from .buoystation import BuoyStation
 from .location import Location
 import xml.etree.ElementTree as ET
 try:
@@ -21,7 +21,7 @@ class BuoyStations(object):
                 return station
         return None
 
-    def find_closest_buoy(self, location, active=False, buoy_type=Buoy.BuoyType.none):
+    def find_closest_buoy(self, location, active=False, buoy_type=BuoyStation.BuoyType.none):
         if len(self.stations) < 1:
             return None
 
@@ -31,7 +31,7 @@ class BuoyStations(object):
         for station in self.stations:
             if active and not station.active:
                 continue
-            if buoy_type != Buoy.BuoyType.NONE:
+            if buoy_type != BuoyStation.BuoyType.none:
                 if station.type != buoy_type:
                     continue
 
@@ -42,7 +42,7 @@ class BuoyStations(object):
 
         return closest_buoy
 
-    def find_closest_buoys(self, location, count, active=False, buoy_type=Buoy.BuoyType.none):
+    def find_closest_buoys(self, location, count, active=False, buoy_type=BuoyStation.BuoyType.none):
         if len(self.stations) < 1:
             return None
         elif count < 1:
@@ -54,7 +54,7 @@ class BuoyStations(object):
         for station in self.stations:
             if active and not station.active:
                 continue
-            if buoy_type != Buoy.BuoyType.NONE:
+            if buoy_type != BuoyStation.BuoyType.none:
                 if station.type != buoy_type:
                     continue
 
@@ -97,7 +97,7 @@ class BuoyStations(object):
             loc = Location(float(attribs['lat']), float(attribs['lon']), name=attribs['name'])
             if 'elev' in attribs:
                 loc.altitude = float(attribs['elev'])
-            buoy = Buoy(station_id, loc)
+            buoy = BuoyStation(station_id, loc)
             buoy.owner = attribs['owner']
             buoy.program = attribs['pgm']
             buoy.type = attribs['type']

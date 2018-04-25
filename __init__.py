@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*
 
 from .buoystations import BuoyStations
-from .buoy import Buoy
+from .buoystation import BuoyStation
 from .swell import Swell
 from .location import Location
 from .buoydata import BuoyData
