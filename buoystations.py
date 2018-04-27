@@ -15,12 +15,6 @@ class BuoyStations(BaseStations):
     def __init__(self):
         super(BuoyStations, self).__init__()
 
-    def find_buoy(self, station_id):
-        for station in self.stations:
-            if station.station_id == station_id:
-                return station
-        return None
-
     def find_closest_buoy(self, location, active=False, buoy_type=BuoyStation.BuoyType.none):
         if len(self.stations) < 1:
             return None
@@ -79,6 +73,9 @@ class BuoyStations(BaseStations):
 
         closest_buoys = [x for _, x in sorted(zip(closest_distances, closest_buoys), key=lambda pair: pair[0])]
         return closest_buoys
+
+    def fetch_stations(self):
+        return self._fetch_stations(self.active_buoys_url)
 
     def parse_stations(self, rawData):
         stations = ET.fromstring(rawData)
