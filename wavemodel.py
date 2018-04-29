@@ -80,9 +80,9 @@ class WaveModel(NOAAModel):
             buoy_data_point.change_units(units.Units.metric)
 
         raw_date = self.data['TIME'][i]
-        raw_date = pytz.utc.localize(datetime.utcfromtimestamp(raw_time))
+        raw_date = pytz.utc.localize(raw_date)
         if buoy_data_point.date == None:
-            buoy_data_point.date = pytz.utc.localize(raw_date)
+            buoy_data_point.date = raw_date
         elif buoy_data_point.date != raw_date:
             return False
 
