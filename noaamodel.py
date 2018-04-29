@@ -4,11 +4,6 @@ from .buoydata import BuoyData
 from . import simplegribmessage
 from . import tools
 
-try:
-    import multiprocessing
-except:
-    pass
-
 
 class NOAAModel(object):
 
@@ -101,15 +96,14 @@ class NOAAModel(object):
         data = tools.download_data(url)
         if data is None:
             return False
-        return self.parse_grib_data(data)
+        return self.parse_grib_data(location, data)
 
     def fetch_grib_datas(self, location, start_time_index, end_time_index):
         urls = self.create_grib_urls(location, start_time_index, end_time_index)
         if not len(urls):
             return False
 
-        pool = multiprocessing.Pool(processes=8)
-        result = pool.map(tools.download_data, urls)
+        result = [tools.download_data(url) for url in urls]
         if not len(result):
             return False
 

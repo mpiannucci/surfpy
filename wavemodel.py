@@ -81,7 +81,7 @@ class WaveModel(NOAAModel):
 
         raw_date = self.data['TIME'][i]
         if buoy_data_point.date == None:
-            buoy_data_point.date = raw_date
+            buoy_data_point.date = pytz.utc.localize(raw_date)
         elif buoy_data_point.date != raw_date:
             return False
 

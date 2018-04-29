@@ -213,7 +213,11 @@ def dump_json(obj):
 def download_data(url):
     if not len(url):
         return None
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+    except:
+        print('Failed to download ' + url)
+        return False
     if not len(response.content):
         return False
     return response.content
