@@ -9,6 +9,7 @@ import pytz
 class GFSModel(NOAAModel):
 
     _base_gfs_ascii_url = 'http://nomads.ncep.noaa.gov:9090/dods/{0}/gfs{1}/{0}_{2}.ascii?time[{6}:{7}],ugrd10m[{6}:{7}][{4}][{5}],vgrd10m[{6}:{7}][{4}][{5}],gustsfc[{6}:{7}][{4}][{5}]'
+    _base_gfs_grib_url = 'http://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p50.pl?file=gfs.t00z.pgrb2full.0p50.f000&var_GUST=on&var_PRES=on&var_TMP=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon=0&rightlon=360&toplat=90&bottomlat=-90&dir=%2Fgfs.2018042000'
 
     def create_ascii_url(self, location, start_time_index, end_time_index):
         timestamp = self.latest_model_time()

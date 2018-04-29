@@ -10,7 +10,7 @@ import pytz
 class WaveModel(NOAAModel):
 
     _base_multigrid_ascii_url = 'http://nomads.ncep.noaa.gov:9090/dods/wave/mww3/{0}/{1}{0}_{2}.ascii?time[{5}:{6}],dirpwsfc.dirpwsfc[{5}:{6}][{3}][{4}],htsgwsfc.htsgwsfc[{5}:{6}][{3}][{4}],perpwsfc.perpwsfc[{5}:{6}][{3}][{4}],swdir_1.swdir_1[{5}:{6}][{3}][{4}],swdir_2.swdir_2[{5}:{6}][{3}][{4}],swell_1.swell_1[{5}:{6}][{3}][{4}],swell_2.swell_2[{5}:{6}][{3}][{4}],swper_1.swper_1[{5}:{6}][{3}][{4}],swper_2.swper_2[{5}:{6}][{3}][{4}],ugrdsfc.ugrdsfc[{5}:{6}][{3}][{4}],vgrdsfc.vgrdsfc[{5}:{6}][{3}][{4}],wdirsfc.wdirsfc[{5}:{6}][{3}][{4}],windsfc.windsfc[{5}:{6}][{3}][{4}],wvdirsfc.wvdirsfc[{5}:{6}][{3}][{4}],wvhgtsfc.wvhgtsfc[{5}:{6}][{3}][{4}],wvpersfc.wvpersfc[{5}:{6}][{3}][{4}]'
-    _base_multigrid_grib_url = 'http://nomads.ncep.noaa.gov/cgi-bin/filter_wave_multi.pl?file=multi_1.at_10m.t{0}z.f{1}.grib2&all_lev=on&all_var=on&subregion=&leftlon={3}&rightlon={4}&toplat={5}&bottomlat={6}&dir=%2Fmulti_1.{2}'
+    _base_multigrid_grib_url = 'http://nomads.ncep.noaa.gov/cgi-bin/filter_wave_multi.pl?file={0}.t{1}z.f{2}.grib2&all_lev=on&all_var=on&subregion=&leftlon={4}&rightlon={5}&toplat={6}&bottomlat={7}&dir=%2Fmulti_1.{3}'
 
     def create_ascii_url(self, location, start_time_index, end_time_index):
         timestamp = self.latest_model_time()
@@ -26,7 +26,7 @@ class WaveModel(NOAAModel):
         model_run_str = str(model_run_time.hour).rjust(2, '0')
         hour_str = str(int(time_index*self.time_resolution_hours)).rjust(3, '0')
         date_str = model_run_time.strftime('%Y%m%d')
-        url = self._base_multigrid_grib_url.format(model_run_str, hour_str, date_str, float(math.floor(location.longitude)), float(math.ceil(location.longitude)), float(math.ceil(location.latitude)), float(math.floor(location.latitude)))
+        url = self._base_multigrid_grib_url.format(self.name, model_run_str, hour_str, date_str, float(math.floor(location.longitude)), float(math.ceil(location.longitude)), float(math.ceil(location.latitude)), float(math.floor(location.latitude)))
         return url
 
     def _to_buoy_data_ascii(self, buoy_data_point, i):
