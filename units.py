@@ -57,6 +57,7 @@ class Units:
     metric = 'metric'
     english = 'english'
     knots = 'knots'
+    kelvin = 'kelvin'
 
 class Measurement:
     length = 'length'
@@ -106,6 +107,12 @@ def convert(value, measure, source_unit, dest_unit):
                 return value * 0.514
             elif dest_unit == Units.english:
                 return value * 1.15
+    elif source_unit == Units.kelvin:
+        if measure == Measurement.temperature:
+            if dest_unit == Units.metric:
+                return value - 273.15
+            elif dest_unit == Units.english:
+                return value * (9.0/5.0) - 459.67
     return value
 
 def earths_radius(unit):

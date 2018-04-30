@@ -25,7 +25,7 @@ if __name__=='__main__':
 
     ri_wind_location = Location(41.6, -71.5, alt=10.0, name='Narragansett Pier')
     gfs_model = weathermodel.global_gfs_model()
-    if gfs_model.fetch_ascii_data(ri_wind_location, 0, 60):
+    if gfs_model.fetch_grib_datas(ri_wind_location, 0, 60):
         gfs_model.fill_buoy_data(data)
     else:
         print('Failed to fetch wind forecast data')
