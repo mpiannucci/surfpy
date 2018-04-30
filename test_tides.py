@@ -4,6 +4,7 @@ sys.path.insert(0, os.path.abspath(__file__))
 
 from .tidestations import TideStations
 from .tidestation import TideStation
+from .tideevent import TideEvent
 from . import units
 from . import tools
 
@@ -61,18 +62,18 @@ class TidePlots(object):
 
         dates = [x.date for x in station.tidal_data]
         levels = [x.water_level for x in station.tidal_data]
-
-        low_indexes, low_values, high_indexes, high_values = tools.peakdetect(levels, delta=0.05)
-        low_dates = [dates[i] for i in low_indexes]
-        high_dates = [dates[i] for i  in high_indexes]
-
+        low_dates = [x.date for x in station.tidal_events if x.tidal_event == TideEvent.TidalEventType.low_tide]
+        low_levels = [x.water_level for x in station.tidal_events if x.tidal_event== TideEvent.TidalEventType.low_tide]
+        high_dates = [x.date for x in station.tidal_events if x.tidal_event == TideEvent.TidalEventType.high_tide]
+        high_levels = [x.water_level for x in station.tidal_events if x.tidal_event == TideEvent.TidalEventType.high_tide]
+        
         plt.figure(1)
         plt.title('Station ' + station_id + ': Water Level (ft)')
         plt.xlabel('Date')
         plt.ylabel('Water Level (ft)')
         plt.plot(dates, levels)
-        plt.scatter(low_dates, low_values, c='r')
-        plt.scatter(high_dates, high_values, c='g')
+        plt.scatter(low_dates, low_levels, c='r')
+        plt.scatter(high_dates, high_levels, c='g')
         
         plt.grid()
         plt.show()

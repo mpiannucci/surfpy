@@ -1,5 +1,6 @@
 from .basestation import BaseStation
 from . import units
+from . import tools
 from .tideevent import TideEvent
 import datetime
 import json
@@ -65,6 +66,29 @@ class TideStation(BaseStation):
 
         if len(self.tidal_events) < 1 and len(self.tidal_data) < 1:
             return False
+        
+        self.interpolate_tidal_events()
+        return True
+
+    def interpolate_tidal_events(self):
+        if len(self.tidal_data) < 1:
+            return False
+        elif len(self.tidal_events) > 0:
+            return False
+
+        levels = [x.water_level for x in self.tidal_data]
+        low_indexes, low_values, high_indexes, high_values = tools.peakdetect(levels, delta=0.05)
+
+        for i in low_indexes:
+            low_tidal_event = self.tidal_data[i]
+            low_tidal_event.tidal_event=TideEvent.TidalEventType.low_tide
+            self.tidal_events.append(low_tidal_event)
+        for i in high_indexes:
+            high_tidal_event = self.tidal_data[i]
+            high_tidal_event.tidal_event=TideEvent.TidalEventType.high_tide
+            self.tidal_events.append(high_tidal_event)
+
+        self.tidal_events.sort(key=lambda x: x.date)
 
         return True
 
