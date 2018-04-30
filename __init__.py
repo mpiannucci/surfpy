@@ -10,3 +10,4 @@ from .weathermodel import *
 from .sun import *
 from .tidestation import TideStation
 from .tidestations import TideStations
+from .tideevent import TideEvent

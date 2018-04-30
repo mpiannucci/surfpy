@@ -25,6 +25,6 @@ class TideStations(BaseStations):
             return False
 
         raw_stations = json.loads(raw_data)['locations']
-        self.stations = [TideStation(x['stnid'], Location(float(x['lat']), float(x['lng']), name=x['name'])) for x in raw_stations]
+        self.stations = [TideStation(x['stnid'], Location(float(x['lat']), float(x['lng']), name=x['name']), state=x['state']) for x in raw_stations]
 
         return True
