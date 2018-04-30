@@ -12,7 +12,6 @@ except:
 
 class TideStation(BaseStation):
 
-    # https://tidesandcurrents.noaa.gov/api/datagetter?begin_date=20180429%2000:00&end_date=20180501%2000:00&station=8454000&product=predictions&datum=MTL&interval=hilo&units=english&time_zone=gmt&application=web_services&format=json
     _base_tide_url = 'https://tidesandcurrents.noaa.gov/api/datagetter?begin_date={0}%20{1}&end_date={2}%20{3}&station={4}&product=predictions&datum={5}&interval={6}&units={7}&time_zone=gmt&application=web_services&format=json'
 
     class DataInterval:
@@ -40,7 +39,7 @@ class TideStation(BaseStation):
         start_time_str = start_date.strftime('%H:%M')
         end_date_str = end_date.strftime('%Y%m%d')
         end_time_str = end_date.strftime('%H:%M')
-        url = self._base_tide_url.format(start_date_str, start_time_str, end_date_str, end_time_str, self.station_id. datum, interval, unit)
+        url = self._base_tide_url.format(start_date_str, start_time_str, end_date_str, end_time_str, self.station_id, datum, interval, unit)
         return url
 
     def parse_tide_data(self, raw_data, datum, unit):
@@ -70,7 +69,7 @@ class TideStation(BaseStation):
         return True
 
     def fetch_tide_data(self, start_date, end_date, datum=TideDatum.mean_tide_level, interval=DataInterval.high_low, unit=units.Units.metric):
-        url = self.create_tide_data_url(start_date, end_date, datum=datum, interval=interval, unit=units)
+        url = self.create_tide_data_url(start_date, end_date, datum=datum, interval=interval, unit=unit)
         response = requests.get(url)
         if len(response.text) < 1:
             return False
