@@ -1,9 +1,9 @@
 # -*- coding: UTF-8 -*
 
+from .location import Location
+from .swell import Swell
 from .buoystations import BuoyStations
 from .buoystation import BuoyStation
-from .swell import Swell
-from .location import Location
 from .buoydata import BuoyData
 from .wavemodel import *
 from .weathermodel import *
