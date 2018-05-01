@@ -24,6 +24,9 @@ class NOAAModel(object):
         self.time_resolution = time_res
         self.data = {}
 
+    def reset_data(self):
+        self.data = {}
+
     @property
     def time_resolution_hours(self):
         return self.time_resolution * 24.0

@@ -2,6 +2,7 @@ from .basestation import BaseStation
 from .buoydata import BuoyData
 from .buoyspectra import BuoySpectra
 from .swell import Swell
+from .location import Location
 from datetime import datetime
 from .tools import parse_float, steepness
 from . import units
