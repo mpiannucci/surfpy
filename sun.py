@@ -1,6 +1,7 @@
 import math
 import datetime
 from .location import Location
+import logging
 
 class Sun:  
     """  
@@ -35,7 +36,7 @@ class Sun:
             when = datetime.datetime.now()  
         self.__preptime(when)  
         self.__calc()  
-        return Sun.__timefromdecimalday(self.sunset_t)  
+        return Sun.__timefromdecimalday(self.sunset_t)
     
     def solarnoon(self,when=None):  
         if when is None: 
@@ -52,11 +53,13 @@ class Sun:
         day is a decimal day between 0.0 and 1.0, e.g. noon = 0.5 
         """  
         hours = 24.0*day  
-        h = int(hours)  
+        h = int(hours)
         minutes = (hours-h)*60  
         m = int(minutes)  
         seconds = (minutes-m)*60  
-        s = int(seconds)  
+        s = int(seconds)
+        if h > 23:
+            h = 0
         return datetime.time(hour=h,minute=m,second=s)  
   
     def __preptime(self,when):  
