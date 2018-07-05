@@ -12,6 +12,7 @@ try:
 except:
     pass
 import math
+import pytz
 
 class BuoyStation(BaseStation):
 
@@ -66,7 +67,7 @@ class BuoyStation(BaseStation):
             return False
 
         data = BuoyData(units.Units.english)
-        data.date = datetime.strptime(raw_data[4], '%H%M %Z %m/%d/%y')
+        data.date = pytz.utc.localize(datetime.strptime(raw_data[4], '%H%M %Z %m/%d/%y'))
 
         swell_period_read = False
         swell_direction_read = False
@@ -151,7 +152,7 @@ class BuoyStation(BaseStation):
         for i in range(header_lines, header_lines + data_lines):
             raw_data_line = raw_data[i].split()
             data = BuoyData(units.Units.metric)
-            data.date = datetime(*[int(x) for x in raw_data_line[0:5]])
+            data.date = pytz.utc.localize(datetime(*[int(x) for x in raw_data_line[0:5]]))
             data.wind_direction = parse_float(raw_data_line[5])
             data.wind_compass_direction = units.degree_to_direction(data.wind_direction)
             data.wind_speed = parse_float(raw_data_line[6])
@@ -186,7 +187,7 @@ class BuoyStation(BaseStation):
             data = BuoyData(units.Units.metric)
             swell_component = Swell(units.Units.metric)
             wind_wave_component = Swell(units.Units.metric)
-            data.date = datetime(*[int(x) for x in raw_data_line[0:5]])
+            data.date = pytz.utc.localize(datetime(*[int(x) for x in raw_data_line[0:5]]))
             data.wave_summary.wave_height = parse_float(raw_data_line[5])
             swell_component.wave_height = parse_float(raw_data_line[6])
             swell_component.period = parse_float(raw_data_line[7])
@@ -228,7 +229,7 @@ class BuoyStation(BaseStation):
 
             spectra = BuoySpectra()
             data = BuoyData(units.Units.metric)
-            data.date = datetime(*[int(x) for x in raw_energy[0:5]])
+            data.date = pytz.utc.localize(datetime(*[int(x) for x in raw_energy[0:5]]))
 
             for j in range(5, len(raw_directional), 2):
                 spectra.frequency.append(parse_float(raw_directional[j+1]))

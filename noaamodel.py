@@ -1,4 +1,5 @@
 import datetime
+import pytz
 from . import units
 from .buoydata import BuoyData
 from . import simplegribmessage
@@ -72,7 +73,7 @@ class NOAAModel(object):
         latest_model_hour = current_time.hour - (current_time.hour % 6)
         current_time = current_time + datetime.timedelta(hours=-(current_time.hour-latest_model_hour))
         current_time = datetime.datetime(current_time.year, current_time.month, current_time.day, current_time.hour, 0)
-        return current_time
+        return pytz.utc.localize(current_time)
 
     def time_index(self, desired_time):
         model_time = self.latest_model_time()
