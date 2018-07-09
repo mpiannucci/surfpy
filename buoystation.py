@@ -14,16 +14,17 @@ except:
 import math
 import pytz
 
+
 class BuoyStation(BaseStation):
 
     class BuoyType:
-        none=''
-        buoy='buoy'
-        fixed='fixed'
-        oilrig='oilrig'
-        dart='dart'
-        tao='tao'
-        other='other'
+        none = ''
+        buoy = 'buoy'
+        fixed = 'fixed'
+        oilrig = 'oilrig'
+        dart = 'dart'
+        tao = 'tao'
+        other = 'other'
 
     def __init__(self, station_id, location, owner='', program='', active=False, currents=False, water_quality=False, dart=False, buoy_type=BuoyType.none):
         super(BuoyStation, self).__init__(station_id, location)
@@ -132,6 +133,8 @@ class BuoyStation(BaseStation):
         if not math.isnan(wind_wave_component.wave_height) and not math.isnan(swell_component.wave_height):
             data.interpolate_dominant_wave_direction()
 
+        data.find_expiration_date()
+
         if len(self.data) > 0:
             self.data[0] = [data] + self.data
         else:
@@ -168,6 +171,7 @@ class BuoyStation(BaseStation):
             data.dewpoint_temperature = parse_float(raw_data_line[15])
             data.pressure_tendency = parse_float(raw_data_line[17])
             data.water_level = units.convert(parse_float(raw_data_line[18]), units.Measurement.length, units.Units.english, units.Units.metric)
+            data.find_expiration_date()
             self.data.append(data)
 
         return True
@@ -206,8 +210,9 @@ class BuoyStation(BaseStation):
             data.swell_components.append(wind_wave_component)
             data.interpolate_dominant_wave_period()
             data.interpolate_dominant_wave_direction()
+            data.find_expiration_date()
             self.data.append(data)
-        
+
         return True
 
     def parse_wave_spectra_reading_data(self, energy_data, directional_data, count_limit):
@@ -232,9 +237,9 @@ class BuoyStation(BaseStation):
             data.date = pytz.utc.localize(datetime(*[int(x) for x in raw_energy[0:5]]))
 
             for j in range(5, len(raw_directional), 2):
-                spectra.frequency.append(parse_float(raw_directional[j+1]))
+                spectra.frequency.append(parse_float(raw_directional[j + 1]))
                 spectra.angle.append(parse_float(raw_directional[j]))
-                spectra.energy.append(parse_float(raw_energy[j+1]))
+                spectra.energy.append(parse_float(raw_energy[j + 1]))
 
             spectra.seperation_frequency = parse_float(raw_energy[5])
 
@@ -243,6 +248,8 @@ class BuoyStation(BaseStation):
             data.swell_components = spectra.swell_components
             data.steepness = steepness(data.wave_summary.wave_height, data.wave_summary.period)
             data.average_period = spectra.average_period
+
+            data.find_expiration_date()
 
             self.data.append(data)
 

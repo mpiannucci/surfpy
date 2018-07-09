@@ -9,9 +9,10 @@ class TideData(BaseData):
 
         # Date
         self.date = None
+        self.expiration_date = None
 
         # Water Level
-        self.water_level = float('nan') 
+        self.water_level = float('nan')
         self.water_level_datum = ''
 
     def change_units(self, new_units):

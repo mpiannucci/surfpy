@@ -3,6 +3,7 @@ from .swell import Swell
 from .buoyspectra import BuoySpectra
 from .basedata import BaseData
 from operator import itemgetter
+import datetime
 
 
 class BuoyData(BaseData):
@@ -13,6 +14,7 @@ class BuoyData(BaseData):
         # Set up all of the data constructors
         # Date
         self.date = None
+        self.expiration_date = None
 
         # Wind
         self.wind_direction = float('nan')
@@ -59,6 +61,15 @@ class BuoyData(BaseData):
         self.pressure = units.convert(self.pressure, units.Measurement.pressure, old_unit, self.unit)
         self.pressure_tendency = units.convert(self.pressure_tendency, units.Measurement.pressure, old_unit, self.unit)
         self.water_level = units.convert(self.water_level, units.Measurement.length, old_unit, self.unit)
+
+    def find_expiration_date(self):
+        time_now = datetime.datetime.now()
+        if time_now.minute < 25:
+            self.expiration_date = time_now + datetime.timedelta(minutes=25 - time_now.minute)
+        elif time_now.minute < 50:
+            self.expiration_date = time_now + datetime.timedelta(minutes=50 - time_now.minute)
+        else:
+            self.expiration_date = time_now + datetime.timedelta(minutes=60 - time_now.minute)
 
     def interpolate_dominant_wave_direction(self):
         min_diff = float('inf')
