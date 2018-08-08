@@ -10,7 +10,7 @@ except:
 
 class BuoyStations(BaseStations):
 
-    active_buoys_url="http://www.ndbc.noaa.gov/activestations.xml"
+    active_buoys_url="https://www.ndbc.noaa.gov/activestations.xml"
 
     def __init__(self):
         super(BuoyStations, self).__init__()

@@ -43,23 +43,23 @@ class BuoyStation(BaseStation):
 
     @property
     def latest_reading_url(self):
-        return 'http://www.ndbc.noaa.gov/data/latest_obs/' + self.station_id + '.txt'
+        return 'https://www.ndbc.noaa.gov/data/latest_obs/' + self.station_id + '.txt'
 
     @property
     def meteorological_reading_url(self):
-        return 'http://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.txt'
+        return 'https://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.txt'
 
     @property
     def detailed_wave_reading_url(self):
-        return 'http://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.spec'
+        return 'https://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.spec'
 
     @property
     def wave_energy_reading_url(self):
-        return 'http://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.data_spec'
+        return 'https://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.data_spec'
 
     @property
     def directional_wave_reading_url(self):
-        return 'http://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.swdir'
+        return 'https://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.swdir'
 
     def parse_latest_reading_data(self, raw_data):
         raw_data = raw_data.split('\n')
