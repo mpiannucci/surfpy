@@ -9,8 +9,8 @@ import math
 
 class GFSModel(NOAAModel):
 
-    _base_gfs_ascii_url = 'http://nomads.ncep.noaa.gov:9090/dods/{0}/gfs{1}/{0}_{2}.ascii?time[{6}:{7}],ugrd10m[{6}:{7}][{4}][{5}],vgrd10m[{6}:{7}][{4}][{5}],gustsfc[{6}:{7}][{4}][{5}]'
-    _base_gfs_grib_url = 'http://nomads.ncep.noaa.gov/cgi-bin/filter_{0}.pl?file=gfs.t{1}z.pgrb2full.{2}.f{3}&lev_10_m_above_ground=on&var_GUST=on&var_PRES=on&var_TMP=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon={4}&rightlon={5}&toplat={6}&bottomlat={7}&dir=%2Fgfs.{8}{1}'
+    _base_gfs_ascii_url = 'https://nomads.ncep.noaa.gov:9090/dods/{0}/gfs{1}/{0}_{2}.ascii?time[{6}:{7}],ugrd10m[{6}:{7}][{4}][{5}],vgrd10m[{6}:{7}][{4}][{5}],gustsfc[{6}:{7}][{4}][{5}]'
+    _base_gfs_grib_url = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_{0}.pl?file=gfs.t{1}z.pgrb2full.{2}.f{3}&lev_10_m_above_ground=on&var_GUST=on&var_PRES=on&var_TMP=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon={4}&rightlon={5}&toplat={6}&bottomlat={7}&dir=%2Fgfs.{8}{1}'
 
     @property
     def model_degree(self):
@@ -25,7 +25,7 @@ class GFSModel(NOAAModel):
         alt_index = self.altitude_index(location.altitude)
         url = self._base_gfs_ascii_url.format(self.name, datestring, hourstring, alt_index, lat_index, lon_index, start_time_index, end_time_index)
         return url
-    
+
     def create_grib_url(self, location, time_index):
         model_run_time = self.latest_model_time()
         model_run_str = str(model_run_time.hour).rjust(2, '0')
