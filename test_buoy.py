@@ -21,6 +21,9 @@ class BuoyPlots(object):
     def fetch_buoy_data(self, station_id, count):
         return self.stations[station_id].fetch_wave_spectra_reading(count)
 
+    def fetch_latest_buoy_data(self, station_id):
+        return self.stations[station_id].fetch_latest_wave_reading()
+
     def plot_directional_spectra(self, station_id):
         if len(self.stations[station_id].data) < 1:
             return
@@ -68,6 +71,7 @@ class BuoyPlots(object):
 
 if __name__ == '__main__':
     plots = BuoyPlots()
+    print(plots.fetch_latest_buoy_data('44017'))
     plots.fetch_buoy_data('44097', 1)
     plots.plot_directional_spectra('44097')
     plots.plot_wave_energy('44097')

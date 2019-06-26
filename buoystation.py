@@ -256,6 +256,7 @@ class BuoyStation(BaseStation):
         return True
 
     def fetch_latest_wave_reading(self):
+        print(self.latest_reading_url)
         response = requests.get(self.latest_reading_url)
         if len(response.text) < 1:
             return False
