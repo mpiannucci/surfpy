@@ -69,6 +69,8 @@ class BuoyStation(BaseStation):
 
         data = BuoyData(units.Units.english)
         data.date = pytz.utc.localize(datetime.strptime(raw_data[4], '%H%M %Z %m/%d/%y'))
+        print(data.date)
+        print(raw_data[4])
 
         swell_period_read = False
         swell_direction_read = False
@@ -255,7 +257,7 @@ class BuoyStation(BaseStation):
 
         return True
 
-    def fetch_latest_wave_reading(self):
+    def fetch_latest_reading(self):
         print(self.latest_reading_url)
         response = requests.get(self.latest_reading_url)
         if len(response.text) < 1:
