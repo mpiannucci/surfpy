@@ -21,22 +21,25 @@ class TidePlots(object):
         _stations.fetch_stations()
 
         self.stations = {}
+        self.data = {}
         for station in _stations.stations:
             self.stations[station.station_id] = station
 
     def fetch_water_level_data(self, station_id, start_date, end_date):
-        return self.stations[station_id].fetch_tide_data(start_date, end_date, interval=TideStation.DataInterval.default, unit=units.Units.english)
+        self.data[station_id] = self.stations[station_id].fetch_tide_data(start_date, end_date, interval=TideStation.DataInterval.default, unit=units.Units.english)
+        return len(self.data[station_id][0]) > 0
 
     def fetch_tidal_data(self, station_id, start_date, end_date):
-        return self.stations[station_id].fetch_tide_data(start_date, end_date, interval=TideStation.DataInterval.high_low, unit=units.Units.english)
+        self.data[station_id] = self.stations[station_id].fetch_tide_data(start_date, end_date, interval=TideStation.DataInterval.high_low, unit=units.Units.english)
+        return len(self.data[station_id][0]) > 0
 
     def plot_tidal_events(self, station_id):
-        station = self.stations[station_id]
-        if station is None:
+        tidal_events, tidal_data = self.data[station_id]
+        if tidal_events is None:
             return
 
-        raw_dates = [x.date for x in station.tidal_events]
-        raw_levels = [x.water_level for x in station.tidal_events]
+        raw_dates = [x.date for x in tidal_events]
+        raw_levels = [x.water_level for x in tidal_events]
 
         x = mdates.date2num(raw_dates)
         z4 = np.polyfit(x, raw_levels, len(raw_levels)-1)
@@ -56,16 +59,16 @@ class TidePlots(object):
         plt.gcf().clear()
 
     def plot_water_level(self, station_id):
-        station = self.stations[station_id]
-        if station is None:
+        tidal_events, tidal_data = self.data[station_id]
+        if tidal_data is None:
             return
 
-        dates = [x.date for x in station.tidal_data]
-        levels = [x.water_level for x in station.tidal_data]
-        low_dates = [x.date for x in station.tidal_events if x.tidal_event == TideEvent.TidalEventType.low_tide]
-        low_levels = [x.water_level for x in station.tidal_events if x.tidal_event== TideEvent.TidalEventType.low_tide]
-        high_dates = [x.date for x in station.tidal_events if x.tidal_event == TideEvent.TidalEventType.high_tide]
-        high_levels = [x.water_level for x in station.tidal_events if x.tidal_event == TideEvent.TidalEventType.high_tide]
+        dates = [x.date for x in tidal_data]
+        levels = [x.water_level for x in tidal_data]
+        low_dates = [x.date for x in tidal_events if x.tidal_event == TideEvent.TidalEventType.low_tide]
+        low_levels = [x.water_level for x in tidal_events if x.tidal_event== TideEvent.TidalEventType.low_tide]
+        high_dates = [x.date for x in tidal_events if x.tidal_event == TideEvent.TidalEventType.high_tide]
+        high_levels = [x.water_level for x in tidal_events if x.tidal_event == TideEvent.TidalEventType.high_tide]
         
         plt.figure(1)
         plt.title('Station ' + station_id + ': Water Level (ft)')

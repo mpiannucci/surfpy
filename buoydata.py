@@ -8,40 +8,41 @@ import datetime
 
 class BuoyData(BaseData):
 
-    def __init__(self, unit):
+    def __init__(self, unit, date=None, expiration_date=None, wind_direction=float('nan'), wind_compass_direction='', 
+        wind_speed=float('nan'), wind_gust=float('nan'), wave_summary=None, swell_components=[], steepness='', average_period=float('nan'),
+        wave_spectra=None, minimum_breaking_height=float('nan'), maximum_breaking_height=float('nan'), pressure=float('nan'),
+        air_temperature=float('nan'), water_temperature=float('nan'), dewpoint_temperature=float('nan'), pressure_tendency=float('nan'), water_level=float('nan')):
         super(BuoyData, self).__init__(unit)
 
         # Set up all of the data constructors
         # Date
-        self.date = None
-        self.expiration_date = None
+        self.date = date
+        self.expiration_date = expiration_date
 
         # Wind
-        self.wind_direction = float('nan')
-        self.wind_compass_direction = ''
-        self.wind_speed = float('nan')
-        self.wind_gust = float('nan')
+        self.wind_direction = wind_direction
+        self.wind_compass_direction = wind_compass_direction
+        self.wind_speed = wind_speed
+        self.wind_gust = wind_gust
 
         # Waves
-        self.wave_summary = Swell(unit)
-        self.swell_components = []
-        self.steepness = ''
-        self.average_period = float('nan')
-        self.wave_spectra = BuoySpectra()
-        self.minimum_breaking_height = float('nan')
-        self.maximum_breaking_height = float('nan')
+        self.wave_summary = wave_summary
+        if self.wave_summary is None:
+            self.wave_summary = Swell(unit)
+        self.swell_components = swell_components
+        self.steepness = steepness
+        self.average_period = average_period
+        self.wave_spectra = wave_spectra
+        self.minimum_breaking_height = minimum_breaking_height
+        self.maximum_breaking_height = maximum_breaking_height
 
         # Meterology
-        self.pressure = float('nan')
-        self.air_temperature = float('nan')
-        self.water_temperature = float('nan')
-        self.dewpoint_temperature = float('nan')
-        self.pressure_tendency = float('nan')
-        self.water_level = float('nan')
-
-        # Plots
-        self.energy_spectra_plot = ''
-        self.direction_spectra_plot = ''
+        self.pressure = pressure
+        self.air_temperature = air_temperature
+        self.water_temperature = water_temperature
+        self.dewpoint_temperature = dewpoint_temperature
+        self.pressure_tendency = pressure_tendency
+        self.water_level = water_level
 
     def change_units(self, new_units):
         old_unit = self.unit

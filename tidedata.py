@@ -4,16 +4,16 @@ from . import units
 
 class TideData(BaseData):
 
-    def __init__(self, unit):
+    def __init__(self, unit, date=None, expiration_date=None, water_level=float('nan'), water_level_datum=''):
         super(TideData, self).__init__(unit)
 
         # Date
-        self.date = None
-        self.expiration_date = None
+        self.date = date
+        self.expiration_date = expiration_date
 
         # Water Level
-        self.water_level = float('nan')
-        self.water_level_datum = ''
+        self.water_level = water_level
+        self.water_level_datum = water_level_datum
 
     def change_units(self, new_units):
         old_unit = self.unit

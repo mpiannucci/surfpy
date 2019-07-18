@@ -32,8 +32,6 @@ class TideStation(BaseStation):
         super(TideStation, self).__init__(station_id, location)
 
         self.state = state
-        self.tidal_data = []
-        self.tidal_events = []
     
     def create_tide_data_url(self, start_date, end_date, datum=TideDatum.mean_tide_level, interval=DataInterval.high_low, unit=units.Units.metric):
         start_date_str = start_date.strftime('%Y%m%d')
@@ -45,15 +43,20 @@ class TideStation(BaseStation):
 
     def parse_tide_data(self, raw_data, datum, unit):
         if raw_data is None:
-            return False
+            print('Failed to parse tidal data')
+            return None
         elif raw_data == '':
-            return False
+            print('Failed to parse tidal data')
+            return None
         
         raw_json = json.loads(raw_data)
         if not 'predictions' in raw_json:
-            return False
+            print('Failed to parse tidal data')
+            return None
         
         tide_datas = raw_json['predictions']
+        tidal_data = []
+        tidal_events = []
         for data in tide_datas:
             event = TideEvent(unit)
             event.date = pytz.utc.localize(datetime.datetime.strptime(data['t'], '%Y-%m-%d %H:%M'))
@@ -61,36 +64,40 @@ class TideStation(BaseStation):
             event.water_level_datum = datum
             if 'type' in data:
                 event.tidal_event = data['type']
-                self.tidal_events.append(event)
-            self.tidal_data.append(event)
+                tidal_events.append(event)
+            tidal_data.append(event)
 
-        if len(self.tidal_events) < 1 and len(self.tidal_data) < 1:
-            return False
+        if len(tidal_data) < 1:
+            print('Failed to parse tidal data')
+            return None
         
-        self.interpolate_tidal_events()
-        return True
+        if len(tidal_events) < 1:
+            tidal_events = self.interpolate_tidal_events(tidal_data)
+            
+        return tidal_events, tidal_data
 
-    def interpolate_tidal_events(self):
-        if len(self.tidal_data) < 1:
-            return False
-        elif len(self.tidal_events) > 0:
-            return False
+    @staticmethod
+    def interpolate_tidal_events(tidal_data):
+        if len(tidal_data) < 1:
+            print('Failed to interpolate tidal events')
+            return None
 
-        levels = [x.water_level for x in self.tidal_data]
+        levels = [x.water_level for x in tidal_data]
         low_indexes, low_values, high_indexes, high_values = tools.peakdetect(levels, delta=0.05)
 
+        tidal_events = []
         for i in low_indexes:
-            low_tidal_event = self.tidal_data[i]
+            low_tidal_event = tidal_data[i]
             low_tidal_event.tidal_event=TideEvent.TidalEventType.low_tide
-            self.tidal_events.append(low_tidal_event)
+            tidal_events.append(low_tidal_event)
         for i in high_indexes:
-            high_tidal_event = self.tidal_data[i]
+            high_tidal_event = tidal_data[i]
             high_tidal_event.tidal_event=TideEvent.TidalEventType.high_tide
-            self.tidal_events.append(high_tidal_event)
+            tidal_events.append(high_tidal_event)
 
-        self.tidal_events.sort(key=lambda x: x.date)
+        tidal_events.sort(key=lambda x: x.date)
 
-        return True
+        return tidal_events
 
     def fetch_tide_data(self, start_date, end_date, datum=TideDatum.mean_tide_level, interval=DataInterval.high_low, unit=units.Units.metric):
         url = self.create_tide_data_url(start_date, end_date, datum=datum, interval=interval, unit=unit)

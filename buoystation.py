@@ -26,20 +26,17 @@ class BuoyStation(BaseStation):
         tao = 'tao'
         other = 'other'
 
-    def __init__(self, station_id, location, owner='', program='', active=False, currents=False, water_quality=False, dart=False, buoy_type=BuoyType.none):
+    def __init__(self, station_id, location, owner='', program='', active=False, currents=False, water_quality=False, dart=False, buoy_type=BuoyType.none, name=''):
         super(BuoyStation, self).__init__(station_id, location)
 
         # Attributes
         self.owner = owner
         self.program = program
-        self.type = buoy_type
+        self.buoy_type = buoy_type
         self.active = active
         self.currents = currents
         self.water_quality = water_quality
         self.dart = dart
-
-        # Data
-        self.data = []
 
     @property
     def latest_reading_url(self):
@@ -64,8 +61,8 @@ class BuoyStation(BaseStation):
     def parse_latest_reading_data(self, raw_data):
         raw_data = raw_data.split('\n')
         if len(raw_data) < 6:
-            print(raw_data)
-            return False
+            print('Invalid latest station data')
+            return None
 
         data = BuoyData(units.Units.english)
         data.date = pytz.utc.localize(datetime.strptime(raw_data[4], '%H%M %Z %m/%d/%y'))
@@ -136,24 +133,20 @@ class BuoyStation(BaseStation):
             data.interpolate_dominant_wave_direction()
 
         data.find_expiration_date()
-
-        if len(self.data) > 0:
-            self.data[0] = [data] + self.data
-        else:
-            self.data = [data]
-
-        return True
+        return data
 
     def parse_meteorological_reading_data(self, raw_data, count_limit):
         raw_data = raw_data.split('\n')
         if len(raw_data) < 2:
-            return False
+            print('Failed to parse meteorological data')
+            return None
 
         header_lines = 2
         data_lines = len(raw_data) - header_lines
         if data_lines > count_limit and count_limit > 0:
             data_lines = count_limit
 
+        all_data = []
         for i in range(header_lines, header_lines + data_lines):
             raw_data_line = raw_data[i].split()
             data = BuoyData(units.Units.metric)
@@ -174,20 +167,22 @@ class BuoyStation(BaseStation):
             data.pressure_tendency = parse_float(raw_data_line[17])
             data.water_level = units.convert(parse_float(raw_data_line[18]), units.Measurement.length, units.Units.english, units.Units.metric)
             data.find_expiration_date()
-            self.data.append(data)
+            all_data.append(data)
 
-        return True
+        return all_data
 
     def parse_detailed_wave_reading_data(self, raw_data, count_limit):
         raw_data = raw_data.split('\n')
         if len(raw_data) < 2:
-            return False
+            print('Failed to parse detailed wave data')
+            return None
 
         header_lines = 2
         data_lines = len(raw_data) - header_lines
         if data_lines > count_limit and count_limit > 0:
             data_lines = count_limit
 
+        all_data = []
         for i in range(header_lines, header_lines + data_lines):
             raw_data_line = raw_data[i].split()
             data = BuoyData(units.Units.metric)
@@ -213,23 +208,26 @@ class BuoyStation(BaseStation):
             data.interpolate_dominant_wave_period()
             data.interpolate_dominant_wave_direction()
             data.find_expiration_date()
-            self.data.append(data)
+            all_data.append(data)
 
-        return True
+        return all_data
 
     def parse_wave_spectra_reading_data(self, energy_data, directional_data, count_limit):
         energy_data = energy_data.split('\n')
         directional_data = directional_data.split('\n')
         if len(energy_data) != len(directional_data):
-            return False
+            print('Failed to parse wave spectra data')
+            return None
         elif len(energy_data) < 2:
-            return False
+            print('Failed to parse wave spectra data')
+            return None
 
         header_lines = 1
         data_lines = len(energy_data) - header_lines
         if data_lines > count_limit and count_limit > 0:
             data_lines = count_limit
 
+        all_data = []
         for i in range(header_lines, header_lines + data_lines):
             raw_energy = energy_data[i].strip().replace(')', '').replace('(', '').split()
             raw_directional = directional_data[i].strip().replace(')', '').replace('(', '').split()
@@ -253,9 +251,9 @@ class BuoyStation(BaseStation):
 
             data.find_expiration_date()
 
-            self.data.append(data)
+            all_data.append(data)
 
-        return True
+        return all_data
 
     def fetch_latest_reading(self):
         print(self.latest_reading_url)
@@ -283,15 +281,16 @@ class BuoyStation(BaseStation):
             return False
         return self.parse_wave_spectra_reading_data(energy_response.text, directional_response.text, data_count)
 
-    def data_index_for_date(self, datetime):
-        if len(self.data) < 1:
+    @staticmethod
+    def data_index_for_date(data, datetime):
+        if len(data) < 1:
             return None
 
-        min_duration = (datetime - self.data[0].date).seconds
+        min_duration = (datetime - data[0].date).seconds
         min_index = 0
 
-        for i in range(1, len(self.data)):
-            duration = (datetime - self.data[i].date).seconds
+        for i in range(1, len(data)):
+            duration = (datetime - data[i].date).seconds
             if abs(duration) < min_duration:
                 min_duration = duration
                 min_index = i

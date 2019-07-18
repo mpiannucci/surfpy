@@ -13,17 +13,17 @@ class NOAAModel(object):
         binary_mode='binary'
         ascii_mode='ascii'
 
-    def __init__(self, name, description, bottom_left, top_right, loc_res, time_res, max_alt=0.0, min_alt=0.0, alt_res=0.0):
+    def __init__(self, name, description, bottom_left, top_right, location_resolution, time_resolution, max_altitude=0.0, min_altitude=0.0, altitude_resolution=0.0, data={}):
         self.name = name
         self.description = description
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.max_altitude = max_alt
         self.min_altitude = min_alt
-        self.altitude_resolution = alt_res
-        self.location_resolution = loc_res
-        self.time_resolution = time_res
-        self.data = {}
+        self.altitude_resolution = altitude_resolution
+        self.location_resolution = location_resolution
+        self.time_resolution = time_resolution
+        self.data = data
 
     def reset_data(self):
         self.data = {}

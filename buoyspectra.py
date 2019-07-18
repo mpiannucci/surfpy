@@ -6,11 +6,11 @@ from .swell import Swell
 
 class BuoySpectra(object):
 
-    def __init__(self):
-        self.frequency= []
-        self.energy = []
-        self.angle = []
-        self.seperation_frequency = float('nan')
+    def __init__(self, frequency=[], energy=[], angle=[], seperation_frequency=float('nan')):
+        self.frequency= frequency
+        self.energy = energy
+        self.angle = angle
+        self.seperation_frequency = seperation_frequency
 
     @property
     def average_period(self):
@@ -94,13 +94,13 @@ class BuoySpectra(object):
             component.period = 1.0 / self.frequency[max_indexes[i]]
             component.direction = self.angle[max_indexes[i]]
             component.compass_direction = degree_to_direction(component.direction)
-            component._max_energy = max_values[i]
-            component._frequency_index = max_indexes[i]
+            component.max_energy = max_values[i]
+            component.frequency_index = max_indexes[i]
             components.append(component)
 
             prev_index = min_index
 
-        components.sort(key=lambda x: x._max_energy, reverse=True)
+        components.sort(key=lambda x: x.max_energy, reverse=True)
         return components
 
     @property

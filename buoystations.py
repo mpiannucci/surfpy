@@ -12,8 +12,11 @@ class BuoyStations(BaseStations):
 
     active_buoys_url="https://www.ndbc.noaa.gov/activestations.xml"
 
-    def __init__(self):
+    def __init__(self, stations=[], fetch_date=None):
         super(BuoyStations, self).__init__()
+
+        self.stations = stations
+        self.fetch_date = fetch_date
 
     def find_closest_buoy(self, location, active=False, buoy_type=BuoyStation.BuoyType.none):
         if len(self.stations) < 1:
@@ -26,7 +29,7 @@ class BuoyStations(BaseStations):
             if active and not station.active:
                 continue
             if buoy_type != BuoyStation.BuoyType.none:
-                if station.type != buoy_type:
+                if station.buoy_type != buoy_type:
                     continue
 
             dist = location.distance(station.location)
@@ -49,7 +52,7 @@ class BuoyStations(BaseStations):
             if active and not station.active:
                 continue
             if buoy_type != BuoyStation.BuoyType.none:
-                if station.type != buoy_type:
+                if station.buoy_type != buoy_type:
                     continue
 
             dist = location.distance(station.location)
@@ -91,7 +94,7 @@ class BuoyStations(BaseStations):
             buoy = BuoyStation(station_id, loc)
             buoy.owner = attribs['owner']
             buoy.program = attribs['pgm']
-            buoy.type = attribs['type']
+            buoy.buoy_type = attribs['type']
             if 'met' in attribs:
                 buoy.active = 'y' in attribs['met']
             if 'currents' in attribs:

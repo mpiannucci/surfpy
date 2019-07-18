@@ -4,15 +4,14 @@ from . import units
 
 class Location(object):
 
-    def __init__(self, lat, lon, name='', alt=0):
-        self.latitude = lat
-        self.longitude = lon
-        self.altitude = alt
+    def __init__(self, latitude=0.0, longitude=0.0, name='', altitude=0, depth=0.0, angle=0.0, slope=0.0):
+        self.latitude = latitude
+        self.longitude = longitude
+        self.altitude = altitude
         self.name = name
-
-        self.depth = 0.0
-        self.angle = 0.0
-        self.slope = 0.0
+        self.depth = depth
+        self.angle = angle
+        self.slope = slope
 
     @property
     def adjusted_longitude(self):

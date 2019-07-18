@@ -11,3 +11,4 @@ from .sun import Sun
 from .tidestation import TideStation
 from .tidestations import TideStations
 from .tideevent import TideEvent
+from .serialize import *
