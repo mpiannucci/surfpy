@@ -10,9 +10,11 @@ def serialize_hook(val):
 			'epoch': val.timestamp(),
 		}
 	else:
-		out = val.__dict__
-		out['__class__'] = val.__class__.__name__
-		out['__module__'] = val.__module__
+		out = {
+			'__class__': val.__class__.__name__,
+			'__module__': val.__module__,
+		}
+		out.update(val.__dict__)
 		return out
 
 
