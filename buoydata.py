@@ -9,7 +9,7 @@ import datetime
 class BuoyData(BaseData):
 
     def __init__(self, unit, date=None, expiration_date=None, wind_direction=float('nan'), wind_compass_direction='', 
-        wind_speed=float('nan'), wind_gust=float('nan'), wave_summary=None, swell_components=[], steepness='', average_period=float('nan'),
+        wind_speed=float('nan'), wind_gust=float('nan'), wave_summary=None, swell_components=None, steepness='', average_period=float('nan'),
         wave_spectra=None, minimum_breaking_height=float('nan'), maximum_breaking_height=float('nan'), pressure=float('nan'),
         air_temperature=float('nan'), water_temperature=float('nan'), dewpoint_temperature=float('nan'), pressure_tendency=float('nan'), water_level=float('nan')):
         super(BuoyData, self).__init__(unit)
@@ -30,9 +30,13 @@ class BuoyData(BaseData):
         if self.wave_summary is None:
             self.wave_summary = Swell(unit)
         self.swell_components = swell_components
+        if self.swell_components is None:
+            self.swell_components = []
         self.steepness = steepness
         self.average_period = average_period
         self.wave_spectra = wave_spectra
+        if self.wave_spectra is None:
+            self.wave_spectra = BuoySpectra()
         self.minimum_breaking_height = minimum_breaking_height
         self.maximum_breaking_height = maximum_breaking_height
 

@@ -227,7 +227,6 @@ class NOAAModel(object):
                 buoy_data_point = BuoyData(units.Units.metric)
                 if self._to_buoy_data_ascii(buoy_data_point, i):
                     buoy_data.append(buoy_data_point)
-
         return buoy_data
 
     def fill_buoy_data(self, buoy_data):

@@ -11,10 +11,11 @@ class TideStations(BaseStations):
 
     tide_stations_url = 'https://tidesandcurrents.noaa.gov/cgi-bin/map2/odinmap.cgi'
 
-    def __init__(self, stations=[], fetch_date=None):
+    def __init__(self, stations=None, fetch_date=None):
         super(TideStations, self).__init__()
 
-        self.stations = stations
+        if stations is not None:
+            self.stations = stations
         self.fetch_date = fetch_date
 
     def fetch_stations(self):

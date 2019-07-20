@@ -118,6 +118,7 @@ class WaveModel(NOAAModel):
         buoy_data_point.wind_direction = self.data['WDIR'][i]
         buoy_data_point.wind_compass_direction = units.degree_to_direction(buoy_data_point.wind_direction)
         buoy_data_point.wind_speed = self.data['WIND'][i]
+
         return True
 
 def us_east_coast_wave_model():
