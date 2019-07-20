@@ -10,7 +10,7 @@ import math
 class GFSModel(NOAAModel):
 
     _base_gfs_ascii_url = 'https://nomads.ncep.noaa.gov:9090/dods/{0}/gfs{1}/{0}_{2}.ascii?time[{6}:{7}],ugrd10m[{6}:{7}][{4}][{5}],vgrd10m[{6}:{7}][{4}][{5}],gustsfc[{6}:{7}][{4}][{5}]'
-    _base_gfs_grib_url = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_{0}.pl?file=gfs.t{1}z.pgrb2full.{2}.f{3}&lev_10_m_above_ground=on&var_GUST=on&var_PRES=on&var_TMP=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon={4}&rightlon={5}&toplat={6}&bottomlat={7}&dir=%2Fgfs.{8}{1}'
+    _base_gfs_grib_url = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_{0}.pl?file=gfs.t{1}z.pgrb2full.{2}.f{3}&lev_10_m_above_ground=on&var_GUST=on&var_PRES=on&var_TMP=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon={4}&rightlon={5}&toplat={6}&bottomlat={7}&dir=%2Fgfs.{8}%2F{1}'
 
     @property
     def model_degree(self):
@@ -82,4 +82,4 @@ class NAMModel(NOAAModel):
         return url
 
 def global_gfs_model():
-    return GFSModel('gfs_0p50', 'Global GFS 0.5 deg', Location(-90.00000, 0.00000), Location(90.0000, 359.5000), 0.5, 0.125, min_alt=1000.0, max_alt=1.0, alt_res=21.717)
+    return GFSModel('gfs_0p50', 'Global GFS 0.5 deg', Location(-90.00000, 0.00000), Location(90.0000, 359.5000), 0.5, 0.125, min_altitude=1000.0, max_altitude=1.0, altitude_resolution=21.717)

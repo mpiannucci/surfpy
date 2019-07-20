@@ -18,8 +18,8 @@ class NOAAModel(object):
         self.description = description
         self.bottom_left = bottom_left
         self.top_right = top_right
-        self.max_altitude = max_alt
-        self.min_altitude = min_alt
+        self.max_altitude = max_altitude
+        self.min_altitude = min_altitude
         self.altitude_resolution = altitude_resolution
         self.location_resolution = location_resolution
         self.time_resolution = time_resolution
