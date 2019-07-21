@@ -259,26 +259,26 @@ class BuoyStation(BaseStation):
         print(self.latest_reading_url)
         response = requests.get(self.latest_reading_url)
         if len(response.text) < 1:
-            return False
+            return None
         return self.parse_latest_reading_data(response.text)
 
     def fetch_meteorological_reading(self, data_count=20):
         response = requests.get(self.meteorological_reading_url)
         if len(response.text) < 1:
-            return False
+            return None
         return self.parse_meteorological_reading_data(response.text, data_count)
 
     def fetch_detailed_wave_reading(self, data_count=20):
         response = requests.get(self.detailed_wave_reading_url)
         if len(response.text) < 1:
-            return False
+            return None
         return self.parse_detailed_wave_reading_data(response.text, data_count)
 
     def fetch_wave_spectra_reading(self, data_count=20):
         energy_response = requests.get(self.wave_energy_reading_url)
         directional_response = requests.get(self.directional_wave_reading_url)
         if len(energy_response.text) < 1 or len(directional_response.text) < 1:
-            return False
+            return None
         return self.parse_wave_spectra_reading_data(energy_response.text, directional_response.text, data_count)
 
     @staticmethod
