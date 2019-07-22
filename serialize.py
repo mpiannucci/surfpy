@@ -19,11 +19,11 @@ def serialize_hook(val):
 
 
 def serialize(val):
-	return json.dumps(val, default=serialize_hook)
+	return json.dumps(val, default=serialize_hook).replace('NaN', 'null')
 
 
 def serialize_to_dict(val):
-	return json.loads(json.dumps(val, default=serialize_hook))
+	return json.loads(json.dumps(val, default=serialize_hook).replace('NaN', 'null'))
 
 
 def deserialize_hook(raw):
