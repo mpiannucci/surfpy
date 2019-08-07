@@ -20,8 +20,10 @@ Because of the crappy python 2/3 compatability fo packages, to run this test you
 ```bash
 python -m surfpy.test_forecast
 python -m surfpy.test_buoy
+python -m surfpy.test_sun
+python -m surfpy.test_tides
 ```
 
 ## License
 
-This project is [`MIT` Licensed](https://choosealicense.com/licenses/mit/#). Please see [`LICENSE.txt`](LICENSE.txt) for more info. 
+This project is [`MIT` Licensed](LICENSE.txt). Please see [`LICENSE.txt`](LICENSE.txt) for more info. 
