@@ -5,10 +5,7 @@ import pytz
 
 def serialize_hook(val):
 	if isinstance(val, datetime.datetime):
-		return {
-			'classname__': 'datetime.datetime',
-			'epoch': val.timestamp(),
-		}
+		return val.timestamp()
 	else:
 		out = {
 			'classname__': val.__class__.__name__,
