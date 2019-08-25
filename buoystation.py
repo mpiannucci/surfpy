@@ -71,6 +71,7 @@ class BuoyStation(BaseStation):
 
         swell_period_read = False
         swell_direction_read = False
+        wave_summary = Swell(units.Units.english)
         swell_component = Swell(units.Units.english)
         wind_wave_component = Swell(units.Units.english)
 
@@ -88,9 +89,9 @@ class BuoyStation(BaseStation):
             elif variable == 'gust':
                 data.wind_gust = units.convert(parse_float(raw_value[0]), units.Measurement.speed, units.Units.knots, units.Units.english)
             elif variable == 'seas':
-                data.wave_summary.wave_height = parse_float(raw_value[0])
+                wave_summary.wave_height = parse_float(raw_value[0])
             elif variable == 'peak period':
-                data.wave_summary.period = parse_float(raw_value[0])
+                wave_summary.period = parse_float(raw_value[0])
             elif variable == 'pres':
                 data.pressure = parse_float(raw_value[0])
                 if len(raw_value) > 1:
@@ -125,6 +126,8 @@ class BuoyStation(BaseStation):
                     wind_wave_component.compass_direction = raw_value[0]
                     wind_wave_component.direction = units.direction_to_degree(wind_wave_component.compass_direction)
 
+        if not math.isnan(wave_summary.wave_height):
+            data.wave_summary = wave_summary
         if not math.isnan(swell_component.wave_height):
             data.swell_components.append(swell_component)
         if not math.isnan(wind_wave_component.wave_height):
@@ -146,6 +149,8 @@ class BuoyStation(BaseStation):
         if data_lines > count_limit and count_limit > 0:
             data_lines = count_limit
 
+        wave_summary = Swell(units.Units.english)
+
         all_data = []
         for i in range(header_lines, header_lines + data_lines):
             raw_data_line = raw_data[i].split()
@@ -155,11 +160,11 @@ class BuoyStation(BaseStation):
             data.wind_compass_direction = units.degree_to_direction(data.wind_direction)
             data.wind_speed = parse_float(raw_data_line[6])
             data.wind_gust = parse_float(raw_data_line[7])
-            data.wave_summary.wave_height = parse_float(raw_data_line[8])
-            data.wave_summary.period = parse_float(raw_data_line[9])
+            wave_summary.wave_height = parse_float(raw_data_line[8])
+            wave_summary.period = parse_float(raw_data_line[9])
             data.average_period = parse_float(raw_data_line[10])
-            data.wave_summary.direction = parse_float(raw_data_line[11])
-            data.wave_summary.compass_direction = units.degree_to_direction(data.wave_summary.direction)
+            wave_summary.direction = parse_float(raw_data_line[11])
+            wave_summary.compass_direction = units.degree_to_direction(wave_summary.direction)
             data.pressure = parse_float(raw_data_line[12])
             data.air_temperature = parse_float(raw_data_line[13])
             data.water_temperature = parse_float(raw_data_line[14])
@@ -168,6 +173,9 @@ class BuoyStation(BaseStation):
             data.water_level = units.convert(parse_float(raw_data_line[18]), units.Measurement.length, units.Units.english, units.Units.metric)
             data.find_expiration_date()
             all_data.append(data)
+
+        if not math.isnan(wave_summary.wave_height):
+            data.wave_summary = wave_summary
 
         return all_data
 
@@ -186,6 +194,7 @@ class BuoyStation(BaseStation):
         for i in range(header_lines, header_lines + data_lines):
             raw_data_line = raw_data[i].split()
             data = BuoyData(units.Units.metric)
+            data.wave_summary = Swell(units.Units.english)
             swell_component = Swell(units.Units.metric)
             wind_wave_component = Swell(units.Units.metric)
             data.date = pytz.utc.localize(datetime(*[int(x) for x in raw_data_line[0:5]]))

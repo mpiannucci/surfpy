@@ -27,16 +27,12 @@ class BuoyData(BaseData):
 
         # Waves
         self.wave_summary = wave_summary
-        if self.wave_summary is None:
-            self.wave_summary = Swell(unit)
         self.swell_components = swell_components
         if self.swell_components is None:
             self.swell_components = []
         self.steepness = steepness
         self.average_period = average_period
         self.wave_spectra = wave_spectra
-        if self.wave_spectra is None:
-            self.wave_spectra = BuoySpectra()
         self.minimum_breaking_height = minimum_breaking_height
         self.maximum_breaking_height = maximum_breaking_height
 
@@ -52,7 +48,8 @@ class BuoyData(BaseData):
         old_unit = self.unit
         super(BuoyData, self).change_units(new_units)
 
-        self.wave_summary.change_units(new_units)
+        if self.wave_summary is not None:
+            self.wave_summary.change_units(new_units)
         for swell in self.swell_components:
             swell.change_units(new_units)
 
