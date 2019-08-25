@@ -149,12 +149,11 @@ class BuoyStation(BaseStation):
         if data_lines > count_limit and count_limit > 0:
             data_lines = count_limit
 
-        wave_summary = Swell(units.Units.english)
-
         all_data = []
         for i in range(header_lines, header_lines + data_lines):
             raw_data_line = raw_data[i].split()
             data = BuoyData(units.Units.metric)
+            wave_summary = Swell(units.Units.metric)
             data.date = pytz.utc.localize(datetime(*[int(x) for x in raw_data_line[0:5]]))
             data.wind_direction = parse_float(raw_data_line[5])
             data.wind_compass_direction = units.degree_to_direction(data.wind_direction)
@@ -194,7 +193,7 @@ class BuoyStation(BaseStation):
         for i in range(header_lines, header_lines + data_lines):
             raw_data_line = raw_data[i].split()
             data = BuoyData(units.Units.metric)
-            data.wave_summary = Swell(units.Units.english)
+            data.wave_summary = Swell(units.Units.metric)
             swell_component = Swell(units.Units.metric)
             wind_wave_component = Swell(units.Units.metric)
             data.date = pytz.utc.localize(datetime(*[int(x) for x in raw_data_line[0:5]]))
