@@ -1,17 +1,6 @@
-import os
-import sys
-sys.path.insert(0, os.path.abspath(__file__))
-
-from .tidestations import TideStations
-from .tidestation import TideStation
-from .tideevent import TideEvent
-from . import units
-from . import tools
-
 import datetime
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import numpy as np
+
+import surfpy
 
 
 class TidePlots(object):

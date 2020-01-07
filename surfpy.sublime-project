@@ -1,8 +1,18 @@
 {
-        "folders":
-    [
-        {
-            "path": "."
-        }
-    ]
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+	"settings":
+	{
+		"LSP":
+		{
+			"pyls":
+			{
+				"enabled": true
+			}
+		}
+	}
 }
