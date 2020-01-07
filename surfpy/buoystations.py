@@ -12,10 +12,11 @@ class BuoyStations(BaseStations):
 
     active_buoys_url="https://www.ndbc.noaa.gov/activestations.xml"
 
-    def __init__(self, stations=[], fetch_date=None):
+    def __init__(self, stations=None, fetch_date=None):
         super(BuoyStations, self).__init__()
 
-        self.stations = stations
+        if stations is not None:
+            self.stations = stations
         self.fetch_date = fetch_date
 
     def find_closest_buoy(self, location, active=False, buoy_type=BuoyStation.BuoyType.none):

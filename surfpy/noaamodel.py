@@ -18,8 +18,8 @@ class NOAAModel(object):
         self.description = description
         self.bottom_left = bottom_left
         self.top_right = top_right
-        self.max_altitude = max_alt
-        self.min_altitude = min_alt
+        self.max_altitude = max_altitude
+        self.min_altitude = min_altitude
         self.altitude_resolution = altitude_resolution
         self.location_resolution = location_resolution
         self.time_resolution = time_resolution
@@ -227,7 +227,6 @@ class NOAAModel(object):
                 buoy_data_point = BuoyData(units.Units.metric)
                 if self._to_buoy_data_ascii(buoy_data_point, i):
                     buoy_data.append(buoy_data_point)
-
         return buoy_data
 
     def fill_buoy_data(self, buoy_data):

@@ -6,10 +6,16 @@ from .swell import Swell
 
 class BuoySpectra(object):
 
-    def __init__(self, frequency=[], energy=[], angle=[], seperation_frequency=float('nan')):
-        self.frequency= frequency
+    def __init__(self, frequency=None, energy=None, angle=None, seperation_frequency=float('nan')):
+        self.frequency = frequency
+        if self.frequency is None:
+            self.frequency = []
         self.energy = energy
+        if self.energy is None:
+            self.energy = []
         self.angle = angle
+        if self.angle is None:
+            self.angle = []
         self.seperation_frequency = seperation_frequency
 
     @property

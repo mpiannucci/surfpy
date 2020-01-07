@@ -4,12 +4,15 @@ wind_directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW',
 epoch_days_since_zero = 719164
 
 def degree_to_direction(degree):
+    if math.isnan(degree):
+        return 'NULL'
+
     # Normalize to a positive float
     degree = abs(degree)
 
     # ake sure its in the range
     if degree > 361:
-        return "NULL"
+        return 'NULL'
 
     wind_index = int((degree+11.25)/22.5 - 0.02)
     if wind_index >= len(wind_directions):

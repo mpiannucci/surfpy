@@ -11,3 +11,7 @@ python setup.py test
 ## Examples
 
 See the `examples` directory for usage
+
+## License
+
+This project is [`MIT` Licensed](LICENSE)

@@ -6,7 +6,7 @@ from .basedata import BaseData
 
 class Swell(BaseData):
 
-    def __init__(self, unit, wave_height=float('nan'), period=float('nan'), direction=float('nan'), compass_direction=None, max_energy = 0.0, frequency_index = 0.0):
+    def __init__(self, unit, wave_height=float('nan'), period=float('nan'), direction=float('nan'), compass_direction=None, max_energy = 0, frequency_index = 0):
         super(Swell, self).__init__(unit)
 
         self.wave_height = wave_height

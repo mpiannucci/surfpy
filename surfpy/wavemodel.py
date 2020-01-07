@@ -41,6 +41,7 @@ class WaveModel(NOAAModel):
         elif buoy_data_point.date != raw_date:
             return False
 
+        buoy_data_point.wave_summary = Swell(units.Units.metric)
         buoy_data_point.wave_summary.direction = self.data['dirpwsfc'][i]
         buoy_data_point.wave_summary.compass_direction = units.degree_to_direction(buoy_data_point.wave_summary.direction)
         buoy_data_point.wave_summary.wave_height = self.data['htsgwsfc'][i]
@@ -86,6 +87,7 @@ class WaveModel(NOAAModel):
         elif buoy_data_point.date != raw_date:
             return False
 
+        buoy_data_point.wave_summary = Swell(units.Units.metric)
         buoy_data_point.wave_summary.direction = self.data['DIRPW'][i]
         buoy_data_point.wave_summary.compass_direction = units.degree_to_direction(buoy_data_point.wave_summary.direction)
         buoy_data_point.wave_summary.wave_height = self.data['HTSGW'][i]
@@ -118,6 +120,7 @@ class WaveModel(NOAAModel):
         buoy_data_point.wind_direction = self.data['WDIR'][i]
         buoy_data_point.wind_compass_direction = units.degree_to_direction(buoy_data_point.wind_direction)
         buoy_data_point.wind_speed = self.data['WIND'][i]
+
         return True
 
 def us_east_coast_wave_model():
