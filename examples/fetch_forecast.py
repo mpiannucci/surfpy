@@ -1,23 +1,13 @@
-import os
-import sys
-sys.path.insert(0, os.path.abspath(__file__))
-
-from . import wavemodel
-from . import weathermodel
-from . import tools
-from . import units
-from .location import Location
-from . import serialize
-
 import matplotlib.pyplot as plt
 
+import surfpy
 
 if __name__=='__main__':
-    ri_wave_location = Location(41.4, -71.45, altitude=30.0, name='Block Island Sound')
+    ri_wave_location = surfpy.Location(41.4, -71.45, altitude=30.0, name='Block Island Sound')
     ri_wave_location.depth = 30.0
     ri_wave_location.angle = 145.0
     ri_wave_location.slope = 0.02
-    ec_wave_model = wavemodel.us_east_coast_wave_model()
+    ec_wave_model = surfpy.wavemodel.us_east_coast_wave_model()
 
     print('Fetching WW3 Wave Data')
     if ec_wave_model.fetch_grib_datas(ri_wave_location, 0, 60):
@@ -27,8 +17,8 @@ if __name__=='__main__':
         sys.exit(1)
 
     print('Fetching GFS Weather Data')
-    ri_wind_location = Location(41.6, -71.5, altitude=10.0, name='Narragansett Pier')
-    gfs_model = weathermodel.global_gfs_model()
+    ri_wind_location = surfpy.Location(41.6, -71.5, altitude=10.0, name='Narragansett Pier')
+    gfs_model = surfpy.weathermodel.global_gfs_model()
     if gfs_model.fetch_grib_datas(ri_wind_location, 0, 60):
         gfs_model.fill_buoy_data(data)
     else:
@@ -37,8 +27,8 @@ if __name__=='__main__':
 
     for dat in data:
         dat.solve_breaking_wave_heights(ri_wave_location)
-        dat.change_units(units.Units.english)
-    json_data = serialize(data)
+        dat.change_units(surfpy.units.Units.english)
+    json_data = surfpy.serialize(data)
     with open('forecast.json', 'w') as outfile:
         outfile.write(json_data)
 
