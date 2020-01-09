@@ -1,4 +1,6 @@
 import datetime
+import numpy as np
+import matplotlib.pyplot as plt
 
 import surfpy
 
@@ -6,7 +8,7 @@ import surfpy
 class TidePlots(object):
 
     def __init__(self):
-        _stations = TideStations()
+        _stations = surfpy.TideStations()
         _stations.fetch_stations()
 
         self.stations = {}
@@ -15,11 +17,11 @@ class TidePlots(object):
             self.stations[station.station_id] = station
 
     def fetch_water_level_data(self, station_id, start_date, end_date):
-        self.data[station_id] = self.stations[station_id].fetch_tide_data(start_date, end_date, interval=TideStation.DataInterval.default, unit=units.Units.english)
+        self.data[station_id] = self.stations[station_id].fetch_tide_data(start_date, end_date, interval=surfpy.TideStation.DataInterval.default, unit=surfpy.units.Units.english)
         return len(self.data[station_id][0]) > 0
 
     def fetch_tidal_data(self, station_id, start_date, end_date):
-        self.data[station_id] = self.stations[station_id].fetch_tide_data(start_date, end_date, interval=TideStation.DataInterval.high_low, unit=units.Units.english)
+        self.data[station_id] = self.stations[station_id].fetch_tide_data(start_date, end_date, interval=surfpy.TideStation.DataInterval.high_low, unit=surfpy.units.Units.english)
         return len(self.data[station_id][0]) > 0
 
     def plot_tidal_events(self, station_id):
@@ -54,10 +56,10 @@ class TidePlots(object):
 
         dates = [x.date for x in tidal_data]
         levels = [x.water_level for x in tidal_data]
-        low_dates = [x.date for x in tidal_events if x.tidal_event == TideEvent.TidalEventType.low_tide]
-        low_levels = [x.water_level for x in tidal_events if x.tidal_event== TideEvent.TidalEventType.low_tide]
-        high_dates = [x.date for x in tidal_events if x.tidal_event == TideEvent.TidalEventType.high_tide]
-        high_levels = [x.water_level for x in tidal_events if x.tidal_event == TideEvent.TidalEventType.high_tide]
+        low_dates = [x.date for x in tidal_events if x.tidal_event == surfpy.TideEvent.TidalEventType.low_tide]
+        low_levels = [x.water_level for x in tidal_events if x.tidal_event== surfpy.TideEvent.TidalEventType.low_tide]
+        high_dates = [x.date for x in tidal_events if x.tidal_event == surfpy.TideEvent.TidalEventType.high_tide]
+        high_levels = [x.water_level for x in tidal_events if x.tidal_event == surfpy.TideEvent.TidalEventType.high_tide]
         
         plt.figure(1)
         plt.title('Station ' + station_id + ': Water Level (ft)')
