@@ -1,17 +1,13 @@
-import os
-import sys
-sys.path.insert(0, os.path.abspath(__file__))
-
-from .buoystations import BuoyStations
-
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cm
 
+import surfpy
+
 class BuoyPlots(object):
 
     def __init__(self):
-        _stations = BuoyStations()
+        _stations = surfpy.BuoyStations()
         _stations.fetch_stations()
 
         self.stations = {}
@@ -21,10 +17,6 @@ class BuoyPlots(object):
 
     def fetch_buoy_data(self, station_id, count):
         self.data[station_id] = self.stations[station_id].fetch_wave_spectra_reading(count)
-        return len(self.data[station_id]) > 0
-
-    def fetch_latest_buoy_data(self, station_id):
-        self.data[station_id] = [self.stations[station_id].fetch_latest_reading()]
         return len(self.data[station_id]) > 0
 
     def plot_directional_spectra(self, station_id):
@@ -74,7 +66,6 @@ class BuoyPlots(object):
 
 if __name__ == '__main__':
     plots = BuoyPlots()
-    plots.fetch_latest_buoy_data('44017')
     plots.fetch_buoy_data('44097', 1)
     plots.plot_directional_spectra('44097')
     plots.plot_wave_energy('44097')
