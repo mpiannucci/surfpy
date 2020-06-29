@@ -66,12 +66,12 @@ class BuoyData(BaseData):
 
     def find_expiration_date(self):
         time_now = datetime.datetime.now()
-        if time_now.minute < 25:
-            self.expiration_date = time_now + datetime.timedelta(minutes=25 - time_now.minute)
+        if time_now.minute < 2:
+            self.expiration_date = time_now + datetime.timedelta(minutes=35 - time_now.minute)
         elif time_now.minute < 50:
             self.expiration_date = time_now + datetime.timedelta(minutes=50 - time_now.minute)
         else:
-            self.expiration_date = time_now + datetime.timedelta(minutes=60 - time_now.minute)
+            self.expiration_date = time_now + datetime.timedelta(minutes=(60 - time_now.minute) + 35)
 
     def interpolate_dominant_wave_direction(self):
         min_diff = float('inf')

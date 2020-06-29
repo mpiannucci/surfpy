@@ -220,7 +220,7 @@ class BuoyStation(BaseStation):
 
         return all_data
 
-    def parse_wave_spectra_reading_data(self, energy_data, directional_data, count_limit):
+    def parse_wave_spectra_reading_data(self, energy_data, directional_data, count_limit, latest_report_date=None):
         energy_data = energy_data.split('\n')
         directional_data = directional_data.split('\n')
         if len(energy_data) != len(directional_data):
@@ -242,7 +242,10 @@ class BuoyStation(BaseStation):
 
             spectra = BuoySpectra()
             data = BuoyData(units.Units.metric)
-            data.date = pytz.utc.localize(datetime(*[int(x) for x in raw_energy[0:5]]))
+            if len(all_data) == 0 and latest_report_date is not None:
+                data.date = pytz.utc.localize(latest_report_date)
+            else:
+                data.date = pytz.utc.localize(datetime(*[int(x) for x in raw_energy[0:5]]))
 
             for j in range(5, len(raw_directional), 2):
                 spectra.frequency.append(parse_float(raw_directional[j + 1]))
@@ -287,7 +290,14 @@ class BuoyStation(BaseStation):
         directional_response = requests.get(self.directional_wave_reading_url)
         if len(energy_response.text) < 1 or len(directional_response.text) < 1:
             return None
-        return self.parse_wave_spectra_reading_data(energy_response.text, directional_response.text, data_count)
+
+        # The spectra date is often update multiple times per hour but the time reported in the data is
+        # only the most recent hour number which is not accurate enough for us unless it is in the past. 
+        # FORMAT Mon, 29 Jun 2020 14:50:20 GMT
+        raw_modification_date = energy_response.headers['Last-Modified']
+        modification_date = datetime.strptime(raw_modification_date, '%a, %d %b %Y %H:%M:%S %Z')
+        
+        return self.parse_wave_spectra_reading_data(energy_response.text, directional_response.text, data_count, modification_date)
 
     @staticmethod
     def data_index_for_date(data, datetime):

@@ -12,4 +12,5 @@ setup(name='surfpy',
       dependency_links=['https://github.com/mpiannucci/grippy/tarball/master#egg=grippy-0.1.0'],
       test_suite='nose.collector',
       tests_require=['nose'],
+      setup_requires=['nose>=1.0'],
       zip_safe=False)
