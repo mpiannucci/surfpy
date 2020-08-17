@@ -2,16 +2,21 @@ import math
 import json
 import datetime
 import bisect
+import time
 try:
     import requests
+    from requests.adapters import HTTPAdapter
+    from requests.packages.urllib3.util.retry import Retry
 except:
     pass
+
 
 def scalar_from_uv(ucomponent, vcomponent):
     # Calculates the scalar magnitude and heading angle from uv vector components
     angle = (270.0 - (math.atan2(vcomponent, ucomponent) * (180.0 / math.pi))) % 360
     speed = math.sqrt(math.pow(abs(vcomponent), 2) + math.pow(abs(ucomponent), 2))
     return speed, angle
+
 
 def ldis(period, depth):
     # Computes the wavelength for a wave with the given period
@@ -51,6 +56,7 @@ def ldis(period, depth):
 
     return 2 * math.pi * depth / Xf
 
+
 def breaking_characteristics(period, incident_angle, deep_wave_height, beach_slope, water_depth):
     # Solves for the Breaking Wave Height and Breaking Water Depth given a swell and beach conditions.
     # All units are metric and gravity is 9.81.
@@ -79,6 +85,7 @@ def breaking_characteristics(period, incident_angle, deep_wave_height, beach_slo
 
     return breaking_wave_height, breaking_water_depth
 
+
 def refraction_coefficient(wavelength, depth, incident_angle):
     # Calculate the refraction coefficient Kr with given
     # inputs on a straight beach with parrellel bottom contours
@@ -88,6 +95,7 @@ def refraction_coefficient(wavelength, depth, incident_angle):
     refraction_coeff = math.sqrt(math.cos(incident_angle_rad) / math.cos(shallow_incident_angle_rad))
     shallow_incident_angle = shallow_incident_angle_rad * 180 / math.pi
     return refraction_coeff, shallow_incident_angle
+
 
 def shoaling_coefficient(wavelength, depth):
     # Calculate the shoaling coeffecient Ks. Units are metric, gravity is 9.81
@@ -106,16 +114,20 @@ def shoaling_coefficient(wavelength, depth):
 
     return math.sqrt(initial_celerity / (2 * group_velocity))
 
+
 def zero_spectral_moment(energy, bandwidth):
     # Calculates the zero moment of a wave spectra point given energy and bandwidth
     return energy * bandwidth
+
 
 def second_spectral_moment(energy, bandwidth, frequency):
     # Calculates the second moment of a wave spectra point given enrgy, frequency and bandwith
     return energy * bandwidth * math.pow(frequency, 2)
 
+
 def steepness_coeff_with_moments(zero_moment, second_moment):
     return (8.0 * math.pi * second_moment) / (9.81 * math.sqrt(zero_moment))
+
 
 def steepness(significant_wave_height, dominant_period):
     val = math.exp(-3.3 * math.log(dominant_period))
@@ -127,6 +139,7 @@ def steepness(significant_wave_height, dominant_period):
         return 'Average'
     else:
         return 'Swell'
+
 
 def peakdetect(v, delta, x = None):
     """
@@ -192,6 +205,7 @@ def peakdetect(v, delta, x = None):
 
     return min_indexes, min_values, max_indexes, max_values
 
+
 def parse_float(raw_value):
     value = float('nan')
     try:
@@ -200,6 +214,7 @@ def parse_float(raw_value):
         pass
     return value
 
+
 def simple_serialize(obj):
     if isinstance(obj, datetime.datetime):
         serial = obj.isoformat()
@@ -207,8 +222,10 @@ def simple_serialize(obj):
 
     return obj.__dict__
 
+
 def dump_json(obj):
     return json.dumps(obj, default=simple_serialize).replace('NaN', 'null')
+
 
 def download_data(url):
     if not len(url):
@@ -221,6 +238,36 @@ def download_data(url):
     if not len(response.content):
         return False
     return response.content
+
+
+def retry_session(retries=1):
+    session = requests.Session()
+    retries = Retry(total=retries,
+                backoff_factor=0.1,
+                status_forcelist=[500, 502, 503, 504],
+                method_whitelist=frozenset(['GET', 'POST']))
+
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+    session.mount('http://', HTTPAdapter(max_retries=retries))
+    return session
+
+
+def download_with_retry(url):
+    if not len(url):
+        return None
+
+    try:
+        print('Downloading ' + url)
+        session = retry_session(retries=2)
+        response = session.get(url, timeout=5)
+        print('Downloaded ' + url)
+    except:
+        print('Failed to download ' + url)
+        return False
+    if not len(response.content):
+        return False
+    return response.content
+
 
 def closest_index(in_list, val):
     pos = bisect.bisect_left(in_list, val)

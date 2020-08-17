@@ -107,7 +107,7 @@ class NOAAModel(object):
         if not len(urls):
             return False
 
-        result = [tools.download_data(url) for url in urls]
+        result = [tools.download_with_retry(url) for url in urls]
         if not len(result):
             return False
 
