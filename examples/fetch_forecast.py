@@ -10,7 +10,7 @@ if __name__=='__main__':
     ec_wave_model = surfpy.wavemodel.us_east_coast_wave_model()
 
     print('Fetching WW3 Wave Data')
-    if ec_wave_model.fetch_grib_datas(ri_wave_location, 0, 60):
+    if ec_wave_model.fetch_grib_datas(ri_wave_location, 0, 180):
         data = ec_wave_model.to_buoy_data()
     else:
         print('Failed to fetch wave forecast data')
@@ -18,8 +18,8 @@ if __name__=='__main__':
 
     print('Fetching GFS Weather Data')
     ri_wind_location = surfpy.Location(41.6, -71.5, altitude=10.0, name='Narragansett Pier')
-    gfs_model = surfpy.weathermodel.global_gfs_model()
-    if gfs_model.fetch_grib_datas(ri_wind_location, 0, 60):
+    gfs_model = surfpy.weathermodel.hourly_gfs_model()
+    if gfs_model.fetch_grib_datas(ri_wind_location, 0, 180):
         gfs_model.fill_buoy_data(data)
     else:
         print('Failed to fetch wind forecast data')
