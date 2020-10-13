@@ -141,7 +141,7 @@ def us_west_coast_wave_model():
                      bottom_left=Location(25.00, 210.00), 
                      top_right=Location(50.00005, 250.00008), 
                      location_resolution=0.167, 
-                     time_resolution_=0.125, 
+                     time_resolution=0.125, 
                      max_index=180, 
                      hourly_cutoff_index=120)
 
