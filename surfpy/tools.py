@@ -257,11 +257,9 @@ def download_with_retry(url):
         return None
 
     try:
-        print('Downloading ' + url)
         session = retry_session(retries=2)
         response = session.get(url, timeout=5)
-        print('Downloaded ' + url)
-    except:
+    except e:
         print('Failed to download ' + url)
         return False
     if not len(response.content):

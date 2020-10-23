@@ -78,6 +78,8 @@ class NAMModel(NOAAModel):
         url = self._base_nam_url.format(datestring, hourstring, alt_index, lat_index, lon_index, start_time_index, end_time_index)
         return url
 
+# Change hourly_cutoff_index to 120 for hourly
+
 def hourly_gfs_model():
     return GFSModel(name='gfs_0p25_1hr', 
                     description='Global GFS 0.25 deg hourly', 
@@ -89,7 +91,7 @@ def hourly_gfs_model():
                     max_altitude=1.0, 
                     altitude_resolution=21.717, 
                     max_index=384, 
-                    hourly_cutoff_index=120)
+                    hourly_cutoff_index=0)
 
 
 # https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25_1hr.pl?file=gfs.t06z.pgrb2full.1hr.f159&lev_10_m_above_ground=on&var_GUST=on&var_PRES=on&var_TMP=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon=-72.0&rightlon=-71.0&toplat=42.0&bottomlat=41.0&dir=%2Fgfs.20200909%2F06

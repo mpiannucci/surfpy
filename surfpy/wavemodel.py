@@ -132,7 +132,7 @@ def us_east_coast_wave_model():
                      location_resolution=0.167, 
                      time_resolution=0.125, 
                      max_index=180, 
-                     hourly_cutoff_index=120)
+                     hourly_cutoff_index=0)
 
 
 def us_west_coast_wave_model():
@@ -143,7 +143,7 @@ def us_west_coast_wave_model():
                      location_resolution=0.167, 
                      time_resolution=0.125, 
                      max_index=180, 
-                     hourly_cutoff_index=120)
+                     hourly_cutoff_index=0)
 
 
 def pacific_islands_wave_model():
@@ -154,4 +154,4 @@ def pacific_islands_wave_model():
                      location_resolution=0.167, 
                      time_resolution=0.125, 
                      max_index=180,
-                     hourly_cutoff_index=120)
+                     hourly_cutoff_index=0)
