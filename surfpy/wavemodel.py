@@ -24,7 +24,7 @@ class WaveModel(NOAAModel):
     def create_grib_url(self, location, time_index):
         model_run_time = self.latest_model_time()
         model_run_str = str(model_run_time.hour).rjust(2, '0')
-        hour_str = str(int(time_index*self.time_resolution_hours)).rjust(3, '0')
+        hour_str = str(int(time_index)).rjust(3, '0')
         date_str = model_run_time.strftime('%Y%m%d')
         url = self._base_multigrid_grib_url.format(self.name, model_run_str, hour_str, date_str, float(math.floor(location.longitude)), float(math.ceil(location.longitude)), float(math.ceil(location.latitude)), float(math.floor(location.latitude)))
         return url
@@ -123,11 +123,35 @@ class WaveModel(NOAAModel):
 
         return True
 
+
 def us_east_coast_wave_model():
-    return WaveModel('multi_1.at_10m', 'Multi-grid wave model: US East Coast 10 arc-min grid', Location(0.00, 260.00), Location(55.00011, 310.00011), 0.167, 0.125)
+    return WaveModel(name='multi_1.at_10m', 
+                     description='Multi-grid wave model: US East Coast 10 arc-min grid', 
+                     bottom_left=Location(0.00, 260.00), 
+                     top_right=Location(55.00011, 310.00011), 
+                     location_resolution=0.167, 
+                     time_resolution=0.125, 
+                     max_index=180, 
+                     hourly_cutoff_index=0)
+
 
 def us_west_coast_wave_model():
-    return WaveModel('multi_1.wc_10m', 'Multi-grid wave model: US West Coast 10 arc-min grid', Location(25.00, 210.00), Location(50.00005, 250.00008), 0.167, 0.125)
+    return WaveModel(name='multi_1.wc_10m', 
+                     description='Multi-grid wave model: US West Coast 10 arc-min grid', 
+                     bottom_left=Location(25.00, 210.00), 
+                     top_right=Location(50.00005, 250.00008), 
+                     location_resolution=0.167, 
+                     time_resolution=0.125, 
+                     max_index=180, 
+                     hourly_cutoff_index=0)
+
 
 def pacific_islands_wave_model():
-    return WaveModel('multi_1.ep_10m', 'Multi-grid wave model: Pacific Islands (including Hawaii) 10 arc-min grid', Location(-20.00, 130.00), Location(30.0001, 215.00017), 0.167, 0.125)
+    return WaveModel(name='multi_1.ep_10m', 
+                     description='Multi-grid wave model: Pacific Islands (including Hawaii) 10 arc-min grid', 
+                     bottom_left=Location(-20.00, 130.00), 
+                     top_right=Location(30.0001, 215.00017), 
+                     location_resolution=0.167, 
+                     time_resolution=0.125, 
+                     max_index=180,
+                     hourly_cutoff_index=0)

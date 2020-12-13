@@ -13,7 +13,7 @@ class NOAAModel(object):
         binary_mode='binary'
         ascii_mode='ascii'
 
-    def __init__(self, name, description, bottom_left, top_right, location_resolution, time_resolution, max_altitude=0.0, min_altitude=0.0, altitude_resolution=0.0, data={}):
+    def __init__(self, name, description, bottom_left, top_right, location_resolution, time_resolution, max_index, hourly_cutoff_index=0, max_altitude=0.0, min_altitude=0.0, altitude_resolution=0.0, data={}):
         self.name = name
         self.description = description
         self.bottom_left = bottom_left
@@ -23,6 +23,8 @@ class NOAAModel(object):
         self.altitude_resolution = altitude_resolution
         self.location_resolution = location_resolution
         self.time_resolution = time_resolution
+        self.hourly_cutoff_index = hourly_cutoff_index
+        self.max_index = max_index
         self.data = data
 
     def reset_data(self):
@@ -80,8 +82,11 @@ class NOAAModel(object):
         diff = (desired_time - model_time).days * 24.0
         if diff < 1:
             return -1
-        hours_res = self.time_resolution_hours
-        return (diff + (hours_res - (diff % hours_res))) / hours_res
+        if diff <= self.hourly_cutoff_index:
+            return diff
+        else: 
+            hours_res = self.time_resolution_hours
+            return self.hourly_cutoff_index + ((diff - self.hourly_cutoff_index) / hours_res)
 
     def create_grib_url(self, location, time_index):
         return ''
@@ -89,6 +94,8 @@ class NOAAModel(object):
     def create_grib_urls(self, location, start_time_index, end_time_index):
         urls = []
         for i in range(start_time_index, end_time_index):
+            if i > self.hourly_cutoff_index and (i - self.hourly_cutoff_index) % self.time_resolution_hours != 0:
+                continue
             urls.append(self.create_grib_url(location, i))
         return urls
 
@@ -104,6 +111,7 @@ class NOAAModel(object):
 
     def fetch_grib_datas(self, location, start_time_index, end_time_index):
         urls = self.create_grib_urls(location, start_time_index, end_time_index)
+        print(urls)
         if not len(urls):
             return False
 
