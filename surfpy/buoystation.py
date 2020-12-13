@@ -4,7 +4,7 @@ from .buoyspectra import BuoySpectra
 from .swell import Swell
 from .location import Location
 from datetime import datetime
-from .tools import parse_float, steepness
+from .tools import parse_float, parse_int, steepness
 from . import units
 import re
 try:
@@ -57,6 +57,10 @@ class BuoyStation(BaseStation):
     @property
     def directional_wave_reading_url(self):
         return 'https://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.swdir'
+
+    @property
+    def wave_forecast_bulletin_url(self):
+        return 'https://polar.ncep.noaa.gov/waves/WEB/multi_1.latest_run/plots/multi_1.' + self.station_id + '.bull'
 
     def parse_latest_reading_data(self, raw_data):
         raw_data = raw_data.split('\n')
@@ -266,6 +270,64 @@ class BuoyStation(BaseStation):
 
         return all_data
 
+    def parse_wave_forecast_bulletin(self, raw_bulletin_data):
+        raw_lines = raw_bulletin_data.split('\n')
+        
+        HEADER_LINES = 7
+        FOOTER_LINES = 11
+        data_lines = len(raw_lines) - HEADER_LINES - FOOTER_LINES
+        if (data_lines < 1):
+            return None
+
+        today = datetime.today()    
+
+        buoy_data = []
+        for i in range(HEADER_LINES, data_lines):
+            columns = raw_lines[i].split('|')
+            if len(columns) < 8:
+                continue
+            
+            # First column is date and time, second is the index, all the other are wave components
+            raw_date_components = columns[0].split()
+            if len(raw_date_components) != 2:
+                continue
+
+            day = parse_int(raw_date_components[0].strip())
+            hour = parse_int(raw_date_components[1].strip())
+            month = today.month
+            if day < today.day:
+                if today.month == 12:
+                    month = 1
+                else: 
+                    month -= 1
+            
+            datapoint = BuoyData(unit=units.Units.metric)
+            datapoint.date = datetime(today.year, month, day, hour)
+
+            summary = columns[1].split()
+            if len(summary) < 2:
+                continue
+
+            significant_wave_height = parse_float(summary[0].strip())
+            datapoint.swell_components = []
+
+            for s in range(2, 8):
+                raw_wave_data = columns[s].split()
+                if len(raw_wave_data) < 3:
+                    break
+
+                component_wave_height = parse_float(raw_wave_data[0].strip())
+                component_period = parse_float(raw_wave_data[1].strip())
+                component_direction = parse_float(raw_wave_data[2].strip())
+                component_compass_direction = units.degree_to_direction(component_direction)
+                component = Swell(units.Units.metric, component_wave_height, component_period, component_direction, component_compass_direction)
+
+                if s == 2:
+                    datapoint.wave_summary = Swell(units.Units.metric, significant_wave_height, component_period, component_direction, component_compass_direction)
+                datapoint.swell_components.append(component)
+            
+        return buoy_data
+
     def fetch_latest_reading(self):
         print(self.latest_reading_url)
         response = requests.get(self.latest_reading_url)
@@ -298,6 +360,12 @@ class BuoyStation(BaseStation):
         modification_date = datetime.strptime(raw_modification_date, '%a, %d %b %Y %H:%M:%S %Z')
         
         return self.parse_wave_spectra_reading_data(energy_response.text, directional_response.text, data_count, modification_date)
+
+    def fetch_wave_forecast_bulletin(self):
+        response = requests.get(self.wave_forecast_bulletin_url)
+        if len(response.text) < 1:
+            return None
+        return self.parse_wave_forecast_bulletin(response.text)
 
     @staticmethod
     def data_index_for_date(data, datetime):

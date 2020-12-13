@@ -215,6 +215,15 @@ def parse_float(raw_value):
     return value
 
 
+def parse_int(raw_value):
+    value = int('nan')
+    try:
+        value = int(raw_value)
+    except:
+        pass
+    return value
+
+
 def simple_serialize(obj):
     if isinstance(obj, datetime.datetime):
         serial = obj.isoformat()
