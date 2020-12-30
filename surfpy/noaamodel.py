@@ -222,10 +222,13 @@ class NOAAModel(object):
     def create_netcdf_url(self):
         return ''
 
-    def fetch_netcdf_data(self, location, start_time_index, end_time_index):
-        url = self.create_netcdf_url()
-        raw_data = Dataset(url)
+    def fetch_and_parse_netcdf_data(self, location, start_time_index, end_time_index):
+        raw_data = self.fetch_netcdf_data()
         return self.parse_netcdf_data(raw_data, location, start_time_index, end_time_index)
+    
+    def fetch_netcdf_data(self):
+        url = self.create_netcdf_url()
+        return Dataset(url)
 
     def parse_netcdf_data(self, raw_data, location, start_time_index, end_time_index):
         self.data = {}

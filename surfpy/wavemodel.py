@@ -2,6 +2,7 @@ from .noaamodel import NOAAModel
 from .location import Location
 from .swell import Swell
 from . import units
+from . import tools
 from . import BuoyData
 from datetime import datetime
 import math
@@ -161,6 +162,9 @@ class WaveModel(NOAAModel):
                 buoy_data_point.wave_summary.direction)
             buoy_data_point.wave_summary.wave_height = self.data['htsgwsfc'][i]
             buoy_data_point.wave_summary.period = self.data['perpwsfc'][i]
+
+            buoy_data_point.wind_speed = self.data['windsfc'][i]
+            buoy_data_point.wind_direction = self.data['wdirsfc'][i]
 
             if self.data['swell_1'][i] > 0:
                 swell_1 = Swell(units.Units.metric)
