@@ -2,6 +2,7 @@ from .noaamodel import NOAAModel
 from .location import Location
 from .swell import Swell
 from . import units
+from . import BuoyData
 from datetime import datetime
 import math
 import pytz
@@ -11,6 +12,7 @@ class WaveModel(NOAAModel):
 
     _base_multigrid_ascii_url = 'https://nomads.ncep.noaa.gov:9090/dods/wave/mww3/{0}/{1}{0}_{2}.ascii?time[{5}:{6}],dirpwsfc.dirpwsfc[{5}:{6}][{3}][{4}],htsgwsfc.htsgwsfc[{5}:{6}][{3}][{4}],perpwsfc.perpwsfc[{5}:{6}][{3}][{4}],swdir_1.swdir_1[{5}:{6}][{3}][{4}],swdir_2.swdir_2[{5}:{6}][{3}][{4}],swell_1.swell_1[{5}:{6}][{3}][{4}],swell_2.swell_2[{5}:{6}][{3}][{4}],swper_1.swper_1[{5}:{6}][{3}][{4}],swper_2.swper_2[{5}:{6}][{3}][{4}],ugrdsfc.ugrdsfc[{5}:{6}][{3}][{4}],vgrdsfc.vgrdsfc[{5}:{6}][{3}][{4}],wdirsfc.wdirsfc[{5}:{6}][{3}][{4}],windsfc.windsfc[{5}:{6}][{3}][{4}],wvdirsfc.wvdirsfc[{5}:{6}][{3}][{4}],wvhgtsfc.wvhgtsfc[{5}:{6}][{3}][{4}],wvpersfc.wvpersfc[{5}:{6}][{3}][{4}]'
     _base_multigrid_grib_url = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_wave_multi.pl?file={0}.t{1}z.f{2}.grib2&all_lev=on&all_var=on&subregion=&leftlon={4}&rightlon={5}&toplat={6}&bottomlat={7}&dir=%2Fmulti_1.{3}'
+    _base_multigrid_netcdf_url = 'https://nomads.ncep.noaa.gov/dods/wave/mww3/{0}/{1}{0}_{2}'
 
     def create_ascii_url(self, location, start_time_index, end_time_index):
         timestamp = self.latest_model_time()
@@ -27,6 +29,14 @@ class WaveModel(NOAAModel):
         hour_str = str(int(time_index)).rjust(3, '0')
         date_str = model_run_time.strftime('%Y%m%d')
         url = self._base_multigrid_grib_url.format(self.name, model_run_str, hour_str, date_str, float(math.floor(location.longitude)), float(math.ceil(location.longitude)), float(math.ceil(location.latitude)), float(math.floor(location.latitude)))
+        return url
+
+    def create_netcdf_url(self):
+        timestamp = self.latest_model_time()
+        datestring = timestamp.strftime('%Y%m%d')
+        hourstring = timestamp.strftime('%Hz')
+
+        url = self._base_multigrid_netcdf_url.format(datestring, self.name, hourstring)
         return url
 
     def _to_buoy_data_ascii(self, buoy_data_point, i):
@@ -123,6 +133,28 @@ class WaveModel(NOAAModel):
 
         return True
 
+    def _to_buoy_data_netcdf(self, data):
+        buoy_data = []
+
+        time = data['time']
+        for i in range(0, len(time)):
+            buoy_data_point = BuoyData(unit=units.Units.metric)
+            buoy_data_point.date = pytz.utc.localize(time[i])
+
+            buoy_data_point.wave_summary = Swell(units.Units.metric)
+            buoy_data_point.wave_summary.direction = self.data['dirpwsfc'][i]
+            buoy_data_point.wave_summary.compass_direction = units.degree_to_direction(buoy_data_point.wave_summary.direction)
+            buoy_data_point.wave_summary.wave_height = self.data['htsgwsfc'][i]
+            buoy_data_point.wave_summary.period = self.data['perpwsfc'][i]
+
+
+            buoy_data_point.wind_direction = self.data['wdirsfc'][i]
+            buoy_data_point.wind_compass_direction = units.degree_to_direction(buoy_data_point.wind_direction)
+            buoy_data_point.wind_speed = self.data['windsfc'][i]
+
+            buoy_data.append(buoy_data_point)
+
+        return buoy_data
 
 def us_east_coast_wave_model():
     return WaveModel(name='multi_1.at_10m', 

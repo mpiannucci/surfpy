@@ -1,4 +1,11 @@
 import math
+import datetime
+try:
+    from netCDF4 import num2date
+except:
+    def num2date(dates):
+        return dates
+
 
 wind_directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
 epoch_days_since_zero = 719164
@@ -197,3 +204,6 @@ def unit_name(source_unit, source_meas, abbrev=True):
                 return 'knots'
     return ''
 
+def convert_netcdf_dates(date_var):
+    cvt = num2date(date_var[:], date_var.units)
+    return [datetime.datetime(year=x.year, month=x.month, day=x.day, hour=x.hour, minute=x.minute, second=x.second) for x in cvt]
