@@ -106,3 +106,11 @@ class BuoyData(BaseData):
 
         if old_unit != self.unit:
             self.change_units(old_unit)
+
+    def copy_wind_data(self, other):
+        if other.unit != self.unit:
+            other.change_units(self.unit)
+        
+        self.wind_speed = other.wind_speed
+        self.wind_direction = other.wind_direction
+        self.wind_compass_direction = other.wind_compass_direction

@@ -157,46 +157,47 @@ class WaveModel(NOAAModel):
             buoy_data_point.date = pytz.utc.localize(time[i])
 
             buoy_data_point.wave_summary = Swell(units.Units.metric)
-            buoy_data_point.wave_summary.direction = self.data['dirpwsfc'][i]
+            buoy_data_point.wave_summary.direction = self.data['dirpwsfc'][i].item()
             buoy_data_point.wave_summary.compass_direction = units.degree_to_direction(
                 buoy_data_point.wave_summary.direction)
-            buoy_data_point.wave_summary.wave_height = self.data['htsgwsfc'][i]
-            buoy_data_point.wave_summary.period = self.data['perpwsfc'][i]
+            buoy_data_point.wave_summary.wave_height = self.data['htsgwsfc'][i].item()
+            buoy_data_point.wave_summary.period = self.data['perpwsfc'][i].item()
 
-            buoy_data_point.wind_speed = self.data['windsfc'][i]
-            buoy_data_point.wind_direction = self.data['wdirsfc'][i]
+            buoy_data_point.wind_speed = self.data['windsfc'][i].item()
+            buoy_data_point.wind_direction = self.data['wdirsfc'][i].item()
+            buoy_data_point.wind_compass_direction = units.degree_to_direction(buoy_data_point.wind_direction)
 
             if self.data['swell_1'][i] > 0:
                 swell_1 = Swell(units.Units.metric)
-                swell_1.direction = self.data['swdir_1'][i]
+                swell_1.direction = self.data['swdir_1'][i].item()
                 swell_1.compass_direction = units.degree_to_direction(
                     swell_1.direction)
-                swell_1.wave_height = self.data['swell_1'][i]
-                swell_1.period = self.data['swper_1'][i]
+                swell_1.wave_height = self.data['swell_1'][i].item()
+                swell_1.period = self.data['swper_1'][i].item()
                 buoy_data_point.swell_components.append(swell_1)
 
             if self.data['swell_2'][i] > 0:
                 swell_2 = Swell(units.Units.metric)
-                swell_2.direction = self.data['swdir_2'][i]
+                swell_2.direction = self.data['swdir_2'][i].item()
                 swell_2.compass_direction = units.degree_to_direction(
                     swell_2.direction)
-                swell_2.wave_height = self.data['swell_2'][i]
-                swell_2.period = self.data['swper_2'][i]
+                swell_2.wave_height = self.data['swell_2'][i].item()
+                swell_2.period = self.data['swper_2'][i].item()
                 buoy_data_point.swell_components.append(swell_2)
 
             if self.data['wvhgtsfc'][i] > 0:
                 wind_swell = Swell(units.Units.metric)
-                wind_swell.direction = self.data['wvdirsfc'][i]
+                wind_swell.direction = self.data['wvdirsfc'][i].item()
                 wind_swell.compass_direction = units.degree_to_direction(
                     wind_swell.direction)
-                wind_swell.wave_height = self.data['wvhgtsfc'][i]
-                wind_swell.period = self.data['wvpersfc'][i]
+                wind_swell.wave_height = self.data['wvhgtsfc'][i].item()
+                wind_swell.period = self.data['wvpersfc'][i].item()
                 buoy_data_point.swell_components.append(wind_swell)
 
-                buoy_data_point.wind_direction = self.data['wdirsfc'][i]
+                buoy_data_point.wind_direction = self.data['wdirsfc'][i].item()
                 buoy_data_point.wind_compass_direction = units.degree_to_direction(
                     buoy_data_point.wind_direction)
-                buoy_data_point.wind_speed = self.data['windsfc'][i]
+                buoy_data_point.wind_speed = self.data['windsfc'][i].item()
 
             buoy_data.append(buoy_data_point)
 
