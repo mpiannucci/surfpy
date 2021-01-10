@@ -11,6 +11,7 @@ class GFSModel(NOAAModel):
 
     _base_gfs_ascii_url = 'https://nomads.ncep.noaa.gov:9090/dods/{0}/gfs{1}/{0}_{2}.ascii?time[{6}:{7}],ugrd10m[{6}:{7}][{4}][{5}],vgrd10m[{6}:{7}][{4}][{5}],gustsfc[{6}:{7}][{4}][{5}]'
     _base_gfs_grib_url = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_{0}.pl?file=gfs.t{1}z.pgrb2.{2}.f{3}&lev_10_m_above_ground=on&var_GUST=on&var_PRES=on&var_TMP=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon={4}&rightlon={5}&toplat={6}&bottomlat={7}&dir=%2Fgfs.{8}%2F{1}'
+    _base_gfs_netcdf_url = 'https://nomads.ncep.noaa.gov/dods/{0}/gfs{1}/{0}_{2}'
 
     def create_ascii_url(self, location, start_time_index, end_time_index):
         timestamp = self.latest_model_time()
@@ -29,6 +30,15 @@ class GFSModel(NOAAModel):
         date_str = model_run_time.strftime('%Y%m%d')
         model_degree = "{}p{}".format(math.floor(self.location_resolution), int(self.location_resolution % 1 * 100))
         url = self._base_gfs_grib_url.format(self.name, model_run_str, model_degree, hour_str, float(math.floor(location.longitude)), float(math.ceil(location.longitude)), float(math.ceil(location.latitude)), float(math.floor(location.latitude)), date_str)
+        return url
+
+    def create_netcdf_url(self):
+        timestamp = self.latest_model_time()
+        datestring = timestamp.strftime('%Y%m%d')
+        hourstring = timestamp.strftime('%Hz')
+
+        url = self._base_gfs_netcdf_url.format(
+            datestring, self.name, hourstring)
         return url
 
     def _to_buoy_data_ascii(self, buoy_data_point, i):
@@ -64,6 +74,12 @@ class GFSModel(NOAAModel):
 
         return True
 
+    def _to_buoy_data_netcdf(self, data):
+        # TODO: TO BE IMPLEMENTED LATER
+        buoy_data = []
+        return buoy_data
+
+
 class NAMModel(NOAAModel):
 
     _base_nam_url = 'http://nomads.ncep.noaa.gov:9090/dods/nam/nam{1}/{0}_{2}.ascii?time[{6}:{7}],ugrd10m[{6}:{7}][{4}][{5}],vgrd10m[{6}:{7}][{4}][{5}],gustsfc[{6}:{7}][{4}][{5}]'
@@ -79,7 +95,6 @@ class NAMModel(NOAAModel):
         return url
 
 # Change hourly_cutoff_index to 120 for hourly
-
 def hourly_gfs_model():
     return GFSModel(name='gfs_0p25_1hr', 
                     description='Global GFS 0.25 deg hourly', 

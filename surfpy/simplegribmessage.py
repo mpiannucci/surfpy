@@ -1,4 +1,7 @@
-from grippy.message import Message
+try:
+    from grippy.message import Message
+except:
+    Message = None
 from .location import Location
 import math
 import datetime

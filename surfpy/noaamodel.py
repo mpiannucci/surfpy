@@ -2,8 +2,15 @@ import datetime
 import pytz
 from . import units
 from .buoydata import BuoyData
-from . import simplegribmessage
 from . import tools
+try:
+    from . import simplegribmessage
+except:
+    simplegribmessage = None
+try: 
+    from netCDF4 import Dataset
+except:
+    Dataset = None
 
 
 class NOAAModel(object):
@@ -12,6 +19,7 @@ class NOAAModel(object):
         no_data_mode='no_data'
         binary_mode='binary'
         ascii_mode='ascii'
+        netcdf_mode = 'netcdf'
 
     def __init__(self, name, description, bottom_left, top_right, location_resolution, time_resolution, max_index, hourly_cutoff_index=0, max_altitude=0.0, min_altitude=0.0, altitude_resolution=0.0, data={}):
         self.name = name
@@ -43,6 +51,8 @@ class NOAAModel(object):
 
         if self.data.get('TIME') is not None:
             return NOAAModel.DataMode.binary_mode
+        elif self.data.get('lat') is not None:
+            return NOAAModel.DataMode.netcdf_mode
         else:
             return NOAAModel.DataMode.ascii_mode
 
@@ -209,17 +219,48 @@ class NOAAModel(object):
 
         return True
 
+    def create_netcdf_url(self):
+        return ''
+
+    def fetch_and_parse_netcdf_data(self, location, start_time_index, end_time_index):
+        raw_data = self.fetch_netcdf_data()
+        return self.parse_netcdf_data(raw_data, location, start_time_index, end_time_index)
+    
+    def fetch_netcdf_data(self):
+        url = self.create_netcdf_url()
+        return Dataset(url)
+
+    def parse_netcdf_data(self, raw_data, location, start_time_index, end_time_index):
+        self.data = {}
+
+        lat_index, lon_index = self.location_index(location)
+
+        for var in raw_data.variables:
+            var_data = raw_data.variables[var]
+
+            if var == 'time':
+                self.data[var] = units.convert_netcdf_dates(raw_data.variables['time'])
+            elif len(var_data.shape) == 1:
+                self.data[var] = var_data[start_time_index:end_time_index]
+            elif len(var_data.shape) == 3:
+                self.data[var] = var_data[start_time_index:end_time_index, lat_index, lon_index]
+            else:
+                return False 
+
+        return True
+
     def _to_buoy_data_binary(self, buoy_data_point, i):
         return False
 
     def _to_buoy_data_ascii(self, buoy_data_point, i):
         return False
 
+    def _to_buoy_data_netcdf(self, data):
+        return []
+
     def to_buoy_data(self):
         buoy_data = []
         if not self.data:
-            return buoy_data
-        elif self.data.get('time') is None and self.data.get('TIME') is None:
             return buoy_data
 
         data_mode = self.data_mode
@@ -235,6 +276,8 @@ class NOAAModel(object):
                 buoy_data_point = BuoyData(units.Units.metric)
                 if self._to_buoy_data_ascii(buoy_data_point, i):
                     buoy_data.append(buoy_data_point)
+        elif data_mode == NOAAModel.DataMode.netcdf_mode:
+            buoy_data = self._to_buoy_data_netcdf(self.data)
         return buoy_data
 
     def fill_buoy_data(self, buoy_data):
@@ -247,3 +290,4 @@ class NOAAModel(object):
             else:
                 return False
         return True
+        
