@@ -10,6 +10,7 @@ except:
 wind_directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
 epoch_days_since_zero = 719164
 
+
 def degree_to_direction(degree):
     if math.isnan(degree):
         return 'NULL'
@@ -25,6 +26,7 @@ def degree_to_direction(degree):
     if wind_index >= len(wind_directions):
         wind_index = 0
     return wind_directions[wind_index%len(wind_directions)]
+
 
 def direction_to_degree(direction):
     direction = direction.lower()
@@ -63,11 +65,13 @@ def direction_to_degree(direction):
     else:
         return -1.0
 
+
 class Units:
     metric = 'metric'
     english = 'english'
     knots = 'knots'
     kelvin = 'kelvin'
+
 
 class Measurement:
     length = 'length'
@@ -76,6 +80,7 @@ class Measurement:
     pressure = 'pressure'
     visibility = 'visibility'
     direction = 'direction'
+
 
 def convert(value, measure, source_unit, dest_unit):
     if math.isnan(value):
@@ -125,6 +130,7 @@ def convert(value, measure, source_unit, dest_unit):
                 return value * (9.0/5.0) - 459.67
     return value
 
+
 def earths_radius(unit):
     if unit == Units.metric:
         return 6371.0
@@ -132,6 +138,7 @@ def earths_radius(unit):
         return 3956.0
     else:
         return 1.0
+
 
 def unit_name(source_unit, source_meas, abbrev=True):
     if source_unit == Units.metric:
@@ -203,6 +210,7 @@ def unit_name(source_unit, source_meas, abbrev=True):
             else:
                 return 'knots'
     return ''
+
 
 def convert_netcdf_dates(date_var):
     cvt = num2date(date_var[:], date_var.units)

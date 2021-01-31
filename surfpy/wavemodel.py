@@ -43,12 +43,12 @@ class WaveModel(NOAAModel):
             datestring, self.name, hourstring)
         return url
 
-    def _to_buoy_data_ascii(self, buoy_data_point, i):
+    def _to_buoy_data_ascii(self, buoy_data_point, data, i):
         if buoy_data_point.unit != units.Units.metric:
             buoy_data_point.change_units(units.Units.metric)
 
         # Make sure the timestamp exists and is the same as the data we are trying to fill
-        raw_time = (self.data['time'][i] -
+        raw_time = (data['time'][i] -
                     units.epoch_days_since_zero) * 24 * 60 * 60
         raw_date = pytz.utc.localize(datetime.utcfromtimestamp(raw_time))
         if buoy_data_point.date == None:
@@ -57,50 +57,50 @@ class WaveModel(NOAAModel):
             return False
 
         buoy_data_point.wave_summary = Swell(units.Units.metric)
-        buoy_data_point.wave_summary.direction = self.data['dirpwsfc'][i]
+        buoy_data_point.wave_summary.direction = data['dirpwsfc'][i]
         buoy_data_point.wave_summary.compass_direction = units.degree_to_direction(
             buoy_data_point.wave_summary.direction)
-        buoy_data_point.wave_summary.wave_height = self.data['htsgwsfc'][i]
-        buoy_data_point.wave_summary.period = self.data['perpwsfc'][i]
+        buoy_data_point.wave_summary.wave_height = data['htsgwsfc'][i]
+        buoy_data_point.wave_summary.period = data['perpwsfc'][i]
 
-        if self.data['swell_1'][i] < 9.0e20 and self.data['swper_1'][i] < 9.0e20 and self.data['swdir_1'][i] < 9.0e20:
+        if data['swell_1'][i] < 9.0e20 and data['swper_1'][i] < 9.0e20 and data['swdir_1'][i] < 9.0e20:
             swell_1 = Swell(units.Units.metric)
-            swell_1.direction = self.data['swdir_1'][i]
+            swell_1.direction = data['swdir_1'][i]
             swell_1.compass_direction = units.degree_to_direction(
                 swell_1.direction)
-            swell_1.wave_height = self.data['swell_1'][i]
-            swell_1.period = self.data['swper_1'][i]
+            swell_1.wave_height = data['swell_1'][i]
+            swell_1.period = data['swper_1'][i]
             buoy_data_point.swell_components.append(swell_1)
 
-        if self.data['swell_2'][i] < 9.0e20 and self.data['swper_2'][i] < 9.0e20 and self.data['swdir_2'][i] < 9.0e20:
+        if data['swell_2'][i] < 9.0e20 and data['swper_2'][i] < 9.0e20 and data['swdir_2'][i] < 9.0e20:
             swell_2 = Swell(units.Units.metric)
-            swell_2.direction = self.data['swdir_2'][i]
+            swell_2.direction = data['swdir_2'][i]
             swell_2.compass_direction = units.degree_to_direction(
                 swell_2.direction)
-            swell_2.wave_height = self.data['swell_2'][i]
-            swell_2.period = self.data['swper_2'][i]
+            swell_2.wave_height = data['swell_2'][i]
+            swell_2.period = data['swper_2'][i]
             buoy_data_point.swell_components.append(swell_2)
 
-        if self.data['wvhgtsfc'][i] < 9.0e20 and self.data['wvpersfc'][i] < 9.0e20 and self.data['wvdirsfc'][i] < 9.0e20:
+        if data['wvhgtsfc'][i] < 9.0e20 and data['wvpersfc'][i] < 9.0e20 and data['wvdirsfc'][i] < 9.0e20:
             wind_swell = Swell(units.Units.metric)
-            wind_swell.direction = self.data['wvdirsfc'][i]
+            wind_swell.direction = data['wvdirsfc'][i]
             wind_swell.compass_direction = units.degree_to_direction(
                 wind_swell.direction)
-            wind_swell.wave_height = self.data['wvhgtsfc'][i]
-            wind_swell.period = self.data['wvpersfc'][i]
+            wind_swell.wave_height = data['wvhgtsfc'][i]
+            wind_swell.period = data['wvpersfc'][i]
             buoy_data_point.swell_components.append(wind_swell)
 
-        buoy_data_point.wind_direction = self.data['wdirsfc'][i]
+        buoy_data_point.wind_direction = data['wdirsfc'][i]
         buoy_data_point.wind_compass_direction = units.degree_to_direction(
             buoy_data_point.wind_direction)
-        buoy_data_point.wind_speed = self.data['windsfc'][i]
+        buoy_data_point.wind_speed = data['windsfc'][i]
         return True
 
-    def _to_buoy_data_binary(self, buoy_data_point, i):
+    def _to_buoy_data_binary(self, buoy_data_point, data, i):
         if buoy_data_point.unit != units.Units.metric:
             buoy_data_point.change_units(units.Units.metric)
 
-        raw_date = self.data['TIME'][i]
+        raw_date = data['TIME'][i]
         raw_date = pytz.utc.localize(raw_date)
         if buoy_data_point.date == None:
             buoy_data_point.date = raw_date
@@ -108,43 +108,43 @@ class WaveModel(NOAAModel):
             return False
 
         buoy_data_point.wave_summary = Swell(units.Units.metric)
-        buoy_data_point.wave_summary.direction = self.data['DIRPW'][i]
+        buoy_data_point.wave_summary.direction = data['DIRPW'][i]
         buoy_data_point.wave_summary.compass_direction = units.degree_to_direction(
             buoy_data_point.wave_summary.direction)
-        buoy_data_point.wave_summary.wave_height = self.data['HTSGW'][i]
-        buoy_data_point.wave_summary.period = self.data['PERPW'][i]
+        buoy_data_point.wave_summary.wave_height = data['HTSGW'][i]
+        buoy_data_point.wave_summary.period = data['PERPW'][i]
 
-        if self.data['SWELL_1'][i] > 0 and self.data['SWPER_1'][i] > 0 and self.data['SWDIR_1'][i] > 0:
+        if data['SWELL_1'][i] > 0 and data['SWPER_1'][i] > 0 and data['SWDIR_1'][i] > 0:
             swell_1 = Swell(units.Units.metric)
-            swell_1.direction = self.data['SWDIR_1'][i]
+            swell_1.direction = data['SWDIR_1'][i]
             swell_1.compass_direction = units.degree_to_direction(
                 swell_1.direction)
-            swell_1.wave_height = self.data['SWELL_1'][i]
-            swell_1.period = self.data['SWPER_1'][i]
+            swell_1.wave_height = data['SWELL_1'][i]
+            swell_1.period = data['SWPER_1'][i]
             buoy_data_point.swell_components.append(swell_1)
 
-        if self.data['SWELL_2'][i] > 0 and self.data['SWPER_2'][i] > 0 and self.data['SWDIR_2'][i] > 0:
+        if data['SWELL_2'][i] > 0 and data['SWPER_2'][i] > 0 and data['SWDIR_2'][i] > 0:
             swell_2 = Swell(units.Units.metric)
-            swell_2.direction = self.data['SWDIR_2'][i]
+            swell_2.direction = data['SWDIR_2'][i]
             swell_2.compass_direction = units.degree_to_direction(
                 swell_2.direction)
-            swell_2.wave_height = self.data['SWELL_2'][i]
-            swell_2.period = self.data['SWPER_2'][i]
+            swell_2.wave_height = data['SWELL_2'][i]
+            swell_2.period = data['SWPER_2'][i]
             buoy_data_point.swell_components.append(swell_2)
 
-        if self.data['WVHGT'][i] > 0 and self.data['WVPER'][i] > 0 and self.data['WVDIR'][i] > 0:
+        if data['WVHGT'][i] > 0 and data['WVPER'][i] > 0 and data['WVDIR'][i] > 0:
             wind_swell = Swell(units.Units.metric)
-            wind_swell.direction = self.data['WVDIR'][i]
+            wind_swell.direction = data['WVDIR'][i]
             wind_swell.compass_direction = units.degree_to_direction(
                 wind_swell.direction)
-            wind_swell.wave_height = self.data['WVHGT'][i]
-            wind_swell.period = self.data['WVPER'][i]
+            wind_swell.wave_height = data['WVHGT'][i]
+            wind_swell.period = data['WVPER'][i]
             buoy_data_point.swell_components.append(wind_swell)
 
-        buoy_data_point.wind_direction = self.data['WDIR'][i]
+        buoy_data_point.wind_direction = data['WDIR'][i]
         buoy_data_point.wind_compass_direction = units.degree_to_direction(
             buoy_data_point.wind_direction)
-        buoy_data_point.wind_speed = self.data['WIND'][i]
+        buoy_data_point.wind_speed = data['WIND'][i]
 
         return True
 
@@ -157,47 +157,47 @@ class WaveModel(NOAAModel):
             buoy_data_point.date = pytz.utc.localize(time[i])
 
             buoy_data_point.wave_summary = Swell(units.Units.metric)
-            buoy_data_point.wave_summary.direction = self.data['dirpwsfc'][i].item()
+            buoy_data_point.wave_summary.direction = data['dirpwsfc'][i].item()
             buoy_data_point.wave_summary.compass_direction = units.degree_to_direction(
                 buoy_data_point.wave_summary.direction)
-            buoy_data_point.wave_summary.wave_height = self.data['htsgwsfc'][i].item()
-            buoy_data_point.wave_summary.period = self.data['perpwsfc'][i].item()
+            buoy_data_point.wave_summary.wave_height = data['htsgwsfc'][i].item()
+            buoy_data_point.wave_summary.period = data['perpwsfc'][i].item()
 
-            buoy_data_point.wind_speed = self.data['windsfc'][i].item()
-            buoy_data_point.wind_direction = self.data['wdirsfc'][i].item()
+            buoy_data_point.wind_speed = data['windsfc'][i].item()
+            buoy_data_point.wind_direction = data['wdirsfc'][i].item()
             buoy_data_point.wind_compass_direction = units.degree_to_direction(buoy_data_point.wind_direction)
 
-            if self.data['swell_1'][i] > 0:
+            if data['swell_1'][i] > 0:
                 swell_1 = Swell(units.Units.metric)
-                swell_1.direction = self.data['swdir_1'][i].item()
+                swell_1.direction = data['swdir_1'][i].item()
                 swell_1.compass_direction = units.degree_to_direction(
                     swell_1.direction)
-                swell_1.wave_height = self.data['swell_1'][i].item()
-                swell_1.period = self.data['swper_1'][i].item()
+                swell_1.wave_height = data['swell_1'][i].item()
+                swell_1.period = data['swper_1'][i].item()
                 buoy_data_point.swell_components.append(swell_1)
 
-            if self.data['swell_2'][i] > 0:
+            if data['swell_2'][i] > 0:
                 swell_2 = Swell(units.Units.metric)
-                swell_2.direction = self.data['swdir_2'][i].item()
+                swell_2.direction = data['swdir_2'][i].item()
                 swell_2.compass_direction = units.degree_to_direction(
                     swell_2.direction)
-                swell_2.wave_height = self.data['swell_2'][i].item()
-                swell_2.period = self.data['swper_2'][i].item()
+                swell_2.wave_height = data['swell_2'][i].item()
+                swell_2.period = data['swper_2'][i].item()
                 buoy_data_point.swell_components.append(swell_2)
 
-            if self.data['wvhgtsfc'][i] > 0:
+            if data['wvhgtsfc'][i] > 0:
                 wind_swell = Swell(units.Units.metric)
-                wind_swell.direction = self.data['wvdirsfc'][i].item()
+                wind_swell.direction = data['wvdirsfc'][i].item()
                 wind_swell.compass_direction = units.degree_to_direction(
                     wind_swell.direction)
-                wind_swell.wave_height = self.data['wvhgtsfc'][i].item()
-                wind_swell.period = self.data['wvpersfc'][i].item()
+                wind_swell.wave_height = data['wvhgtsfc'][i].item()
+                wind_swell.period = data['wvpersfc'][i].item()
                 buoy_data_point.swell_components.append(wind_swell)
 
-                buoy_data_point.wind_direction = self.data['wdirsfc'][i].item()
+                buoy_data_point.wind_direction = data['wdirsfc'][i].item()
                 buoy_data_point.wind_compass_direction = units.degree_to_direction(
                     buoy_data_point.wind_direction)
-                buoy_data_point.wind_speed = self.data['windsfc'][i].item()
+                buoy_data_point.wind_speed = data['windsfc'][i].item()
 
             buoy_data.append(buoy_data_point)
 
@@ -210,6 +210,17 @@ def us_east_coast_wave_model():
                      bottom_left=Location(0.00, 260.00),
                      top_right=Location(55.00011, 310.00011),
                      location_resolution=0.167,
+                     time_resolution=0.125,
+                     max_index=180,
+                     hourly_cutoff_index=0)
+
+
+def us_east_coast_wave_model_dense():
+    return WaveModel(name='multi_1.at_4m',
+                     description='Multi-grid wave model: US East Coast 4 arc-min grid',
+                     bottom_left=Location(15.0, 261.00),
+                     top_right=Location(47.00016, 300.000195),
+                     location_resolution=0.067,
                      time_resolution=0.125,
                      max_index=180,
                      hourly_cutoff_index=0)

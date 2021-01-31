@@ -41,36 +41,36 @@ class GFSModel(NOAAModel):
             datestring, self.name, hourstring)
         return url
 
-    def _to_buoy_data_ascii(self, buoy_data_point, i):
+    def _to_buoy_data_ascii(self, buoy_data_point, data, i):
         if buoy_data_point.unit != units.Units.metric:
             buoy_data_point.change_units(units.Units.metric)
 
         # Make sure the timestamp exists and is the same as the data we are trying to fill
-        raw_time = (self.data['time'][i] - units.epoch_days_since_zero) * 24 * 60 * 60
+        raw_time = (data['time'][i] - units.epoch_days_since_zero) * 24 * 60 * 60
         raw_date = pytz.utc.localize(datetime.utcfromtimestamp(raw_time))
         if buoy_data_point.date == None:
             buoy_data_point.date = raw_date
         elif buoy_data_point.date != raw_date:
             return False
 
-        buoy_data_point.wind_speed, buoy_data_point.wind_direction = tools.scalar_from_uv(self.data['ugrd10m'][i], self.data['vgrd10m'][i])
+        buoy_data_point.wind_speed, buoy_data_point.wind_direction = tools.scalar_from_uv(data['ugrd10m'][i], data['vgrd10m'][i])
         buoy_data_point.wind_compass_direction = units.degree_to_direction(buoy_data_point.wind_direction)
-        buoy_data_point.wind_gust = self.data['gustsfc'][i]
+        buoy_data_point.wind_gust = data['gustsfc'][i]
 
         return True
 
-    def _to_buoy_data_binary(self, buoy_data_point, i):
+    def _to_buoy_data_binary(self, buoy_data_point, data, i):
         if buoy_data_point.unit != units.Units.metric:
             buoy_data_point.change_units(units.Units.metric)
 
-        raw_date = self.data['TIME'][i]
+        raw_date = data['TIME'][i]
         raw_date = pytz.utc.localize(raw_date)
         if buoy_data_point.date == None:
             buoy_data_point.date = raw_date
         elif buoy_data_point.date != raw_date:
             return False
 
-        buoy_data_point.wind_speed, buoy_data_point.wind_direction = tools.scalar_from_uv(self.data['UGRD'][i], self.data['VGRD'][i])
+        buoy_data_point.wind_speed, buoy_data_point.wind_direction = tools.scalar_from_uv(data['UGRD'][i], data['VGRD'][i])
 
         return True
 
@@ -94,6 +94,7 @@ class NAMModel(NOAAModel):
         url = self._base_nam_url.format(datestring, hourstring, alt_index, lat_index, lon_index, start_time_index, end_time_index)
         return url
 
+
 # Change hourly_cutoff_index to 120 for hourly
 def hourly_gfs_model():
     return GFSModel(name='gfs_0p25_1hr', 
@@ -107,6 +108,3 @@ def hourly_gfs_model():
                     altitude_resolution=21.717, 
                     max_index=384, 
                     hourly_cutoff_index=0)
-
-
-# https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25_1hr.pl?file=gfs.t06z.pgrb2full.1hr.f159&lev_10_m_above_ground=on&var_GUST=on&var_PRES=on&var_TMP=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon=-72.0&rightlon=-71.0&toplat=42.0&bottomlat=41.0&dir=%2Fgfs.20200909%2F06
