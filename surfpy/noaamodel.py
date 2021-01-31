@@ -33,28 +33,10 @@ class NOAAModel(object):
         self.time_resolution = time_resolution
         self.hourly_cutoff_index = hourly_cutoff_index
         self.max_index = max_index
-        self.data = data
-
-    def reset_data(self):
-        self.data = {}
 
     @property
     def time_resolution_hours(self):
         return self.time_resolution * 24.0
-
-    @property
-    def data_mode(self):
-        if not self.data:
-            return NOAAModel.DataMode.no_data_mode
-        elif self.data.get('time') is None and self.data.get('TIME') is None:
-            return NOAAModel.DataMode.no_data_mode
-
-        if self.data.get('TIME') is not None:
-            return NOAAModel.DataMode.binary_mode
-        elif self.data.get('lat') is not None:
-            return NOAAModel.DataMode.netcdf_mode
-        else:
-            return NOAAModel.DataMode.ascii_mode
 
     def contains_location(self, location):
         if location.latitude > self.bottom_left.latitude and location.latitude < self.top_right.latitude:
@@ -131,22 +113,22 @@ class NOAAModel(object):
 
         return self.parse_grib_datas(location, result)
 
-    def parse_grib_data(self, location, raw_data):
+    def parse_grib_data(self, location, raw_data, data={}):
         if not raw_data:
-            return False
+            return None
         elif not len(raw_data):
-            return False
+            return None
 
         messages = simplegribmessage.read_simple_grib_messages_raw(raw_data)
 
         if not len(messages):
-            return False
+            return None
 
         # Parse out the timestamp first
-        if self.data.get('TIME') is None:
-            self.data['TIME'] = [messages[0].forecast_time]
+        if data.get('TIME') is None:
+            data['TIME'] = [messages[0].forecast_time]
         else:
-            self.data['TIME'].append(messages[0].forecast_time)
+            data['TIME'].append(messages[0].forecast_time)
 
         # Parse all of the variables into the map
         for mess in messages:
@@ -161,21 +143,24 @@ class NOAAModel(object):
             if len(all_data) > 0:
                 value = all_data[index]
 
-            if self.data.get(var) is None:
-                self.data[var] = [value]
+            if data.get(var) is None:
+                data[var] = [value]
             else:
-                self.data[var].append(value)
+                data[var].append(value)
 
-        return True
+        return data
 
     def parse_grib_datas(self, location, raw_data):
         if not len(raw_data):
-            return False
+            return None
 
+        data = {}
         for dat in raw_data:
-            self.parse_grib_data(location, dat)
+            new_data = self.parse_grib_data(location, dat, data)
+            if new_data is not None:
+                data = new_data
 
-        return len(self.data.keys()) > 0
+        return data
 
     def create_ascii_url(self, location, start_time_index, end_time_index):
         return ''
@@ -192,11 +177,11 @@ class NOAAModel(object):
 
     def parse_ascii_data(self, raw_data):
         if not len(raw_data):
-            return False
+            return None
 
         split_data = raw_data.split('\n')
 
-        self.data = {}
+        data = {}
         current_var = ''
 
         for value in split_data:
@@ -204,20 +189,20 @@ class NOAAModel(object):
                 continue
             elif value[0] == '[':
                 datas = value.split(',')
-                self.data[current_var].append(float(datas[1].strip()))
+                data[current_var].append(float(datas[1].strip()))
             elif value[0] >= '0' and value[0] <= '9':
                 raw_timestamps = value.split(',')
                 for timestamp in raw_timestamps:
-                    self.data[current_var].append(float(timestamp.strip()))
+                    data[current_var].append(float(timestamp.strip()))
             else:
                 vars = value.split(',')
                 current_var = vars[0]
-                self.data[current_var] = []
+                data[current_var] = []
 
-        if 'time' not in self.data:
-            return False
+        if 'time' not in data:
+            return None
 
-        return True
+        return data
 
     def create_netcdf_url(self):
         return ''
@@ -231,7 +216,7 @@ class NOAAModel(object):
         return Dataset(url)
 
     def parse_netcdf_data(self, raw_data, location, start_time_index, end_time_index):
-        self.data = {}
+        data = {}
 
         lat_index, lon_index = self.location_index(location)
 
@@ -239,15 +224,15 @@ class NOAAModel(object):
             var_data = raw_data.variables[var]
 
             if var == 'time':
-                self.data[var] = units.convert_netcdf_dates(raw_data.variables['time'])
+                data[var] = units.convert_netcdf_dates(raw_data.variables['time'])
             elif len(var_data.shape) == 1:
-                self.data[var] = var_data[start_time_index:end_time_index]
+                data[var] = var_data[start_time_index:end_time_index]
             elif len(var_data.shape) == 3:
-                self.data[var] = var_data[start_time_index:end_time_index, lat_index, lon_index]
+                data[var] = var_data[start_time_index:end_time_index, lat_index, lon_index]
             else:
-                return False 
+                return None 
 
-        return True
+        return data
 
     def _to_buoy_data_binary(self, buoy_data_point, i):
         return False
@@ -258,30 +243,28 @@ class NOAAModel(object):
     def _to_buoy_data_netcdf(self, data):
         return []
 
-    def to_buoy_data(self):
+    def to_buoy_data(self, data, data_mode):
         buoy_data = []
-        if not self.data:
+        if not data:
             return buoy_data
 
-        data_mode = self.data_mode
         if data_mode == NOAAModel.DataMode.no_data_mode:
             return buoy_data
         elif data_mode == NOAAModel.DataMode.binary_mode:
-            for i in range(0, len(self.data['TIME'])):
+            for i in range(0, len(data['TIME'])):
                 buoy_data_point = BuoyData(units.Units.metric)
                 if self._to_buoy_data_binary(buoy_data_point, i):
                     buoy_data.append(buoy_data_point)
         elif data_mode == NOAAModel.DataMode.ascii_mode:
-            for i in range(0, len(self.data['time'])):
+            for i in range(0, len(data['time'])):
                 buoy_data_point = BuoyData(units.Units.metric)
                 if self._to_buoy_data_ascii(buoy_data_point, i):
                     buoy_data.append(buoy_data_point)
         elif data_mode == NOAAModel.DataMode.netcdf_mode:
-            buoy_data = self._to_buoy_data_netcdf(self.data)
+            buoy_data = self._to_buoy_data_netcdf(data)
         return buoy_data
 
-    def fill_buoy_data(self, buoy_data):
-        data_mode = self.data_mode
+    def fill_buoy_data(self, buoy_data, data_mode):
         for i in range(0, len(buoy_data)):
             if data_mode == NOAAModel.DataMode.binary_mode:
                 self._to_buoy_data_binary(buoy_data[i], i)
