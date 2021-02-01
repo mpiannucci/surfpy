@@ -3,23 +3,18 @@ import pytz
 from . import units
 from .buoydata import BuoyData
 from . import tools
-try:
-    from . import simplegribmessage
-except:
-    simplegribmessage = None
-try: 
-    from netCDF4 import Dataset
-except:
-    Dataset = None
+
+from io import StringIO, BytesIO
+import struct
+
+import pygrib
+
+# https://ftp.ncep.noaa.gov/data/nccf/com/gfs/prod/gfs.20210131/18/gfs.t18z.pgrb2b.0p50.f156
+# https://ftp.ncep.noaa.gov/data/nccf/com/wave/prod/multi_1.20210130/multi_1.at_4m.t00z.f000.grib2
+# https://nomads.ncep.noaa.gov/pub/data/nccf/com/wave/prod/multi_1.20210130/multi_1.at_4m.t00z.f000.grib2
 
 
 class NOAAModel(object):
-
-    class DataMode:
-        no_data_mode='no_data'
-        grib_mode='grib'
-        ascii_mode='ascii'
-        netcdf_mode = 'netcdf'
 
     def __init__(self, name, description, bottom_left, top_right, location_resolution, time_resolution, max_index, hourly_cutoff_index=0, max_altitude=0.0, min_altitude=0.0, altitude_resolution=0.0, data={}):
         self.name = name
@@ -65,8 +60,10 @@ class NOAAModel(object):
     def latest_model_time(self):
         current_time = datetime.datetime.utcnow() + datetime.timedelta(hours=-5)
         latest_model_hour = current_time.hour - (current_time.hour % 6)
-        current_time = current_time + datetime.timedelta(hours=-(current_time.hour-latest_model_hour))
-        current_time = datetime.datetime(current_time.year, current_time.month, current_time.day, current_time.hour, 0)
+        current_time = current_time + \
+            datetime.timedelta(hours=-(current_time.hour-latest_model_hour))
+        current_time = datetime.datetime(
+            current_time.year, current_time.month, current_time.day, current_time.hour, 0)
         return pytz.utc.localize(current_time)
 
     def time_index(self, desired_time):
@@ -76,7 +73,7 @@ class NOAAModel(object):
             return -1
         if diff <= self.hourly_cutoff_index:
             return diff
-        else: 
+        else:
             hours_res = self.time_resolution_hours
             return self.hourly_cutoff_index + ((diff - self.hourly_cutoff_index) / hours_res)
 
@@ -99,8 +96,8 @@ class NOAAModel(object):
         return tools.download_data(url)
 
     def fetch_grib_datas(self, location, start_time_index, end_time_index):
-        urls = self.create_grib_urls(location, start_time_index, end_time_index)
-        print(urls)
+        urls = self.create_grib_urls(
+            location, start_time_index, end_time_index)
         if not len(urls):
             return None
 
@@ -112,29 +109,60 @@ class NOAAModel(object):
         elif not len(raw_data):
             return None
 
-        messages = simplegribmessage.read_simple_grib_messages_raw(raw_data)
+        # From https://github.com/jswhit/pygrib/issues/42#issuecomment-243643075
+        f = BytesIO(raw_data)
+        f.seek(0, 2)
+        size = f.tell()
+        f.seek(0)
+        raw_messages = []
+        while 1:
+            # find next occurence of string 'GRIB' (or EOF).
+            nbyte = f.tell()
+            while 1:
+                f.seek(nbyte)
+                start = f.read(4)
+                sstart = start.decode('ascii', errors='ignore')
+                if sstart == '' or sstart == 'GRIB':
+                    break
+                nbyte = nbyte + 1
+            #     if nbyte >= size:
+            #         break
+
+            # if nbyte >= size:
+            #     break
+            # otherwise, start (='GRIB') contains indicator message (section 0)
+            if sstart == '':
+                break
+            startpos = f.tell()-4
+            f.read(4)  # next four octets are reserved
+            # 5th octet is length of grib message
+            lengrib = struct.unpack('>q', f.read(8))[0]
+            # read in entire grib message, append to list.
+            f.seek(startpos)
+            gribmsg = f.read(lengrib)
+            raw_messages.append(gribmsg)
+
+        # convert grib message string to grib message object 
+        messages = [pygrib.fromstring(m) for m in raw_messages]   
 
         if not len(messages):
             return None
 
         # Parse out the timestamp first
-        if data.get('TIME') is None:
-            data['TIME'] = [messages[0].forecast_time]
+        if data.get('time') is None:
+            data['time'] = [messages[0].validDate]
         else:
-            data['TIME'].append(messages[0].forecast_time)
+            data['time'].append(messages[0].validDate)
 
         # Parse all of the variables into the map
-        for mess in messages:
-            var = mess.var
-            if mess.is_array_var:
-                var += '_' + str(mess.var_index)
+        for message in messages:
+            var = message.shortName
+            if message.has_key('level'):
+                if message.level > 1:
+                    var += '_' + str(message.level)
 
-            index = mess.index_for_location(location)
-            all_data = mess.data
-
-            value = 0.0
-            if len(all_data) > 0:
-                value = all_data[index]
+            lat_index, lon_index = self.location_index(location)
+            value = message.values[lat_index][lon_index]
 
             if data.get(var) is None:
                 data[var] = [value]
@@ -155,116 +183,42 @@ class NOAAModel(object):
 
         return data
 
-    def create_ascii_url(self, location, start_time_index, end_time_index):
-        return ''
-
-    def fetch_ascii_data(self, location, start_time_index, end_time_index):
-        url = self.create_ascii_url(location, start_time_index, end_time_index)
-        if not len(url):
-            return False
-
-        return tools.download_data(url)
-
-    def parse_ascii_data(self, raw_data):
-        if not len(raw_data):
-            return None
-
-        split_data = raw_data.split('\n')
-
-        data = {}
-        current_var = ''
-
-        for value in split_data:
-            if len(value) < 1:
-                continue
-            elif value[0] == '[':
-                datas = value.split(',')
-                data[current_var].append(float(datas[1].strip()))
-            elif value[0] >= '0' and value[0] <= '9':
-                raw_timestamps = value.split(',')
-                for timestamp in raw_timestamps:
-                    data[current_var].append(float(timestamp.strip()))
-            else:
-                vars = value.split(',')
-                current_var = vars[0]
-                data[current_var] = []
-
-        if 'time' not in data:
-            return None
-
-        return data
-
-    def create_netcdf_url(self):
-        return ''
-    
-    def fetch_netcdf_data(self):
-        url = self.create_netcdf_url()
-        return Dataset(url)
-
-    def parse_netcdf_data(self, raw_data, location, start_time_index, end_time_index):
-        data = {}
-
-        lat_index, lon_index = self.location_index(location)
-
-        for var in raw_data.variables:
-            var_data = raw_data.variables[var]
-
-            fetch_success = False
-            retries = 0
-            RETRY_LIMIT = 2
-            while not fetch_success and retries < RETRY_LIMIT:
-                try:
-                    if var == 'time':
-                        data[var] = units.convert_netcdf_dates(raw_data.variables['time'])
-                    elif len(var_data.shape) == 1:
-                        data[var] = var_data[start_time_index:end_time_index]
-                    elif len(var_data.shape) == 3:
-                        data[var] = var_data[start_time_index:end_time_index, lat_index, lon_index]
-                    else:
-                        pass
-                    fetch_success = True
-                except Exception:
-                    retries += 1
-
-        return data
-
-    def _to_buoy_data_binary(self, buoy_data_point, data, i):
+    def _to_buoy_data_wave(self, buoy_data_point, data, i):
         return False
 
-    def _to_buoy_data_ascii(self, buoy_data_point, data, i):
+    def _to_buoy_data_weather(self, buoy_data_point, data, i):
         return False
 
-    def _to_buoy_data_netcdf(self, data):
-        return []
-
-    def to_buoy_data(self, data, data_mode):
+    def to_buoy_data_wave(self, data):
         buoy_data = []
         if not data:
             return buoy_data
 
-        if data_mode == NOAAModel.DataMode.no_data_mode:
-            return buoy_data
-        elif data_mode == NOAAModel.DataMode.grib_mode:
-            for i in range(0, len(data['TIME'])):
-                buoy_data_point = BuoyData(units.Units.metric)
-                if self._to_buoy_data_binary(buoy_data_point, data, i):
-                    buoy_data.append(buoy_data_point)
-        elif data_mode == NOAAModel.DataMode.ascii_mode:
-            for i in range(0, len(data['time'])):
-                buoy_data_point = BuoyData(units.Units.metric)
-                if self._to_buoy_data_ascii(buoy_data_point, data, i):
-                    buoy_data.append(buoy_data_point)
-        elif data_mode == NOAAModel.DataMode.netcdf_mode:
-            buoy_data = self._to_buoy_data_netcdf(data)
+        for i in range(0, len(data['time'])):
+            buoy_data_point = BuoyData(units.Units.metric)
+            if self._to_buoy_data_wave(buoy_data_point, data, i):
+                buoy_data.append(buoy_data_point)
+
         return buoy_data
 
-    def fill_buoy_data(self, buoy_data, data, data_mode):
+    def to_buoy_data_weather(self, data):
+        buoy_data = []
+        if not data:
+            return buoy_data
+
+        for i in range(0, len(data['time'])):
+            buoy_data_point = BuoyData(units.Units.metric)
+            if self._to_buoy_data_weather(buoy_data_point, data, i):
+                buoy_data.append(buoy_data_point)
+
+        return buoy_data
+
+    def fill_buoy_data_wave(self, buoy_data, data):
         for i in range(0, len(buoy_data)):
-            if data_mode == NOAAModel.DataMode.grib_mode:
-                self._to_buoy_data_binary(buoy_data[i], data, i)
-            elif data_mode == NOAAModel.DataMode.ascii_mode:
-                self._to_buoy_data_ascii(buoy_data[i], data, i)
-            else:
-                return False
+            self._to_buoy_data_wave(buoy_data[i], data, i)
         return True
-        
+
+    def fill_buoy_data_weather(self, buoy_data, data):
+        for i in range(0, len(buoy_data)):
+            self._to_buoy_data_weather(buoy_data[i], data, i)
+        return True
