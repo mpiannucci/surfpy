@@ -7,12 +7,16 @@ def serialize_hook(val):
 	if isinstance(val, datetime.datetime):
 		return val.timestamp()
 	else:
-		out = {
-			'classname__': val.__class__.__name__,
-			'modulename__': val.__module__,
-		}
-		out.update(val.__dict__)
-		return out
+		try:
+			out = {
+				'classname__': val.__class__.__name__,
+			}
+			if hasattr(val, '__module__'):
+				out['modulename__'] = val.__module__
+			out.update(val.__dict__)
+			return out
+		except Exception:
+			return None
 
 
 def serialize(val):

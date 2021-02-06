@@ -11,7 +11,7 @@ if __name__=='__main__':
     ec_wave_model = surfpy.wavemodel.us_east_coast_wave_model()
 
     print('Fetching WW3 Wave Data')
-    wave_grib_data = ec_wave_model.fetch_grib_datas(ri_wave_location, 0, 180)
+    wave_grib_data = ec_wave_model.fetch_grib_datas(0, 180)
     raw_wave_data = ec_wave_model.parse_grib_datas(ri_wave_location, wave_grib_data)
     if raw_wave_data:
         data = ec_wave_model.to_buoy_data_wave(raw_wave_data)

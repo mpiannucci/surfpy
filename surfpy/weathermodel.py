@@ -12,7 +12,8 @@ class GFSModel(NOAAModel):
     _base_gfs_grib_url = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_{0}.pl?file=gfs.t{1}z.pgrb2.{2}.f{3}&lev_10_m_above_ground=on&var_GUST=on&var_PRES=on&var_TMP=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon={4}&rightlon={5}&toplat={6}&bottomlat={7}&dir=%2Fgfs.{8}%2F{1}'
     _base_gfs_netcdf_url = 'https://nomads.ncep.noaa.gov/dods/{0}/gfs{1}/{0}_{2}'
 
-    def create_grib_url(self, location, time_index):
+    def create_grib_url(self, time_index):
+        # TODO: Update this to use the new schema and match wavemodel.py
         model_run_time = self.latest_model_time()
         model_run_str = str(model_run_time.hour).rjust(2, '0')
         hour_str = str(int(time_index)).rjust(3, '0')

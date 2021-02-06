@@ -44,7 +44,7 @@ class NOAAModel(object):
             print('Not in the grid')
             return -1, -1
 
-        lat_offset = location.latitude - self.bottom_left.latitude
+        lat_offset = self.top_right.latitude - location.latitude
         lon_offset = location.absolute_longitude - self.bottom_left.absolute_longitude
 
         lat_index = int(lat_offset / self.location_resolution)
@@ -77,27 +77,27 @@ class NOAAModel(object):
             hours_res = self.time_resolution_hours
             return self.hourly_cutoff_index + ((diff - self.hourly_cutoff_index) / hours_res)
 
-    def create_grib_url(self, location, time_index):
+    def create_grib_url(self, time_index):
         return ''
 
-    def create_grib_urls(self, location, start_time_index, end_time_index):
+    def create_grib_urls(self, start_time_index, end_time_index):
         urls = []
         for i in range(start_time_index, end_time_index):
             if i > self.hourly_cutoff_index and (i - self.hourly_cutoff_index) % self.time_resolution_hours != 0:
                 continue
-            urls.append(self.create_grib_url(location, i))
+            urls.append(self.create_grib_url(i))
         return urls
 
-    def fetch_grib_data(self, location, time_index):
-        url = self.create_grib_url(location, time_index)
+    def fetch_grib_data(self, time_index):
+        url = self.create_grib_url(time_index)
         if not len(url):
             return None
 
         return tools.download_data(url)
 
-    def fetch_grib_datas(self, location, start_time_index, end_time_index):
+    def fetch_grib_datas(self, start_time_index, end_time_index):
         urls = self.create_grib_urls(
-            location, start_time_index, end_time_index)
+            start_time_index, end_time_index)
         if not len(urls):
             return None
 
@@ -161,8 +161,10 @@ class NOAAModel(object):
                 if message.level > 1:
                     var += '_' + str(message.level)
 
-            lat_index, lon_index = self.location_index(location)
-            value = message.values[lat_index][lon_index]
+            tolerence = 0.1
+            rawvalue, lats, lons = message.data(lat1=location.latitude-tolerence,lat2=location.latitude+tolerence,
+                            lon1=location.absolute_longitude-tolerence,lon2=location.absolute_longitude+tolerence)
+            value = rawvalue.mean().item()
 
             if data.get(var) is None:
                 data[var] = [value]

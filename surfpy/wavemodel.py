@@ -15,16 +15,7 @@ class WaveModel(NOAAModel):
     _base_multigrid_netcdf_url = 'https://nomads.ncep.noaa.gov/dods/wave/mww3/{0}/{1}{0}_{2}'
     _base_multigrid_grib_url = 'https://ftp.ncep.noaa.gov/data/nccf/com/wave/prod/multi_1.{0}/{1}.t{2}z.f{3}.grib2'
 
-    # def create_grib_url(self, location, time_index):
-    #     model_run_time = self.latest_model_time()
-    #     model_run_str = str(model_run_time.hour).rjust(2, '0')
-    #     hour_str = str(int(time_index)).rjust(3, '0')
-    #     date_str = model_run_time.strftime('%Y%m%d')
-    #     url = self._base_multigrid_grib_url.format(self.name, model_run_str, hour_str, date_str, float(math.floor(location.longitude)), float(
-    #         math.ceil(location.longitude)), float(math.ceil(location.latitude)), float(math.floor(location.latitude)))
-    #     return url
-
-    def create_grib_url(self, location, time_index):
+    def create_grib_url(self, time_index):
         model_run_time = self.latest_model_time()
         model_run_str = str(model_run_time.hour).rjust(2, '0')
         hour_str = str(int(time_index)).rjust(3, '0')
