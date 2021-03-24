@@ -158,6 +158,7 @@ class NOAAModel(object):
         # Parse all of the variables into the map
         for message in messages:
             var = message.shortName
+            
             if message.has_key('level'):
                 if message.level > 1:
                     var += '_' + str(message.level)
@@ -212,6 +213,19 @@ class NOAAModel(object):
         for i in range(0, len(data['time'])):
             buoy_data_point = BuoyData(units.Units.metric)
             if self._to_buoy_data_weather(buoy_data_point, data, i):
+                buoy_data.append(buoy_data_point)
+
+        return buoy_data
+
+    def to_buoy_data(self, data):
+        buoy_data = []
+        if not data:
+            return buoy_data
+
+        for i in range(0, len(data['time'])):
+            buoy_data_point = BuoyData(units.Units.metric)
+            if self._to_buoy_data_wave(buoy_data_point, data, i):
+                self._to_buoy_data_weather(buoy_data_point, data, i)
                 buoy_data.append(buoy_data_point)
 
         return buoy_data

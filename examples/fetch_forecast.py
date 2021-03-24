@@ -4,29 +4,29 @@ import matplotlib.pyplot as plt
 import surfpy
 
 if __name__=='__main__':
-    ri_wave_location = surfpy.Location(41.4, -71.45, altitude=30.0, name='Block Island Sound')
+    ri_wave_location = surfpy.Location(41.4, -71.45, altitude=30.0, name='Rhode Island Coast')
     ri_wave_location.depth = 30.0
     ri_wave_location.angle = 145.0
     ri_wave_location.slope = 0.02
-    ec_wave_model = surfpy.wavemodel.atlantic_gfs_wave_model()
+    atlantic_wave_model = surfpy.wavemodel.atlantic_gfs_wave_model()
 
     print('Fetching WW3 Wave Data')
-    wave_grib_data = ec_wave_model.fetch_grib_datas(0, 180)
-    raw_wave_data = ec_wave_model.parse_grib_datas(ri_wave_location, wave_grib_data)
+    wave_grib_data = atlantic_wave_model.fetch_grib_datas(0, 180)
+    raw_wave_data = atlantic_wave_model.parse_grib_datas(ri_wave_location, wave_grib_data)
     if raw_wave_data:
-        data = ec_wave_model.to_buoy_data_wave(raw_wave_data)
+        data = atlantic_wave_model.to_buoy_data(raw_wave_data)
     else:
         print('Failed to fetch wave forecast data')
         sys.exit(1)
 
-    print('Fetching GFS Weather Data')
-    ri_wind_location = surfpy.Location(41.6, -71.5, altitude=10.0, name='Narragansett Pier')
-    raw_weather_data = ec_wave_model.parse_grib_datas(ri_wind_location, wave_grib_data)
-    if raw_weather_data:
-        ec_wave_model.fill_buoy_data_weather(data, raw_weather_data)
-    else:
-        print('Failed to fetch wind forecast data')
-        #sys.exit(1)
+    # print('Fetching GFS Weather Data')
+    # ri_wind_location = surfpy.Location(41.41, -71.5, altitude=0.0, name='Narragansett Pier')
+    # raw_weather_data = ec_wave_model.parse_grib_datas(ri_wave_location, wave_grib_data)
+    # if raw_weather_data:
+    #     ec_wave_model.fill_buoy_data_weather(data, raw_weather_data)
+    # else:
+    #     print('Failed to fetch wind forecast data')
+    #     #sys.exit(1)
 
     for dat in data:
         dat.solve_breaking_wave_heights(ri_wave_location)
@@ -46,5 +46,5 @@ if __name__=='__main__':
     plt.xlabel('Hours')
     plt.ylabel('Breaking Wave Height (ft)')
     plt.grid(True)
-    plt.title('WaveWatch III: ' + ec_wave_model.latest_model_time().strftime('%d/%m/%Y %Hz'))
+    plt.title('WaveWatch III: ' + atlantic_wave_model.latest_model_time().strftime('%d/%m/%Y %Hz'))
     plt.show()
