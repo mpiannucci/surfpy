@@ -41,15 +41,15 @@ class GFSModel(NOAAModel):
 
 
 # Change hourly_cutoff_index to 120 for hourly
-def hourly_gfs_model():
-    return GFSModel(name='gfs_0p25_1hr', 
-                    description='Global GFS 0.25 deg hourly', 
-                    bottom_left=Location(-90.00000, 0.00000), 
-                    top_right=Location(90.0000, 359.5000), 
-                    location_resolution=0.25, 
-                    time_resolution=0.125, 
-                    min_altitude=1000.0, 
-                    max_altitude=1.0, 
-                    altitude_resolution=21.717, 
-                    max_index=384, 
-                    hourly_cutoff_index=0)
+# def hourly_gfs_model():
+#     return GFSModel(name='gfs_0p25_1hr', 
+#                     description='Global GFS 0.25 deg hourly', 
+#                     bottom_left=Location(-90.00000, 0.00000), 
+#                     top_right=Location(90.0000, 359.5000), 
+#                     location_resolution=0.25, 
+#                     time_resolution=0.125, 
+#                     min_altitude=1000.0, 
+#                     max_altitude=1.0, 
+#                     altitude_resolution=21.717, 
+#                     max_index=384, 
+#                     hourly_cutoff_index=0)

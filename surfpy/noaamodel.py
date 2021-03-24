@@ -16,8 +16,9 @@ import pygrib
 
 class NOAAModel(object):
 
-    def __init__(self, name, description, bottom_left, top_right, location_resolution, time_resolution, max_index, hourly_cutoff_index=0, max_altitude=0.0, min_altitude=0.0, altitude_resolution=0.0, data={}):
+    def __init__(self, name, subset, description, bottom_left, top_right, location_resolution, time_resolution, max_index, hourly_cutoff_index=0, max_altitude=0.0, min_altitude=0.0, altitude_resolution=0.0, data={}):
         self.name = name
+        self.subset = subset
         self.description = description
         self.bottom_left = bottom_left
         self.top_right = top_right

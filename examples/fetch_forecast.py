@@ -8,7 +8,7 @@ if __name__=='__main__':
     ri_wave_location.depth = 30.0
     ri_wave_location.angle = 145.0
     ri_wave_location.slope = 0.02
-    ec_wave_model = surfpy.wavemodel.us_east_coast_wave_model()
+    ec_wave_model = surfpy.wavemodel.atlantic_gfs_wave_model()
 
     print('Fetching WW3 Wave Data')
     wave_grib_data = ec_wave_model.fetch_grib_datas(0, 180)
