@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import surfpy
 
 if __name__=='__main__':
-    ri_wave_location = surfpy.Location(41.4, -71.45, altitude=30.0, name='Rhode Island Coast')
+    ri_wave_location = surfpy.Location(41.35, -71.4, altitude=30.0, name='Rhode Island Coast')
     ri_wave_location.depth = 30.0
     ri_wave_location.angle = 145.0
     ri_wave_location.slope = 0.02

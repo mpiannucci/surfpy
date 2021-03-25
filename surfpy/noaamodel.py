@@ -158,12 +158,12 @@ class NOAAModel(object):
         # Parse all of the variables into the map
         for message in messages:
             var = message.shortName
-            
+
             if message.has_key('level'):
                 if message.level > 1:
                     var += '_' + str(message.level)
 
-            tolerence = 0.1
+            tolerence = self.location_resolution
             rawvalue, lats, lons = message.data(lat1=location.latitude-tolerence,lat2=location.latitude+tolerence,
                             lon1=location.absolute_longitude-tolerence,lon2=location.absolute_longitude+tolerence)
             value = rawvalue.mean().item()
