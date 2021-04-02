@@ -98,7 +98,7 @@ def atlantic_gfs_wave_model():
         top_right=Location(55.00011, 310.00011),
         location_resolution=0.167,
         time_resolution=0.125,
-        max_index=180,
+        max_index=384,
         hourly_cutoff_index=0
     )
 
@@ -112,6 +112,6 @@ def us_west_coast_gfs_wave_model():
         top_right=Location(50.00005, 250.00008),
         location_resolution=0.167,
         time_resolution=0.125,
-        max_index=180,
+        max_index=384,
         hourly_cutoff_index=0
     )

@@ -10,8 +10,8 @@ if __name__=='__main__':
     ri_wave_location.slope = 0.02
     atlantic_wave_model = surfpy.wavemodel.atlantic_gfs_wave_model()
 
-    print('Fetching WW3 Wave Data')
-    wave_grib_data = atlantic_wave_model.fetch_grib_datas(0, 180)
+    print('Fetching GFS Wave Data')
+    wave_grib_data = atlantic_wave_model.fetch_grib_datas(0, 384)
     raw_wave_data = atlantic_wave_model.parse_grib_datas(ri_wave_location, wave_grib_data)
     if raw_wave_data:
         data = atlantic_wave_model.to_buoy_data(raw_wave_data)
@@ -46,5 +46,5 @@ if __name__=='__main__':
     plt.xlabel('Hours')
     plt.ylabel('Breaking Wave Height (ft)')
     plt.grid(True)
-    plt.title('WaveWatch III: ' + atlantic_wave_model.latest_model_time().strftime('%d/%m/%Y %Hz'))
+    plt.title('GFS Wave Atlantic: ' + atlantic_wave_model.latest_model_time().strftime('%d/%m/%Y %Hz'))
     plt.show()
