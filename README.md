@@ -7,7 +7,7 @@ This package aims to create a suite of tools than can be used to generate and cr
 ## Running the Tests
 
 ```bash
-python setup.py test
+python3 -m unittest
 ```
 
 ## Examples

@@ -62,7 +62,8 @@ class BuoyStation(BaseStation):
     def wave_forecast_bulletin_url(self):
         return 'https://polar.ncep.noaa.gov/waves/WEB/multi_1.latest_run/plots/multi_1.' + self.station_id + '.bull'
 
-    def parse_latest_reading_data(self, raw_data):
+    @staticmethod
+    def parse_latest_reading_data(raw_data):
         raw_data = raw_data.split('\n')
         if len(raw_data) < 6:
             print('Invalid latest station data')
@@ -142,7 +143,8 @@ class BuoyStation(BaseStation):
         data.find_expiration_date()
         return data
 
-    def parse_meteorological_reading_data(self, raw_data, count_limit):
+    @staticmethod
+    def parse_meteorological_reading_data(raw_data, count_limit):
         raw_data = raw_data.split('\n')
         if len(raw_data) < 2:
             print('Failed to parse meteorological data')
@@ -182,7 +184,8 @@ class BuoyStation(BaseStation):
 
         return all_data
 
-    def parse_detailed_wave_reading_data(self, raw_data, count_limit):
+    @staticmethod
+    def parse_detailed_wave_reading_data(raw_data, count_limit):
         raw_data = raw_data.split('\n')
         if len(raw_data) < 2:
             print('Failed to parse detailed wave data')
@@ -224,7 +227,8 @@ class BuoyStation(BaseStation):
 
         return all_data
 
-    def parse_wave_spectra_reading_data(self, energy_data, directional_data, count_limit, latest_report_date=None):
+    @staticmethod
+    def parse_wave_spectra_reading_data(energy_data, directional_data, count_limit, latest_report_date=None):
         energy_data = energy_data.split('\n')
         directional_data = directional_data.split('\n')
         if len(energy_data) != len(directional_data):
@@ -270,48 +274,53 @@ class BuoyStation(BaseStation):
 
         return all_data
 
-    def parse_wave_forecast_bulletin(self, raw_bulletin_data):
+    @staticmethod
+    def parse_wave_forecast_bulletin(raw_bulletin_data, count_limit):
         raw_lines = raw_bulletin_data.split('\n')
-        
+
         HEADER_LINES = 7
         FOOTER_LINES = 11
         data_lines = len(raw_lines) - HEADER_LINES - FOOTER_LINES
         if (data_lines < 1):
             return None
+        elif count_limit and count_limit > 0 and count_limit < data_lines:
+            data_lines = count_limit
 
-        today = datetime.today()    
+        raw_model_run_components = raw_lines[2].split()
+        #hour = int(raw_model_run_components[3])
+        model_run_date = datetime.strptime(raw_model_run_components[2], '%Y%m%d')
 
         buoy_data = []
-        for i in range(HEADER_LINES, data_lines):
+        for i in range(HEADER_LINES, data_lines + HEADER_LINES):
             columns = raw_lines[i].split('|')
             if len(columns) < 8:
                 continue
             
             # First column is date and time, second is the index, all the other are wave components
-            raw_date_components = columns[0].split()
+            raw_date_components = columns[1].split()
             if len(raw_date_components) != 2:
                 continue
 
-            day = parse_int(raw_date_components[0].strip())
-            hour = parse_int(raw_date_components[1].strip())
-            month = today.month
-            if day < today.day:
-                if today.month == 12:
+            day = int(raw_date_components[0].strip())
+            hour = int(raw_date_components[1].strip())
+            month = model_run_date.month
+            if day < model_run_date.day:
+                if model_run_date.month == 12:
                     month = 1
                 else: 
                     month -= 1
             
             datapoint = BuoyData(unit=units.Units.metric)
-            datapoint.date = datetime(today.year, month, day, hour)
+            datapoint.date = datetime(model_run_date.year, month, day, hour)
 
-            summary = columns[1].split()
+            summary = columns[2].split()
             if len(summary) < 2:
                 continue
 
             significant_wave_height = parse_float(summary[0].strip())
             datapoint.swell_components = []
 
-            for s in range(2, 8):
+            for s in range(3, 9):
                 raw_wave_data = columns[s].split()
                 if len(raw_wave_data) < 3:
                     break
@@ -325,6 +334,8 @@ class BuoyStation(BaseStation):
                 if s == 2:
                     datapoint.wave_summary = Swell(units.Units.metric, significant_wave_height, component_period, component_direction, component_compass_direction)
                 datapoint.swell_components.append(component)
+            
+            buoy_data.append(datapoint)
             
         return buoy_data
 
