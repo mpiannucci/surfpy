@@ -58,6 +58,7 @@ class NOAAModel(object):
 
         return int(altitude / self.altitude_resolution)
 
+    @staticmethod
     def latest_model_time(self):
         current_time = datetime.datetime.utcnow() + datetime.timedelta(hours=-5)
         latest_model_hour = current_time.hour - (current_time.hour % 6)

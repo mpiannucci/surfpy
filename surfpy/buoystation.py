@@ -1,3 +1,4 @@
+from surfpy.noaamodel import NOAAModel
 from .basestation import BaseStation
 from .buoydata import BuoyData
 from .buoyspectra import BuoySpectra
@@ -40,27 +41,30 @@ class BuoyStation(BaseStation):
 
     @property
     def latest_reading_url(self):
-        return 'https://www.ndbc.noaa.gov/data/latest_obs/' + self.station_id + '.txt'
+        return f'https://www.ndbc.noaa.gov/data/latest_obs/{self.station_id}.txt'
 
     @property
     def meteorological_reading_url(self):
-        return 'https://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.txt'
+        return f'https://www.ndbc.noaa.gov/data/realtime2/{self.station_id}.txt'
 
     @property
     def detailed_wave_reading_url(self):
-        return 'https://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.spec'
+        return f'https://www.ndbc.noaa.gov/data/realtime2/{self.station_id}.spec'
 
     @property
     def wave_energy_reading_url(self):
-        return 'https://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.data_spec'
+        return f'https://www.ndbc.noaa.gov/data/realtime2/{self.station_id}.data_spec'
 
     @property
     def directional_wave_reading_url(self):
-        return 'https://www.ndbc.noaa.gov/data/realtime2/' + self.station_id + '.swdir'
+        return f'https://www.ndbc.noaa.gov/data/realtime2/{self.station_id}.swdir'
 
     @property
     def wave_forecast_bulletin_url(self):
-        return 'https://polar.ncep.noaa.gov/waves/WEB/multi_1.latest_run/plots/multi_1.' + self.station_id + '.bull'
+        model_time = NOAAModel.latest_model_time()
+        date_string = model_time.strftime('%Y%m%d')
+        hour_string = model_time.strftime('%H')
+        return f'https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gfs.{date_string}/{hour_string}/wave/station/bulls.t{hour_string}z/gfswave.{self.station_id}.bull'
 
     @staticmethod
     def parse_latest_reading_data(raw_data):
