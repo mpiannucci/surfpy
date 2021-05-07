@@ -14,17 +14,12 @@ if __name__=='__main__':
 
     print('Fetching GFS Wave Data')
     data = block_island_buoy.fetch_wave_forecast_bulletin(atlantic_wave_model)
-    # wave_grib_data = atlantic_wave_model.fetch_grib_datas(0, 384)
-    # raw_wave_data = atlantic_wave_model.parse_grib_datas(ri_wave_location, wave_grib_data)
-    # if raw_wave_data:
-    #     data = atlantic_wave_model.to_buoy_data(raw_wave_data)
-    # else:
-    #     print('Failed to fetch wave forecast data')
-    #     sys.exit(1)
+    print(len(data))
 
     print('Fetching local weather data')
     ri_wind_location = surfpy.Location(41.41, -71.45, altitude=0.0, name='Narragansett Pier')
     weather_data = surfpy.WeatherApi.fetch_hourly_forecast(ri_wind_location)
+    print(len(weather_data))
     surfpy.merge_wave_weather_data(data, weather_data)
 
     for dat in data:

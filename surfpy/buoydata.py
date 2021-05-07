@@ -123,7 +123,7 @@ def merge_wave_weather_data(wave_data: List[BuoyData], weather_data: List[BuoyDa
     last_weather_index = 0
     
     for wave in wave_data:
-        if wave.date > weather_data[-1]:
+        if wave.date > weather_data[-1].date:
             return wave_data
 
         for i in range(last_weather_index, len(weather_data)):

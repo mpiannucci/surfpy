@@ -63,7 +63,7 @@ class BuoyStation(BaseStation):
         model_run_time = model.latest_model_time()
         model_run_str = str(model_run_time.hour).rjust(2, '0')
         date_str = model_run_time.strftime('%Y%m%d')
-        return f'https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gfs.{date_str}/{model_run_str}/wave/station/bulls.t{model_run_str}z/gfswave.{self.station_id}.cbull'
+        return f'https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gfs.{date_str}/{model_run_str}/wave/station/bulls.t{model_run_str}z/gfswave.{self.station_id}.bull'
 
     @staticmethod
     def parse_latest_reading_data(raw_data):
@@ -297,6 +297,7 @@ class BuoyStation(BaseStation):
         for i in range(HEADER_LINES, data_lines + HEADER_LINES):
             columns = raw_lines[i].split('|')
             if len(columns) < 8:
+                print('asjhdkajhsd')
                 continue
             
             # First column is date and time, second is the index, all the other are wave components
@@ -314,7 +315,7 @@ class BuoyStation(BaseStation):
                     month -= 1
             
             datapoint = BuoyData(unit=units.Units.metric)
-            datapoint.date = datetime(model_run_date.year, month, day, hour)
+            datapoint.date = pytz.utc.localize(datetime(model_run_date.year, month, day, hour))
 
             summary = columns[2].split()
             if len(summary) < 2:
@@ -381,7 +382,7 @@ class BuoyStation(BaseStation):
         response = requests.get(url)
         if len(response.text) < 1:
             return None
-        return self.parse_wave_forecast_bulletin(response.text, -1)
+        return self.parse_wave_forecast_bulletin(response.text, None)
 
     @staticmethod
     def data_index_for_date(data, datetime):
