@@ -1,3 +1,4 @@
+from typing import List
 from . import units
 from .swell import Swell
 from .buoyspectra import BuoySpectra
@@ -11,7 +12,8 @@ class BuoyData(BaseData):
     def __init__(self, unit, date=None, expiration_date=None, wind_direction=float('nan'), wind_compass_direction='', 
         wind_speed=float('nan'), wind_gust=float('nan'), wave_summary=None, swell_components=None, steepness='', average_period=float('nan'),
         wave_spectra=None, minimum_breaking_height=float('nan'), maximum_breaking_height=float('nan'), pressure=float('nan'),
-        air_temperature=float('nan'), water_temperature=float('nan'), dewpoint_temperature=float('nan'), pressure_tendency=float('nan'), water_level=float('nan')):
+        air_temperature=float('nan'), water_temperature=float('nan'), dewpoint_temperature=float('nan'), pressure_tendency=float('nan'), 
+        water_level=float('nan'), short_forecast=None):
         super(BuoyData, self).__init__(unit)
 
         # Set up all of the data constructors
@@ -36,13 +38,14 @@ class BuoyData(BaseData):
         self.minimum_breaking_height = minimum_breaking_height
         self.maximum_breaking_height = maximum_breaking_height
 
-        # Meterology
+        # Meteorology
         self.pressure = pressure
         self.air_temperature = air_temperature
         self.water_temperature = water_temperature
         self.dewpoint_temperature = dewpoint_temperature
         self.pressure_tendency = pressure_tendency
         self.water_level = water_level
+        self.short_forecast = short_forecast
 
     def change_units(self, new_units):
         old_unit = self.unit
@@ -114,3 +117,26 @@ class BuoyData(BaseData):
         self.wind_speed = other.wind_speed
         self.wind_direction = other.wind_direction
         self.wind_compass_direction = other.wind_compass_direction
+
+
+def merge_wave_weather_data(wave_data: List[BuoyData], weather_data: List[BuoyData]) -> List[BuoyData]:
+    last_weather_index = 0
+    
+    for wave in wave_data:
+        if wave.date > weather_data[-1]:
+            return wave_data
+
+        for i in range(last_weather_index, len(weather_data)):
+            weather = weather_data[i]
+            if weather.date != wave.date:
+                continue
+
+            wave.air_temperature = weather.air_temperature
+            wave.short_forecast = weather.short_forecast
+            wave.wind_speed = weather.wind_speed
+            wave.wind_direction = weather.wind_direction
+            wave.wind_compass_direction = weather.wind_compass_direction
+            last_weather_index = i
+            break
+        
+    return wave_data
