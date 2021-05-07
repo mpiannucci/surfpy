@@ -123,6 +123,7 @@ def merge_wave_weather_data(wave_data: List[BuoyData], weather_data: List[BuoyDa
     last_weather_index = 0
     
     for wave in wave_data:
+        wave.change_units(units.Units.metric)
         if wave.date > weather_data[-1].date:
             return wave_data
 
@@ -131,6 +132,7 @@ def merge_wave_weather_data(wave_data: List[BuoyData], weather_data: List[BuoyDa
             if weather.date != wave.date:
                 continue
 
+            weather.change_units(units.Units.metric)
             wave.air_temperature = weather.air_temperature
             wave.short_forecast = weather.short_forecast
             wave.wind_speed = weather.wind_speed

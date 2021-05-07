@@ -326,19 +326,25 @@ class BuoyStation(BaseStation):
 
             for s in range(3, 9):
                 raw_wave_data = columns[s].split()
+                significant = None
                 if len(raw_wave_data) < 3:
                     break
+                elif raw_wave_data[0] == '*':
+                    significant = raw_wave_data.pop(0)
 
                 component_wave_height = parse_float(raw_wave_data[0].strip())
                 component_period = parse_float(raw_wave_data[1].strip())
                 component_direction = parse_float(raw_wave_data[2].strip())
                 component_compass_direction = units.degree_to_direction(component_direction)
                 component = Swell(units.Units.metric, component_wave_height, component_period, component_direction, component_compass_direction)
-
-                if s == 2:
+ 
+                if significant is not None:
                     datapoint.wave_summary = Swell(units.Units.metric, significant_wave_height, component_period, component_direction, component_compass_direction)
                 datapoint.swell_components.append(component)
             
+            if not datapoint.wave_summary:
+                datapoint.wave_summary = Swell(units.Units.metric, significant_wave_height, datapoint.swell_components[0].period, datapoint.swell_components[0].direction, datapoint.swell_components[0].compass_direction)
+
             buoy_data.append(datapoint)
             
         return buoy_data
