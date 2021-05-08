@@ -1,29 +1,26 @@
+from surfpy.buoystation import BuoyStation
 import sys
 import matplotlib.pyplot as plt
 
 import surfpy
 
 if __name__=='__main__':
-    ri_wave_location = surfpy.Location(41.35, -71.4, altitude=30.0, name='Rhode Island Coast')
-    ri_wave_location.depth = 30.0
+    ri_wave_location = surfpy.Location(40.967, -71.126, altitude=30.0, name='Block Island Buoy')
+    ri_wave_location.depth = 51.0
     ri_wave_location.angle = 145.0
     ri_wave_location.slope = 0.02
     atlantic_wave_model = surfpy.wavemodel.atlantic_gfs_wave_model()
+    block_island_buoy = BuoyStation('44097', ri_wave_location)
 
     print('Fetching GFS Wave Data')
-    wave_grib_data = atlantic_wave_model.fetch_grib_datas(0, 384)
-    raw_wave_data = atlantic_wave_model.parse_grib_datas(ri_wave_location, wave_grib_data)
-    if raw_wave_data:
-        data = atlantic_wave_model.to_buoy_data(raw_wave_data)
-    else:
-        print('Failed to fetch wave forecast data')
-        sys.exit(1)
+    data = block_island_buoy.fetch_wave_forecast_bulletin(atlantic_wave_model)
 
     print('Fetching local weather data')
     ri_wind_location = surfpy.Location(41.41, -71.45, altitude=0.0, name='Narragansett Pier')
     weather_data = surfpy.WeatherApi.fetch_hourly_forecast(ri_wind_location)
     surfpy.merge_wave_weather_data(data, weather_data)
 
+    print('Solving Breaking Wave Heights')
     for dat in data:
         dat.solve_breaking_wave_heights(ri_wave_location)
         dat.change_units(surfpy.units.Units.english)
