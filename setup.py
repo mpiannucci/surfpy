@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='surfpy',
-      version='0.96.0',
+      version='0.97.0',
       description='Wave and weather tools written in pure python',
       url='https://github.com/mpiannucci/surfpy',
       author='Matthew Iannucci',
