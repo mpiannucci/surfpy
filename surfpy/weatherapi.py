@@ -59,8 +59,8 @@ class WeatherApi():
             buoy_data_point.air_temperature = int(period['temperature'])
             buoy_data_point.short_forecast = period['shortForecast']
             buoy_data_point.wind_speed = int(period['windSpeed'].split(' ')[0])
-            buoy_data_point.wind_direction = period['windDirection']
-            buoy_data_point.wind_compass_direction = units.direction_to_degree(buoy_data_point.wind_direction)
+            buoy_data_point.wind_compass_direction = period['windDirection']
+            buoy_data_point.wind_direction =  units.direction_to_degree(buoy_data_point.wind_compass_direction)
             buoy_data.append(buoy_data_point)
 
         return buoy_data
