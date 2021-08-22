@@ -63,8 +63,8 @@ class WeatherApi():
             raw_speed = period['windSpeed']
             if raw_speed:
                 buoy_data_point.wind_speed = int(raw_speed.split(' ')[0])
-            buoy_data_point.wind_direction = period['windDirection']
-            buoy_data_point.wind_compass_direction = units.direction_to_degree(buoy_data_point.wind_direction)
+            buoy_data_point.wind_compass_direction = period['windDirection']
+            buoy_data_point.wind_direction =  units.direction_to_degree(buoy_data_point.wind_compass_direction)
             buoy_data.append(buoy_data_point)
 
         return buoy_data
