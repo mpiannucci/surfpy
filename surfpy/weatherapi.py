@@ -56,9 +56,13 @@ class WeatherApi():
         for period in periods:
             buoy_data_point = BuoyData(units.Units.english)
             buoy_data_point.date = datetime.datetime.strptime(period['startTime'], '%Y-%m-%dT%H:%M:%S%z').astimezone(pytz.utc)
-            buoy_data_point.air_temperature = int(period['temperature'])
+            raw_temp = period['temperature']
+            if raw_temp:
+                buoy_data_point.air_temperature = int(raw_temp)
             buoy_data_point.short_forecast = period['shortForecast']
-            buoy_data_point.wind_speed = int(period['windSpeed'].split(' ')[0])
+            raw_speed = period['windSpeed']
+            if raw_speed:
+                buoy_data_point.wind_speed = int(raw_speed.split(' ')[0])
             buoy_data_point.wind_direction = period['windDirection']
             buoy_data_point.wind_compass_direction = units.direction_to_degree(buoy_data_point.wind_direction)
             buoy_data.append(buoy_data_point)

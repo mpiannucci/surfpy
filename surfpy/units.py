@@ -29,6 +29,8 @@ def degree_to_direction(degree):
 
 
 def direction_to_degree(direction):
+    if direction is None:
+        return -1.0
     direction = direction.lower()
     if direction == 'n' or direction == 'north':
         return 0.0
