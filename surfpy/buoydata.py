@@ -1,3 +1,4 @@
+from math import isnan
 from typing import List
 from . import units
 from .swell import Swell
@@ -133,11 +134,15 @@ def merge_wave_weather_data(wave_data: List[BuoyData], weather_data: List[BuoyDa
                 continue
 
             weather.change_units(units.Units.metric)
-            wave.air_temperature = weather.air_temperature
+            if weather.air_temperature is not None and not isnan(weather.air_temperature):
+                wave.air_temperature = weather.air_temperature
             wave.short_forecast = weather.short_forecast
-            wave.wind_speed = weather.wind_speed
-            wave.wind_direction = weather.wind_direction
-            wave.wind_compass_direction = weather.wind_compass_direction
+            if weather.wind_speed is not None and not isnan(weather.wind_speed):
+                wave.wind_speed = weather.wind_speed
+            if weather.wind_direction is not None and not isnan(weather.wind_direction):
+                wave.wind_direction = weather.wind_direction
+            if weather.wind_compass_direction is not None:
+                wave.wind_compass_direction = weather.wind_compass_direction
             last_weather_index = i
             break
         
