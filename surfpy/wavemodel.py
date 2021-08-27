@@ -38,7 +38,7 @@ class WaveModel(NOAAModel):
         buoy_data_point.wave_summary.direction = data['dirpw'][i]
         buoy_data_point.wave_summary.compass_direction = units.degree_to_direction(
             buoy_data_point.wave_summary.direction)
-        buoy_data_point.wave_summary.wave_height = data['swh'][i]
+        buoy_data_point.wave_summary.wave_height = data['htsgw'][i]
         buoy_data_point.wave_summary.period = data['perpw'][i]
 
         if data['swell'][i] > 0 and data['swper'][i] > 0 and data['swdir'][i] > 0:
