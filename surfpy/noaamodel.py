@@ -3,14 +3,10 @@ import pytz
 from . import units
 from .buoydata import BuoyData
 from . import tools
+from .location import Location
 
-from io import StringIO, BytesIO
-import struct
-
-import pygrib
 import gribberish
 
-import surfpy
 
 # https://ftp.ncep.noaa.gov/data/nccf/com/gfs/prod/gfs.20210131/18/gfs.t18z.pgrb2b.0p50.f156
 # https://ftp.ncep.noaa.gov/data/nccf/com/wave/prod/multi_1.20210130/multi_1.at_4m.t00z.f000.grib2
@@ -108,13 +104,11 @@ class NOAAModel(object):
 
         return [tools.download_with_retry(url) for url in urls]
 
-    def parse_grib_data(self, location: surfpy.Location, raw_data, data={}):
+    def parse_grib_data(self, location: Location, raw_data, data={}):
         if not raw_data:
             return None
         elif not len(raw_data):
             return None
-
-        print('Parsing Grib')
 
         messages = gribberish.parse_grib_messages(raw_data)  
         if not len(messages):
@@ -130,24 +124,16 @@ class NOAAModel(object):
         for message in messages:
             var = message.var_abbrev.lower()
 
-            # TODO
-            # if message.has_key('level'):
-            #     if message.level > 1:
-            #         var += '_' + str(message.level)
+            if message.array_index is not None:
+                if message.array_index > 1:
+                    var += '_' + str(message.array_index)
 
-            # tolerence = self.location_resolution
-            # rawvalue, lats, lons = message.data(lat1=location.latitude-tolerence,lat2=location.latitude+tolerence,
-            #                 lon1=location.absolute_longitude-tolerence,lon2=location.absolute_longitude+tolerence)
-            # value = rawvalue.mean().item()
-
-            value = message.data_at_location(location.latitude, location.longitude)
+            value = message.data_at_location(location.absolute_latitude, location.absolute_longitude)
 
             if data.get(var) is None:
                 data[var] = [value]
             else:
                 data[var].append(value)
-
-            print('Parsed Grib')
 
         return data
 

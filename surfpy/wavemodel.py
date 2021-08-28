@@ -59,13 +59,13 @@ class WaveModel(NOAAModel):
             swell_2.period = data['swper_2'][i]
             buoy_data_point.swell_components.append(swell_2)
 
-        if data['shww'][i] > 0 and data['mpww'][i] > 0 and data['wvdir'][i] > 0:
+        if data['wvhgt'][i] > 0 and data['wvper'][i] > 0 and data['wvdir'][i] > 0:
             wind_swell = Swell(units.Units.metric)
             wind_swell.direction = data['wvdir'][i]
             wind_swell.compass_direction = units.degree_to_direction(
                 wind_swell.direction)
-            wind_swell.wave_height = data['shww'][i]
-            wind_swell.period = data['mpww'][i]
+            wind_swell.wave_height = data['wvhgt'][i]
+            wind_swell.period = data['wvper'][i]
             buoy_data_point.swell_components.append(wind_swell)
 
         return True
@@ -84,7 +84,7 @@ class WaveModel(NOAAModel):
         buoy_data_point.wind_direction = data['wdir'][i]
         buoy_data_point.wind_compass_direction = units.degree_to_direction(
             buoy_data_point.wind_direction)
-        buoy_data_point.wind_speed = data['ws'][i]
+        buoy_data_point.wind_speed = data['wind'][i]
 
         return True
 
