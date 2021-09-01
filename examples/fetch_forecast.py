@@ -12,7 +12,7 @@ if __name__=='__main__':
     atlantic_wave_model = surfpy.wavemodel.atlantic_gfs_wave_model()
 
     print('Fetching GFS Wave Data')
-    wave_grib_data = atlantic_wave_model.fetch_grib_datas(0, 120)
+    wave_grib_data = atlantic_wave_model.fetch_grib_datas(0, 72)
     raw_wave_data = atlantic_wave_model.parse_grib_datas(ri_wave_location, wave_grib_data)
     if raw_wave_data:
         data = atlantic_wave_model.to_buoy_data(raw_wave_data)

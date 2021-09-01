@@ -128,7 +128,7 @@ class NOAAModel(object):
                 if message.array_index > 1:
                     var += '_' + str(message.array_index)
 
-            tolerence = self.location_resolution * 2
+            tolerence = self.location_resolution
             # rawvalue, lats, lons = message.data(lat1=location.latitude-tolerence,lat2=location.latitude+tolerence,
             #                 lon1=location.absolute_longitude-tolerence,lon2=location.absolute_longitude+tolerence)
             # value = rawvalue.mean().item()
@@ -136,10 +136,10 @@ class NOAAModel(object):
             bottom_right = (location.absolute_latitude-tolerence, location.absolute_longitude+tolerence)
             top_left_indices = message.location_data_indices(top_left[0], top_left[1])
             bottom_right_indices = message.location_data_indices(bottom_right[0], bottom_right[1])
-            print(top_left)
-            print(bottom_right)
             values = message.data()[top_left_indices[0]:bottom_right_indices[0],top_left_indices[1]:bottom_right_indices[1]]
             print(values)
+            print(message.latitudes()[top_left_indices[0]:bottom_right_indices[0]])
+            print(message.longitudes()[top_left_indices[1]:bottom_right_indices[1]])
             value = numpy.nanmean(values)
 
             # value = message.data_at_location(location.absolute_latitude, location.absolute_longitude)
