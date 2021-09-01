@@ -53,7 +53,7 @@ class Swell(BaseData):
             if incident_angle < 90:
                 wave_breaking_height, _ = tools.breaking_characteristics(self.period, incident_angle, self.wave_height, beach_slope, depth)
 
-        # Take the maximum breaking height and give it a scale factor of 0.8 for refraction
+        # Take the maximum breaking height and give it a scale factor of 0.9 for refraction
         # or anything we are not checking for.
         breaking_height = 0.8 * wave_breaking_height
 

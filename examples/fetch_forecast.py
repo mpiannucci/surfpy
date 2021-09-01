@@ -4,15 +4,15 @@ import matplotlib.pyplot as plt
 import surfpy
 
 if __name__=='__main__':
-    #ri_wave_location = surfpy.Location(41.35, -71.4, altitude=30.0, name='Rhode Island Coast')
-    ri_wave_location = surfpy.Location(40.967, -71.126, altitude=30.0, name='Block Island Buoy')
-    ri_wave_location.depth = 50.0
+    ri_wave_location = surfpy.Location(41.35, -71.4, altitude=30.0, name='Rhode Island Coast')
+    # ri_wave_location = surfpy.Location(40.967, -71.126, altitude=30.0, name='Block Island Buoy')
+    ri_wave_location.depth = 30.0
     ri_wave_location.angle = 145.0
     ri_wave_location.slope = 0.02
     atlantic_wave_model = surfpy.wavemodel.atlantic_gfs_wave_model()
 
     print('Fetching GFS Wave Data')
-    wave_grib_data = atlantic_wave_model.fetch_grib_datas(0, 384)
+    wave_grib_data = atlantic_wave_model.fetch_grib_datas(0, 120)
     raw_wave_data = atlantic_wave_model.parse_grib_datas(ri_wave_location, wave_grib_data)
     if raw_wave_data:
         data = atlantic_wave_model.to_buoy_data(raw_wave_data)
@@ -35,8 +35,8 @@ if __name__=='__main__':
     with open('forecast.json', 'w') as outfile:
         outfile.write(json_data)
 
-    maxs =[x.maximum_breaking_height * 0.667 for x in data]
-    mins = [x.minimum_breaking_height * 0.667 for x in data]
+    maxs =[x.maximum_breaking_height for x in data]
+    mins = [x.minimum_breaking_height for x in data]
     summary = [x.wave_summary.wave_height for x in data]
     times = [x.date for x in data]
 

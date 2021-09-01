@@ -6,7 +6,7 @@ from . import tools
 from .location import Location
 
 import gribberish
-
+import numpy
 
 # https://ftp.ncep.noaa.gov/data/nccf/com/gfs/prod/gfs.20210131/18/gfs.t18z.pgrb2b.0p50.f156
 # https://ftp.ncep.noaa.gov/data/nccf/com/wave/prod/multi_1.20210130/multi_1.at_4m.t00z.f000.grib2
@@ -128,7 +128,22 @@ class NOAAModel(object):
                 if message.array_index > 1:
                     var += '_' + str(message.array_index)
 
-            value = message.data_at_location(location.absolute_latitude, location.absolute_longitude)
+            tolerence = self.location_resolution * 2
+            # rawvalue, lats, lons = message.data(lat1=location.latitude-tolerence,lat2=location.latitude+tolerence,
+            #                 lon1=location.absolute_longitude-tolerence,lon2=location.absolute_longitude+tolerence)
+            # value = rawvalue.mean().item()
+            top_left = (location.absolute_latitude+tolerence, location.absolute_longitude-tolerence)
+            bottom_right = (location.absolute_latitude-tolerence, location.absolute_longitude+tolerence)
+            top_left_indices = message.location_data_indices(top_left[0], top_left[1])
+            bottom_right_indices = message.location_data_indices(bottom_right[0], bottom_right[1])
+            print(top_left)
+            print(bottom_right)
+            values = message.data()[top_left_indices[0]:bottom_right_indices[0],top_left_indices[1]:bottom_right_indices[1]]
+            print(values)
+            value = numpy.nanmean(values)
+
+            # value = message.data_at_location(location.absolute_latitude, location.absolute_longitude)
+            print(f'{var}: {value}')
 
             if data.get(var) is None:
                 data[var] = [value]
