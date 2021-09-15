@@ -3,11 +3,10 @@ import pytz
 from . import units
 from .buoydata import BuoyData
 from . import tools
+from .location import Location
 
-from io import StringIO, BytesIO
-import struct
-
-import pygrib
+import gribberish
+import numpy
 
 # https://ftp.ncep.noaa.gov/data/nccf/com/gfs/prod/gfs.20210131/18/gfs.t18z.pgrb2b.0p50.f156
 # https://ftp.ncep.noaa.gov/data/nccf/com/wave/prod/multi_1.20210130/multi_1.at_4m.t00z.f000.grib2
@@ -105,69 +104,37 @@ class NOAAModel(object):
 
         return [tools.download_with_retry(url) for url in urls]
 
-    def parse_grib_data(self, location, raw_data, data={}):
+    def parse_grib_data(self, location: Location, raw_data, data={}):
         if not raw_data:
             return None
         elif not len(raw_data):
             return None
 
-        # From https://github.com/jswhit/pygrib/issues/42#issuecomment-243643075
-        f = BytesIO(raw_data)
-        f.seek(0, 2)
-        size = f.tell()
-        f.seek(0)
-        raw_messages = []
-        while 1:
-            # find next occurence of string 'GRIB' (or EOF).
-            nbyte = f.tell()
-            while 1:
-                f.seek(nbyte)
-                start = f.read(4)
-                sstart = start.decode('ascii', errors='ignore')
-                if sstart == '' or sstart == 'GRIB':
-                    break
-                nbyte = nbyte + 1
-            #     if nbyte >= size:
-            #         break
-
-            # if nbyte >= size:
-            #     break
-            # otherwise, start (='GRIB') contains indicator message (section 0)
-            if sstart == '':
-                break
-            startpos = f.tell()-4
-            f.read(4)  # next four octets are reserved
-            # 5th octet is length of grib message
-            lengrib = struct.unpack('>q', f.read(8))[0]
-            # read in entire grib message, append to list.
-            f.seek(startpos)
-            gribmsg = f.read(lengrib)
-            raw_messages.append(gribmsg)
-
-        # convert grib message string to grib message object 
-        messages = [pygrib.fromstring(m) for m in raw_messages]   
-
+        messages = gribberish.parse_grib_messages(raw_data)  
         if not len(messages):
             return None
 
         # Parse out the timestamp first
         if data.get('time') is None:
-            data['time'] = [messages[0].validDate]
+            data['time'] = [messages[0].forecast_date]
         else:
-            data['time'].append(messages[0].validDate)
+            data['time'].append(messages[0].forecast_date)
 
         # Parse all of the variables into the map
         for message in messages:
-            var = message.shortName
+            var = message.var_abbrev.lower()
 
-            if message.has_key('level'):
-                if message.level > 1:
-                    var += '_' + str(message.level)
+            if message.array_index is not None:
+                if message.array_index > 1:
+                    var += '_' + str(message.array_index)
 
             tolerence = self.location_resolution
-            rawvalue, lats, lons = message.data(lat1=location.latitude-tolerence,lat2=location.latitude+tolerence,
-                            lon1=location.absolute_longitude-tolerence,lon2=location.absolute_longitude+tolerence)
-            value = rawvalue.mean().item()
+            top_left = (location.absolute_latitude+tolerence, location.absolute_longitude-tolerence)
+            bottom_right = (location.absolute_latitude-tolerence, location.absolute_longitude+tolerence)
+            top_left_indices = message.location_data_indices(top_left[0], top_left[1])
+            bottom_right_indices = message.location_data_indices(bottom_right[0], bottom_right[1])
+            values = message.data()[top_left_indices[0]:bottom_right_indices[0],top_left_indices[1]:bottom_right_indices[1]]
+            value = numpy.nanmean(values)
 
             if data.get(var) is None:
                 data[var] = [value]
