@@ -312,7 +312,7 @@ class BuoyStation(BaseStation):
                 if model_run_date.month == 12:
                     month = 1
                 else: 
-                    month -= 1
+                    month += 1
             
             datapoint = BuoyData(unit=units.Units.metric)
             datapoint.date = pytz.utc.localize(datetime(model_run_date.year, month, day, hour))
