@@ -7,7 +7,10 @@ from . import tools
 from io import StringIO, BytesIO
 import struct
 
-import pygrib
+try:
+    import pygrib
+except: 
+    pygrib = None
 
 # https://ftp.ncep.noaa.gov/data/nccf/com/gfs/prod/gfs.20210131/18/gfs.t18z.pgrb2b.0p50.f156
 # https://ftp.ncep.noaa.gov/data/nccf/com/wave/prod/multi_1.20210130/multi_1.at_4m.t00z.f000.grib2
@@ -106,6 +109,8 @@ class NOAAModel(object):
         return [tools.download_with_retry(url) for url in urls]
 
     def parse_grib_data(self, location, raw_data, data={}):
+        if not pygrib:
+            return None
         if not raw_data:
             return None
         elif not len(raw_data):
