@@ -11,8 +11,8 @@ import pytz
 
 class WaveModel(NOAAModel):
 
-    # https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gfs.20210324/06/wave/gridded/gfswave.t06z.atlocn.0p16.f006.grib2
-    _base_gfs_wave_grib_url = 'https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gfs.{0}/{3}/wave/gridded/{1}.t{3}z.{2}.f{4}.grib2'
+    # https://noaa-gfs-bdp-pds.s3.amazonaws.com/gfs.20230101/18/wave/gridded/gfswave.t18z.atlocn.0p16.f064.grib2
+    _base_gfs_wave_grib_url = 'https://noaa-gfs-bdp-pds.s3.amazonaws.com/gfs.{0}/{3}/wave/gridded/{1}.t{3}z.{2}.f{4}.grib2'
 
     def create_grib_url(self, time_index):
         model_run_time = self.latest_model_time()
