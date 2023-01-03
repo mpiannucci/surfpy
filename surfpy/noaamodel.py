@@ -184,6 +184,7 @@ class NOAAModel(object):
 
     def parse_grib_datas(self, location, raw_data):
         if not len(raw_data):
+            print('Failed to parse data, empty data array found')
             return None
 
         data = {}
