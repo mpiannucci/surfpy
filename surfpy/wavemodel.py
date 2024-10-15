@@ -2,10 +2,6 @@ from .noaamodel import NOAAModel
 from .location import Location
 from .swell import Swell
 from . import units
-from . import tools
-from . import BuoyData
-from datetime import datetime
-import math
 import pytz
 
 
@@ -41,22 +37,22 @@ class WaveModel(NOAAModel):
         buoy_data_point.wave_summary.wave_height = data['swh'][i]
         buoy_data_point.wave_summary.period = data['perpw'][i]
 
-        if data['swell'][i] > 0 and data['swper'][i] > 0 and data['swdir'][i] > 0:
+        if data['shts'][i] > 0 and data['mpts'][i] > 0 and data['swdir'][i] > 0:
             swell_1 = Swell(units.Units.metric)
             swell_1.direction = data['swdir'][i]
             swell_1.compass_direction = units.degree_to_direction(
                 swell_1.direction)
-            swell_1.wave_height = data['swell'][i]
-            swell_1.period = data['swper'][i]
+            swell_1.wave_height = data['shts'][i]
+            swell_1.period = data['mpts'][i]
             buoy_data_point.swell_components.append(swell_1)
 
-        if data['swell_2'][i] > 0 and data['swper_2'][i] > 0 and data['swdir_2'][i] > 0:
+        if data['shts_2'][i] > 0 and data['mpts_2'][i] > 0 and data['swdir_2'][i] > 0:
             swell_2 = Swell(units.Units.metric)
             swell_2.direction = data['swdir_2'][i]
             swell_2.compass_direction = units.degree_to_direction(
                 swell_2.direction)
-            swell_2.wave_height = data['swell_2'][i]
-            swell_2.period = data['swper_2'][i]
+            swell_2.wave_height = data['shts_2'][i]
+            swell_2.period = data['mpts_2'][i]
             buoy_data_point.swell_components.append(swell_2)
 
         if data['shww'][i] > 0 and data['mpww'][i] > 0 and data['wvdir'][i] > 0:
