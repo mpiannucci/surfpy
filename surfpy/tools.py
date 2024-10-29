@@ -6,7 +6,7 @@ import time
 try:
     import requests
     from requests.adapters import HTTPAdapter
-    from urllib3 import Retry
+    from urllib3.util import Retry
 except:
     pass
 
