@@ -6,7 +6,7 @@ import time
 try:
     import requests
     from requests.adapters import HTTPAdapter
-    from requests.packages.urllib3.util.retry import Retry
+    from urllib3.util import Retry
 except:
     pass
 
@@ -254,7 +254,7 @@ def retry_session(retries=1):
     retries = Retry(total=retries,
                 backoff_factor=0.1,
                 status_forcelist=[500, 502, 503, 504],
-                method_whitelist=frozenset(['GET', 'POST']))
+                allowed_methods=frozenset(['GET', 'POST']))
 
     session.mount('https://', HTTPAdapter(max_retries=retries))
     session.mount('http://', HTTPAdapter(max_retries=retries))
