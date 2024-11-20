@@ -8,11 +8,8 @@ import math
 
 
 class GFSModel(NOAAModel):
-
-    _base_gfs_grib_url = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_{0}.pl?file=gfs.t{1}z.pgrb2.{2}.f{3}&lev_10_m_above_ground=on&var_GUST=on&var_PRES=on&var_TMP=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon={4}&rightlon={5}&toplat={6}&bottomlat={7}&dir=%2Fgfs.{8}%2F{1}'
-
-    def create_grib_url(self, time_index):
-        # TODO: Update this to use the new schema and match wavemodel.py
+    _base_gfs_grib_url = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_{0}.pl?file=gfs.t{1}z.pgrb2.{2}.f{3}&lev_10_m_above_ground=on&var_GUST=on&var_PRES=on&var_TMP=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon={4}&rightlon={5}&toplat={6}&bottomlat={7}&dir=%2Fgfs.{8}%2F{1}/atmos'
+    def create_grib_url(self, time_index, location):
         model_run_time = self.latest_model_time()
         model_run_str = str(model_run_time.hour).rjust(2, '0')
         hour_str = str(int(time_index)).rjust(3, '0')
@@ -25,19 +22,21 @@ class GFSModel(NOAAModel):
         if buoy_data_point.unit != units.Units.metric:
             buoy_data_point.change_units(units.Units.metric)
 
-        raw_date = data['TIME'][i]
+        raw_date = data['time'][i]
         raw_date = pytz.utc.localize(raw_date)
         if buoy_data_point.date == None:
             buoy_data_point.date = raw_date
         elif buoy_data_point.date != raw_date:
             return False
 
-        buoy_data_point.wind_speed, buoy_data_point.wind_direction = tools.scalar_from_uv(data['UGRD'][i], data['VGRD'][i])
+        buoy_data_point.wind_speed, buoy_data_point.wind_direction = tools.scalar_from_uv(data['10u_10'][i], data['10v_10'][i])
 
         # TODO: Other important vars
         
         return True
 
+    def _to_buoy_data_wave(self, buoy_data_point, data, i):
+        return True
 
 # Change hourly_cutoff_index to 120 for hourly
 # def hourly_gfs_model():

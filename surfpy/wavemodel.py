@@ -10,7 +10,7 @@ class WaveModel(NOAAModel):
     # https://noaa-gfs-bdp-pds.s3.amazonaws.com/gfs.20230101/18/wave/gridded/gfswave.t18z.atlocn.0p16.f064.grib2
     _base_gfs_wave_grib_url = 'https://noaa-gfs-bdp-pds.s3.amazonaws.com/gfs.{0}/{3}/wave/gridded/{1}.t{3}z.{2}.f{4}.grib2'
 
-    def create_grib_url(self, time_index):
+    def create_grib_url(self, time_index, location):
         model_run_time = self.latest_model_time()
         model_run_str = str(model_run_time.hour).rjust(2, '0')
         hour_str = str(int(time_index)).rjust(3, '0')
