@@ -57,7 +57,6 @@ if __name__=='__main__':
     # Show wind speed and direction over time
     wind_speeds = [x.wind_speed for x in data]
     wind_directions = [x.wind_direction for x in data]
-    # Show wind speed and direction over time
     fig, ax1 = plt.subplots()
 
     # Wind speed (Primary Y-axis)
@@ -78,5 +77,3 @@ if __name__=='__main__':
     fig.tight_layout()
 
     plt.show()
-
-    print(maxs, mins, summary, times, wind_speeds, wind_directions)
