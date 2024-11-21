@@ -10,7 +10,7 @@ class WaveModel(NOAAModel):
     # https://noaa-gfs-bdp-pds.s3.amazonaws.com/gfs.20230101/18/wave/gridded/gfswave.t18z.atlocn.0p16.f064.grib2
     _base_gfs_wave_grib_url = 'https://noaa-gfs-bdp-pds.s3.amazonaws.com/gfs.{0}/{3}/wave/gridded/{1}.t{3}z.{2}.f{4}.grib2'
 
-    def create_grib_url(self, time_index, location):
+    def create_grib_url(self, time_index, location=None):
         model_run_time = self.latest_model_time()
         model_run_str = str(model_run_time.hour).rjust(2, '0')
         hour_str = str(int(time_index)).rjust(3, '0')
@@ -84,7 +84,77 @@ class WaveModel(NOAAModel):
 
         return True
 
+# Global wave model with 25 km resolution with range -90:90, 0:359.75
+def global_gfs_wave_model_25km():
+    return WaveModel(
+        name='gfswave',
+        subset='global.0p25',
+        description='GFS Wave Model: Global 25 km',
+        bottom_left=Location(-90.00, 0.00),
+        top_right=Location(90.00, 359.75),
+        location_resolution=0.25,  # 25 km in degrees
+        time_resolution=0.125, # Runs every 3 hours, 3/24 = 0.125
+        max_index=384,
+        hourly_cutoff_index=0
+    )
 
+# Global wave model with 16 km resolution with range -15:52.5, 0:359.83
+def global_gfs_wave_model():
+    return WaveModel(
+        name='gfswave',
+        subset='global.0p16',
+        description='GFS Wave Model: Global 0.16 degree',
+        bottom_left=Location(-15.00, 0.00),
+        top_right=Location(52.5, 359.83),
+        location_resolution=0.167,
+        time_resolution=0.125,
+        max_index=384,
+        hourly_cutoff_index=0
+    )
+
+# Arctic wave model with 9 km resolution with range 50:90, 0:360
+def arctic_gfs_wave_model():
+    return WaveModel(
+        name='gfswave',
+        subset='arctic.9km',
+        description='GFS Wave Model: Arctic 9 km',
+        bottom_left=Location(50.00, 0.00),
+        top_right=Location(90.00, 360.00),
+        location_resolution=0.0833,  # 9 km in degrees
+        time_resolution=0.125,
+        max_index=384,
+        hourly_cutoff_index=0
+    )
+
+# Global south wave model with 25 km resolution with range -10.5:-79.5, 0:359.75
+def southern_gfs_wave_model():
+    return WaveModel(
+        name='gfswave',
+        subset='gsouth.0p25',
+        description='GFS Wave Model: Southern Hemisphere 0.25 degree',
+        bottom_left=Location(-10.5, 0),
+        top_right=Location(-79.5, 359.75),
+        location_resolution=0.25,
+        time_resolution=0.125,
+        max_index=384,
+        hourly_cutoff_index=0
+    )
+
+# Alaska wave model with 16 km resolution with range 44:75, 140:240
+def alaska_gfs_wave_model():
+    return WaveModel(
+        name='gfswave',
+        subset='alaska.0p16',
+        description='GFS Wave Model: Alaska 0.16 degree',
+        bottom_left=Location(44.00, 140.00),
+        top_right=Location(75.00, 240.00),
+        location_resolution=0.167,
+        time_resolution=0.125,
+        max_index=384,
+        hourly_cutoff_index=0
+    )
+
+# Atlantic wave model with 16 km resolution with range 0:55, 260:310
 def atlantic_gfs_wave_model():
     return WaveModel(
         name='gfswave',
@@ -98,7 +168,21 @@ def atlantic_gfs_wave_model():
         hourly_cutoff_index=0
     )
 
+# Eastern Pacific wave model with 16 km resolution with range -20:30, 130:215
+def eastpacific_gfs_wave_model():
+    return WaveModel(
+        name='gfswave',
+        subset='epacif.0p16',
+        description='GFS Wave Model: Eastern Pacific 0.16 degree',
+        bottom_left=Location(-20.00, 130.00),
+        top_right=Location(30.00, 215.00),
+        location_resolution=0.167,
+        time_resolution=0.125,
+        max_index=384,
+        hourly_cutoff_index=0
+    )
 
+# West coast wave model with 16 km resolution with range 25:50, 210:250
 def us_west_coast_gfs_wave_model():
     return WaveModel(
         name='gfswave',
