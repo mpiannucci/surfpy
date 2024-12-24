@@ -308,14 +308,16 @@ class BuoyStation(BaseStation):
             day = int(raw_date_components[0].strip())
             hour = int(raw_date_components[1].strip())
             month = model_run_date.month
+            year = model_run_date.year
             if day < model_run_date.day:
                 if model_run_date.month == 12:
                     month = 1
+                    year += 1
                 else: 
                     month += 1
             
             datapoint = BuoyData(unit=units.Units.metric)
-            datapoint.date = pytz.utc.localize(datetime(model_run_date.year, month, day, hour))
+            datapoint.date = pytz.utc.localize(datetime(year, month, day, hour))
 
             summary = columns[2].split()
             if len(summary) < 2:
