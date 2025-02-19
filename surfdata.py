@@ -17,11 +17,8 @@ def fetch_buoy_data(station_id, count):
 
 def find_closest_data(data_list, target_datetime):
     """Find the data entry closest to the given target datetime."""
-
-    def find_closest_data(data_list, target_datetime):
-        """Find the data entry closest to the given target datetime."""
-        # Make sure the entry.date is timezone-aware
-        return min(data_list, key=lambda entry: abs(entry.date.replace(tzinfo=timezone.utc) - target_datetime))
+    # Make sure the entry.date is timezone-aware
+    return min(data_list, key=lambda entry: abs(entry.date.replace(tzinfo=timezone.utc) - target_datetime))
 
 def buoy_data_to_json(wave_data, met_data):
     """Convert buoy data to a JSON-serializable structure."""
@@ -51,7 +48,7 @@ def buoy_data_to_json(wave_data, met_data):
 
 def get_buoy_data():
     station_id = '44097'
-    target_datetime_str = '2025-02-16T12:00:00'
+    target_datetime_str = '2025-02-19T12:00:00-05:00'
     count = 500
 
     if target_datetime_str:
@@ -59,17 +56,24 @@ def get_buoy_data():
     else:
         target_datetime = datetime.now(timezone.utc)
 
+    print(f"Fetching buoy data for station_id: {station_id}, count: {count}")
     wave_data, met_data = fetch_buoy_data(station_id, count)
 
     if wave_data:
         closest_wave_data = find_closest_data(wave_data, target_datetime)
+        # print(f"Closest wave data: {closest_wave_data}")
     else:
         closest_wave_data = None
+        print("No wave data found")
+
 
     if met_data:
         closest_met_data = find_closest_data(met_data, target_datetime)
+        # print(f"Closest met data: {closest_met_data}")
     else:
         closest_met_data = None
+        print("No met data found")
+
 
     buoy_data_json = buoy_data_to_json([closest_wave_data] if closest_wave_data else [],
                                        [closest_met_data] if closest_met_data else [])
