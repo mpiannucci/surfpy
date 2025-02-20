@@ -3,9 +3,11 @@ from datetime import datetime, timezone
 import surfpy
 
 def fetch_buoy_data(station_id, count):
+    # Fetch buoy data for the given station_id and count
+    # station_id: identifier for the buoy station
+    # count: number of historical readings to fetch
     stations = surfpy.BuoyStations()
     stations.fetch_stations()
-
     station = next((s for s in stations.stations if s.station_id == station_id), None)
     if station:
         wave_data = station.fetch_wave_spectra_reading(count)
@@ -16,12 +18,12 @@ def fetch_buoy_data(station_id, count):
         return None, None
 
 def find_closest_data(data_list, target_datetime):
-    """Find the data entry closest to the given target datetime."""
+    # Find the data entry closest to the given target datetime
     # Make sure the entry.date is timezone-aware
     return min(data_list, key=lambda entry: abs(entry.date.replace(tzinfo=timezone.utc) - target_datetime))
 
 def buoy_data_to_json(wave_data, met_data):
-    """Convert buoy data to a JSON-serializable structure."""
+    # Convert buoy data to a JSON-serializable structure
     wave_json = []
     if wave_data:
         for entry in wave_data:
@@ -46,9 +48,10 @@ def buoy_data_to_json(wave_data, met_data):
         "meteorological_data": met_json
     }
 
-def get_buoy_data():
+def main():
+    # Fetch buoy data for a given station_id, target_datetime, and count
     station_id = '44097'
-    target_datetime_str = '2025-02-19T12:00:00-05:00'
+    target_datetime_str = ''
     count = 500
 
     if target_datetime_str:
@@ -78,11 +81,7 @@ def get_buoy_data():
     buoy_data_json = buoy_data_to_json([closest_wave_data] if closest_wave_data else [],
                                        [closest_met_data] if closest_met_data else [])
 
-    return buoy_data_json
-
-def main():
-    json = get_buoy_data()
-    print(json)
+    print(buoy_data_json)
 
 if __name__ == '__main__':
     main()
