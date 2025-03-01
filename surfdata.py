@@ -1,6 +1,53 @@
-import argparse
+from flask import Flask, jsonify, request
+# import argparse
 from datetime import datetime, timezone
 import surfpy
+
+app = Flask(__name__)
+
+@app.route('/api/buoy-data', methods=['POST'])
+def get_buoy_data():
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"status": "fail", "message": "No data provided"}), 400
+    
+    station_id = data.get('station_id')
+    target_datetime_str = data.get('target_datetime')
+    count = data.get('count', 500)
+    
+    if not station_id:
+        return jsonify({"status": "fail", "message": "station_id is required"}), 400
+    
+    # Process the date
+    if target_datetime_str:
+        try:
+            target_datetime = datetime.fromisoformat(target_datetime_str)
+        except ValueError:
+            return jsonify({"status": "fail", "message": "Invalid datetime format. Use ISO format (YYYY-MM-DDTHH:MM:SS)"}), 400
+    else:
+        target_datetime = datetime.now(timezone.utc)
+    
+    try:
+        # Use your existing functions
+        wave_data = fetch_buoy_data(station_id, count)
+        
+        if wave_data:
+            closest_wave_data = find_closest_data(wave_data, target_datetime)
+            result = buoy_data_to_json([closest_wave_data])
+            
+            return jsonify({
+                "status": "success",
+                "data": {
+                    "station_id": station_id,
+                    "target_datetime": target_datetime.isoformat(),
+                    "wave_data": result
+                }
+            })
+        else:
+            return jsonify({"status": "fail", "message": "No wave data found"}), 404
+    except Exception as e:
+        return jsonify({"status": "fail", "message": f"Error fetching buoy data: {str(e)}"}), 500
 
 def fetch_buoy_data(station_id, count):
     # Fetch buoy data for the given station_id and count
@@ -45,35 +92,36 @@ def buoy_data_to_json(wave_data):
 
     return wave_json
 
-def main():
-    # Fetch buoy data for a given station_id, target_datetime, and count
-    parser = argparse.ArgumentParser(description='Fetch buoy data for a given station_id and target_datetime.')
-    parser.add_argument('station_id', type=str, help='The station ID to fetch data for')
-    parser.add_argument('target_datetime', type=str, nargs='?', default='', help='The target datetime in ISO format (optional)')
-    parser.add_argument('--count', type=int, default=500, help='The number of data points to fetch (default: 500)')
+# old main
+# def main():
+#     # Fetch buoy data for a given station_id, target_datetime, and count
+#     parser = argparse.ArgumentParser(description='Fetch buoy data for a given station_id and target_datetime.')
+#     parser.add_argument('station_id', type=str, help='The station ID to fetch data for')
+#     parser.add_argument('target_datetime', type=str, nargs='?', default='', help='The target datetime in ISO format (optional)')
+#     parser.add_argument('--count', type=int, default=500, help='The number of data points to fetch (default: 500)')
 
-    args = parser.parse_args()
+#     args = parser.parse_args()
 
-    station_id = args.station_id
-    target_datetime_str = args.target_datetime
-    count = args.count
+#     station_id = args.station_id
+#     target_datetime_str = args.target_datetime
+#     count = args.count
 
-    if target_datetime_str:
-        target_datetime = datetime.fromisoformat(target_datetime_str)
-    else:
-        target_datetime = datetime.now(timezone.utc)
+#     if target_datetime_str:
+#         target_datetime = datetime.fromisoformat(target_datetime_str)
+#     else:
+#         target_datetime = datetime.now(timezone.utc)
 
-    print(f"Fetching buoy data for station_id: {station_id}, count: {count}")
-    wave_data = fetch_buoy_data(station_id, count)
+#     print(f"Fetching buoy data for station_id: {station_id}, count: {count}")
+#     wave_data = fetch_buoy_data(station_id, count)
 
-    if wave_data:
-        closest_wave_data = find_closest_data(wave_data, target_datetime)
-        # print(f"Closest wave data: {closest_wave_data}")
-    else:
-        closest_wave_data = None
-        print("No wave data found")
+#     if wave_data:
+#         closest_wave_data = find_closest_data(wave_data, target_datetime)
+#         # print(f"Closest wave data: {closest_wave_data}")
+#     else:
+#         closest_wave_data = None
+#         print("No wave data found")
 
-
+# old met data that I stopped calling
     # if met_data:
     #     closest_met_data = find_closest_data(met_data, target_datetime)
     #     # print(f"Closest met data: {closest_met_data}")
@@ -82,9 +130,10 @@ def main():
     #     print("No met data found")
 
 
-    buoy_data_json = buoy_data_to_json([closest_wave_data] if closest_wave_data else [])
+    # buoy_data_json = buoy_data_to_json([closest_wave_data] if closest_wave_data else [])
 
-    print(buoy_data_json)
+    # print(buoy_data_json)
 
 if __name__ == '__main__':
-    main()
+    app.run(debug=True, host='0.0.0.0', port=5000)
+    # main() # old main call
