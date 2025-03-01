@@ -1,4 +1,4 @@
-import os
+import argparse
 from datetime import datetime, timezone
 import surfpy
 
@@ -47,9 +47,16 @@ def buoy_data_to_json(wave_data):
 
 def main():
     # Fetch buoy data for a given station_id, target_datetime, and count
-    station_id = '44097'
-    target_datetime_str = ''
-    count = 500
+    parser = argparse.ArgumentParser(description='Fetch buoy data for a given station_id and target_datetime.')
+    parser.add_argument('station_id', type=str, help='The station ID to fetch data for')
+    parser.add_argument('target_datetime', type=str, nargs='?', default='', help='The target datetime in ISO format (optional)')
+    parser.add_argument('--count', type=int, default=500, help='The number of data points to fetch (default: 500)')
+
+    args = parser.parse_args()
+
+    station_id = args.station_id
+    target_datetime_str = args.target_datetime
+    count = args.count
 
     if target_datetime_str:
         target_datetime = datetime.fromisoformat(target_datetime_str)
