@@ -9,7 +9,7 @@ app = Flask(__name__)
 buoy_data_storage = []
 
 @app.route('/api/buoy-data', methods=['POST'])
-def get_buoy_data():
+def create_buoy_data():
     data = request.get_json()
     
     if not data:
