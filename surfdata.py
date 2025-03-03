@@ -40,17 +40,20 @@ def get_buoy_data():
             closest_wave_data = find_closest_data(wave_data, target_datetime)
             result = buoy_data_to_json([closest_wave_data])
 
-            # Store the processed data
-            buoy_data_storage.append({
+            # Store the processed data with a unique ID
+            data_id = len(buoy_data_storage) + 1
+            new_data = {
+                "id": data_id,
                 "station_id": station_id,
                 "target_datetime": target_datetime.isoformat(),
                 "wave_data": result
-            })
+            }
+            buoy_data_storage.append(new_data)
 
             return jsonify({
                 "status": "success",
-                "data": buoy_data_storage[-1]  # Return the latest stored data
-            })
+                "data": new_data
+            }), 201  # 201 Created status code
         else:
             return jsonify({"status": "fail", "message": "No wave data found"}), 404
     except Exception as e:
