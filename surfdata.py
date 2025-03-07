@@ -34,7 +34,7 @@ def create_surf_session():
         try:
             # Combining date and time strings
             datetime_str = f"{session_date}T{session_time}"
-            target_datetime = datetime.fromisoformat(datetime_str)
+            target_datetime = datetime.fromisoformat(datetime_str).replace(tzinfo=timezone.utc)
         except ValueError:
             return jsonify({
                 "status": "fail", 
@@ -139,7 +139,7 @@ def update_surf_session(session_id):
             # Fetch new buoy data
             try:
                 datetime_str = f"{session_date}T{session_time}"
-                target_datetime = datetime.fromisoformat(datetime_str)
+                target_datetime = datetime.fromisoformat(datetime_str).replace(tzinfo=timezone.utc)
             except ValueError:
                 return jsonify({
                     "status": "fail", 
