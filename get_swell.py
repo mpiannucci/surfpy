@@ -1,18 +1,18 @@
 from datetime import datetime, timezone
 import surfpy
+import json
 
-def fetch_buoy_data(station_id, count=500):
-    """Fetch wave and meteorological data for a given buoy station."""
+def fetch_swell_data(station_id, count=500):
+    """Fetch wave data for a given buoy station."""
     stations = surfpy.BuoyStations()
     stations.fetch_stations()
     station = next((s for s in stations.stations if s.station_id == station_id), None)
     
     if not station:
-        return None, None
+        return None
         
     wave_data = station.fetch_wave_spectra_reading(count)
-    met_data = station.fetch_meteorological_reading(count)
-    return wave_data, met_data
+    return wave_data
 
 def find_closest_data(data_list, target_datetime):
     """Find the data entry closest to the given target datetime."""
@@ -20,8 +20,8 @@ def find_closest_data(data_list, target_datetime):
         return None
     return min(data_list, key=lambda entry: abs(entry.date.replace(tzinfo=timezone.utc) - target_datetime))
 
-def buoy_data_to_json(wave_data, met_data):
-    """Convert buoy data to a JSON-serializable structure."""
+def swell_data_to_json(wave_data):
+    """Convert swell data to a JSON-serializable structure."""
     wave_json = []
     if wave_data:
         for entry in wave_data:
@@ -37,43 +37,29 @@ def buoy_data_to_json(wave_data, met_data):
                 "swell_components": swell_data
             })
 
-    met_json = []
-    if met_data:
-        for entry in met_data:
-            met_json.append({
-                "date": entry.date.isoformat(),
-                "wind_speed": entry.wind_speed,
-                "wind_direction": entry.wind_direction
-            })
-
-    return {
-        "wave_data": wave_json,
-        "meteorological_data": met_json
-    }
+    return {"wave_data": wave_json}
 
 def main(station_id):
     """Main function that takes only the buoy ID as an argument."""
     target_datetime = datetime.now(timezone.utc)
     count = 500
     
-    wave_data, met_data = fetch_buoy_data(station_id, count)
+    wave_data = fetch_swell_data(station_id, count)
     
     if not wave_data:
-        return {"error": f"No data found for station {station_id}"}
+        return {"error": f"No swell data found for station {station_id}"}
     
     closest_wave = find_closest_data(wave_data, target_datetime)
-    closest_met = find_closest_data(met_data, target_datetime)
     
-    result = buoy_data_to_json([closest_wave] if closest_wave else [], 
-                               [closest_met] if closest_met else [])
+    result = swell_data_to_json([closest_wave] if closest_wave else [])
     return result
 
 if __name__ == '__main__':
     import sys
     if len(sys.argv) < 2:
-        print("Usage: python data_avail.py BUOY_ID")
+        print("Usage: python get_swell_data.py BUOY_ID")
         sys.exit(1)
     
     buoy_id = sys.argv[1]
     result = main(buoy_id)
-    print(result)
+    print(json.dumps(result, indent=2))
