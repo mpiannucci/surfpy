@@ -3,7 +3,20 @@ import surfpy
 import json
 import sys
 
-def fetch_water_level(station_id, target_datetime=None):
+def find_closest_tide_station(latitude, longitude):
+    """Find the closest tide station to a given location."""
+    location = surfpy.Location(latitude, longitude)
+    
+    # Fetch all tide stations
+    tide_stations = surfpy.TideStations()
+    tide_stations.fetch_stations()
+    
+    # Find closest tide station
+    closest_station = tide_stations.find_closest_station(location)
+    
+    return closest_station
+
+def fetch_water_level(station, target_datetime=None):
     """Fetch water level for a given tide station at a specific time."""
     if target_datetime is None:
         target_datetime = datetime.now(timezone.utc)
@@ -13,12 +26,8 @@ def fetch_water_level(station_id, target_datetime=None):
     end_time = target_datetime + timedelta(hours=1)
     
     try:
-        # Create a tide station object
-        dummy_location = surfpy.Location(0, 0)
-        tide_station = surfpy.TideStation(station_id, dummy_location)
-        
         # Generate URL for water level data with a smaller interval
-        tide_url = tide_station.create_tide_data_url(
+        tide_url = station.create_tide_data_url(
             start_time,
             end_time,
             datum=surfpy.TideStation.TideDatum.mean_lower_low_water,
@@ -27,15 +36,12 @@ def fetch_water_level(station_id, target_datetime=None):
             unit=surfpy.units.Units.metric
         )
         
-        print(f"Generated URL: {tide_url}")
-        
         # Fetch the water level data
         import requests
         response = requests.get(tide_url)
         
         if response.status_code != 200:
             print(f"Error fetching water level data: HTTP {response.status_code}")
-            print(f"Response: {response.text}")
             return None
         
         data_json = response.json()
@@ -75,20 +81,25 @@ def fetch_water_level(station_id, target_datetime=None):
         traceback.print_exc()
         return None
 
-def water_level_to_json(water_level, station_id):
+def water_level_to_json(water_level, station):
     """Convert water level data to a JSON-serializable structure."""
     if not water_level:
         return {"error": "No water level data available"}
     
     return {
-        "station_id": station_id,
+        "station_id": station.station_id,
+        "location": {
+            "latitude": station.location.latitude,
+            "longitude": station.location.longitude
+        },
+        "state": station.state if hasattr(station, "state") else None,
         "date": water_level["date"].isoformat(),
         "water_level": water_level["height"],
         "units": "meters"  # Assuming metric units as specified in the request
     }
 
-def main(station_id, timestamp=None):
-    """Main function to get water level for a specific station."""
+def main(latitude, longitude, timestamp=None):
+    """Main function to get water level for location."""
     # Parse timestamp or use current time
     if timestamp:
         try:
@@ -100,28 +111,55 @@ def main(station_id, timestamp=None):
     else:
         target_datetime = datetime.now(timezone.utc)
     
-    print(f"Fetching water level for station {station_id} closest to {target_datetime}")
+    print(f"Finding closest tide station to location: {latitude}, {longitude}")
     
-    # Get water level
-    water_level = fetch_water_level(station_id, target_datetime)
+    # Fetch all tide stations
+    tide_stations = surfpy.TideStations()
+    tide_stations.fetch_stations()
     
-    if not water_level:
-        return {"error": f"No water level data found for station {station_id}"}
+    # Get all stations sorted by distance
+    location = surfpy.Location(latitude, longitude)
+    nearby_stations = sorted(
+        tide_stations.stations,
+        key=lambda s: s.location.distance(location)
+    )[:5]  # Get the 5 closest stations
     
-    # Convert to JSON
-    result = water_level_to_json(water_level, station_id)
+    if not nearby_stations:
+        return {"error": "Could not find any tide stations"}
+    
+    # Try each station until we get data
+    result = None
+    for station in nearby_stations:
+        print(f"Trying tide station: {station.station_id} at {station.location.latitude}, {station.location.longitude}")
+        
+        water_level = fetch_water_level(station, target_datetime)
+        
+        if water_level:
+            print(f"Successfully fetched water level data from station {station.station_id}")
+            result = water_level_to_json(water_level, station)
+            break
+    
+    if not result:
+        return {"error": "No water level data found for any nearby tide stations"}
+    
     return result
 
 if __name__ == "__main__":
     # Parse command line arguments
-    if len(sys.argv) < 2:
-        print("Usage: python get_tide.py STATION_ID [TIMESTAMP]")
-        print("Example: python get_tide.py 8447930")
-        print("Example with timestamp: python get_tide.py 8447930 2023-10-01T12:00:00")
+    if len(sys.argv) < 3:
+        print("Usage: python get_tide.py LATITUDE LONGITUDE [TIMESTAMP]")
+        print("Example: python get_tide.py 40.7 -74.0")
+        print("Example with timestamp: python get_tide.py 40.7 -74.0 2023-10-01T12:00:00")
         sys.exit(1)
     
-    station_id = sys.argv[1]
-    timestamp = sys.argv[2] if len(sys.argv) > 2 else None
+    try:
+        latitude = float(sys.argv[1])
+        longitude = float(sys.argv[2])
+    except ValueError:
+        print("Error: Latitude and longitude must be valid numbers")
+        sys.exit(1)
     
-    result = main(station_id, timestamp)
+    timestamp = sys.argv[3] if len(sys.argv) > 3 else None
+    
+    result = main(latitude, longitude, timestamp)
     print(json.dumps(result, indent=2))
