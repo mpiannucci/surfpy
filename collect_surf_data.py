@@ -82,13 +82,13 @@ def save_spot_to_db(cursor, spot):
     cursor.execute("SELECT id FROM spots WHERE name = ?", (spot['name'],))
     return cursor.fetchone()[0]
 
-def run_data_collection(spot_id, lat, lng):
-    """Run the data collection scripts for a spot and return the results."""
-    results = {
-        'swell': None,
-        'met': None,
-        'tide': None
-    }
+# def run_data_collection(spot_id, lat, lng):
+#     """Run the data collection scripts for a spot and return the results."""
+#     results = {
+#         'swell': None,
+#         'met': None,
+#         'tide': None
+#     }
     
 def run_data_collection(spot_id, lat, lng):
     """Run the data collection scripts for a spot and return the results."""
@@ -224,7 +224,7 @@ def extract_json_from_output(output):
 
 def save_data_to_db(conn, cursor, spot_id, data):
     """Save the collected data to the database."""
-    now = datetime.now()
+    now = datetime.now().isoformat()
     
     # Save swell data if available
     if data['swell']:
