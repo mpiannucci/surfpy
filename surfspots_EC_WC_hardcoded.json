@@ -1,0 +1,62 @@
+[
+    {
+        "lng" : "-122.1173286438",
+        "lat" : "36.961500196913",
+        "country" : "USA, California, Santa Cruz",
+        "name" : "3 Mile"
+    },
+    {
+        "lng" : "-121.9931101799",
+        "lat" : "36.958834019965",
+        "country" : "USA, California, Santa Cruz",
+        "name" : "Blacks"
+    },
+    {
+        "lng" : "-122.50185012817",
+        "lat" : "37.599000150648",
+        "country" : "USA, California, SF Marin",
+        "name" : "Linda Mar"
+    },
+    {
+        "lng" : "-122.51189231873",
+        "lat" : "37.753547599917",
+        "country" : "USA, California, SF Marin",
+        "name" : "Ocean Beach"
+    },
+    {
+        "lng" : "-117.60840654373",
+        "lat" : "33.405794140708",
+        "country" : "USA, California, Orange County",
+        "name" : "Riviera"
+    },
+    {
+        "lng" : "-71.913778781891",
+        "lat" : "41.038756051661",
+        "country" : "USA, North East, Long Island NY",
+        "name" : "Ditch Plains"
+    },
+    {
+        "lng" : "-73.607196807861",
+        "lat" : "40.591274593102",
+        "country" : "USA, North East, Long Island NY",
+        "name" : "Lido"
+    },
+    {
+        "lng" : "-73.812053203583",
+        "lat" : "40.583330639749",
+        "country" : "USA, North East, Long Island NY",
+        "name" : "92nd Street"
+    },
+    {
+        "lng" : "-74.015439748764",
+        "lat" : "40.172089796197",
+        "country" : "USA, North East, New Jersey",
+        "name" : "Belmar - 16 th Street"
+    },
+    {
+        "lng" : "-74.032756090164",
+        "lat" : "40.102670436153",
+        "country" : "USA, North East, New Jersey",
+        "name" : "Manasquan Inlet"
+    }
+]
