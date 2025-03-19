@@ -234,12 +234,12 @@ class BuoyStation(BaseStation):
     def parse_wave_spectra_reading_data(energy_data, directional_data, count_limit, latest_report_date=None):
         energy_data = energy_data.split('\n')
         directional_data = directional_data.split('\n')
-        if len(energy_data) != len(directional_data):
-            print('Failed to parse wave spectra data')
-            return None
-        elif len(energy_data) < 2:
-            print('Failed to parse wave spectra data')
-            return None
+        # if len(energy_data) != len(directional_data):
+        #     print('Failed to parse wave spectra data')
+        #     return None
+        # elif len(energy_data) < 2:
+        #     print('Failed to parse wave spectra data')
+        #     return None
 
         header_lines = 1
         data_lines = len(energy_data) - header_lines

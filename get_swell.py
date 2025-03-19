@@ -106,7 +106,7 @@ def swell_data_to_json(wave_data, buoy=None):
 def main(latitude, longitude):
     """Main function that takes a location and finds closest buoy."""
     target_datetime = datetime.now(timezone.utc)
-    count = 500
+    count = 20
     
     print(f"Finding closest buoy to location: {latitude}, {longitude}")
     closest_buoy = find_closest_buoy(latitude, longitude)
