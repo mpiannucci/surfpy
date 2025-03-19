@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import surfpy
 import json
 import sys
+import math
 
 def find_closest_buoy(latitude, longitude, active=True):
     """Find the closest buoy to a given location."""
@@ -14,7 +15,7 @@ def find_closest_buoy(latitude, longitude, active=True):
     closest_buoy = stations.find_closest_buoy(
         location, 
         active=active,
-        buoy_type=surfpy.BuoyStation.BuoyType.none
+        buoy_type=surfpy.BuoyStation.BuoyType.buoy
     )
     
     return closest_buoy
@@ -57,8 +58,7 @@ def meteorological_data_to_json(met_data, buoy=None):
                          'visibility', 'pressure_tendency', 'tide']:
                 if hasattr(entry, attr):
                     value = getattr(entry, attr)
-                    if value is not None:
-                        data_point[attr] = value
+                    data_point[attr] = value
             
             met_json.append(data_point)
     
@@ -76,50 +76,67 @@ def meteorological_data_to_json(met_data, buoy=None):
     
     return result
 
+def has_valid_wind_data(met_data):
+    """Check if the meteorological data contains valid wind speed values."""
+    if not met_data:
+        return False
+    
+    for entry in met_data:
+        # Check if wind_speed exists and is not NaN
+        if (hasattr(entry, 'wind_speed') and 
+            entry.wind_speed is not None and 
+            not (isinstance(entry.wind_speed, float) and math.isnan(entry.wind_speed))):
+            return True
+    
+    return False
+
 def main(latitude, longitude):
     """Main function that takes a location and finds closest buoy."""
     target_datetime = datetime.now(timezone.utc)
     count = 500
     
     print(f"Finding closest buoy to location: {latitude}, {longitude}")
-    closest_buoy = find_closest_buoy(latitude, longitude)
     
-    if not closest_buoy:
-        return {"error": "Could not find any active buoys"}
+    # Get all buoy stations (filtering by type will happen in the loop)
+    location = surfpy.Location(latitude, longitude)
+    stations = surfpy.BuoyStations()
+    stations.fetch_stations()
     
-    print(f"Found closest buoy: {closest_buoy.station_id} at location: {closest_buoy.location.latitude}, {closest_buoy.location.longitude}")
+    # Filter stations to only include type 'buoy'
+    buoy_stations = []
+    for station in stations.stations:
+        # Explicitly check the buoy_type
+        if station.buoy_type == surfpy.BuoyStation.BuoyType.buoy:
+            buoy_stations.append(station)
     
-    # Try to get meteorological data
-    met_data = fetch_meteorological_data(closest_buoy, count)
+    # Sort by distance
+    nearby_stations = sorted(
+        buoy_stations,
+        key=lambda s: s.location.distance(location)
+    )
     
-    if not met_data:
-        # Try to find another nearby buoy
-        print("Searching for another nearby buoy with meteorological data...")
-        location = surfpy.Location(latitude, longitude)
-        stations = surfpy.BuoyStations()
-        stations.fetch_stations()
+    if not nearby_stations:
+        return {"error": "Could not find any buoy stations in the area"}
+    
+    # Try buoys until we find one with wind data
+    found_wind_data = False
+    checked_count = 0
+    
+    for station in nearby_stations[:10]:  # Check up to 10 buoys
+        checked_count += 1
+        print(f"Trying buoy {station.station_id} (type: {station.buoy_type})...")
         
-        # Get all stations sorted by distance
-        nearby_stations = sorted(
-            stations.stations, 
-            key=lambda s: s.location.distance(location)
-        )
+        met_data = fetch_meteorological_data(station, count)
         
-        # Skip the first one (it's the closest one we already tried)
-        for station in nearby_stations[1:5]:  # Try the next 4 closest buoys
-            print(f"Trying buoy {station.station_id}...")
-            met_data = fetch_meteorological_data(station, count)
-            if met_data:
-                closest_buoy = station
-                break
+        if met_data and has_valid_wind_data(met_data):
+            print(f"Found buoy {station.station_id} with valid wind data")
+            found_wind_data = True
+            closest_met = find_closest_data(met_data, target_datetime)
+            result = meteorological_data_to_json([closest_met] if closest_met else [], station)
+            return result
     
-    if not met_data:
-        return {"error": "No meteorological data found for any nearby buoys"}
-    
-    closest_met = find_closest_data(met_data, target_datetime)
-    
-    result = meteorological_data_to_json([closest_met] if closest_met else [], closest_buoy)
-    return result
+    print(f"Checked {checked_count} buoys, couldn't find any with valid wind data")
+    return {"error": "No buoys with valid wind data found"}
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
