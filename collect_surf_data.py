@@ -62,6 +62,14 @@ def setup_database():
         FOREIGN KEY (spot_id) REFERENCES spots(id)
     )
     ''')
+
+    # Clear all data from the tables
+    print("Clearing existing data from tables...")
+    cursor.execute("DELETE FROM swell_data")
+    cursor.execute("DELETE FROM met_data")
+    cursor.execute("DELETE FROM tide_data")
+    cursor.execute("DELETE FROM spots")
+    cursor.execute("DELETE FROM sqlite_sequence WHERE name='spots' OR name='swell_data'")
     
     conn.commit()
     return conn, cursor
@@ -81,14 +89,6 @@ def save_spot_to_db(cursor, spot):
     # Get spot_id (either newly created or existing)
     cursor.execute("SELECT id FROM spots WHERE name = ?", (spot['name'],))
     return cursor.fetchone()[0]
-
-# def run_data_collection(spot_id, lat, lng):
-#     """Run the data collection scripts for a spot and return the results."""
-#     results = {
-#         'swell': None,
-#         'met': None,
-#         'tide': None
-#     }
     
 def run_data_collection(spot_id, lat, lng):
     """Run the data collection scripts for a spot and return the results."""
