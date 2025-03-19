@@ -14,7 +14,7 @@ def find_closest_buoy(latitude, longitude, active=True):
     closest_buoy = stations.find_closest_buoy(
         location, 
         active=active,
-        buoy_type=surfpy.BuoyStation.BuoyType.none
+        buoy_type=surfpy.BuoyStation.BuoyType.buoy
     )
     
     return closest_buoy
