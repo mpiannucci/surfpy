@@ -122,7 +122,7 @@ def main(latitude, longitude, timestamp=None):
     nearby_stations = sorted(
         tide_stations.stations,
         key=lambda s: s.location.distance(location)
-    )[:5]  # Get the 5 closest stations
+    )[:50]  # Get the 50 closest stations
     
     if not nearby_stations:
         return {"error": "Could not find any tide stations"}
