@@ -2,10 +2,11 @@ import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 import json
 from datetime import datetime, time, date
-from json_utils import CustomJSONEncoder
+# from json_utils import CustomJSONEncoder
 
 # Database connection string
-db_url = "postgresql://postgres:kooksinthekitchen@db.ehrfwjekssrnbgmgxctg.supabase.co:5432/postgres"
+# db_url = "postgresql://postgres:kooksinthekitchen@db.ehrfwjekssrnbgmgxctg.supabase.co:5432/postgres"
+db_url = "postgresql://postgres.ehrfwjekssrnbgmgxctg:kooksinthekitchen@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
 
 def get_db_connection():
     """Create and return a database connection"""

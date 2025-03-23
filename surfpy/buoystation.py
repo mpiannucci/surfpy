@@ -91,7 +91,7 @@ class BuoyStation(BaseStation):
             raw_value = comps[1].strip().split()
 
             if variable == 'wind':
-                data.wind_direction = parse_float(re.findall("\d+", raw_value[1])[0])
+                data.wind_direction = parse_float(re.findall(r"\d+", raw_value[1])[0])
                 data.wind_compass_direction = units.degree_to_direction(data.wind_direction)
                 data.wind_speed = units.convert(parse_float(raw_value[2]), units.Measurement.speed, units.Units.knots, units.Units.english)
             elif variable == 'gust':

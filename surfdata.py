@@ -190,6 +190,10 @@ def delete_surf_session(session_id):
         print(traceback.format_exc())
         return jsonify({"status": "fail", "message": f"Error deleting surf session: {str(e)}"}), 500
 
+@app.route('/api/test', methods=['GET'])
+def test_route():
+    return jsonify({"status": "success", "message": "API is working"}), 200
+
 # Buoy data utility functions
 def fetch_buoy_data(station_id, count):
     try:
@@ -227,5 +231,5 @@ def buoy_data_to_json(wave_data):
             })
     return wave_json
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+# if __name__ == '__main__':
+#     app.run(debug=True, host='0.0.0.0', port=5000)
