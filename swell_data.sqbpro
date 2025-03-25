@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="/Users/mdietz/surfpy/surf_data.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="1091"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,10:mainswell_data"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="met_data" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="18"/><column index="2" value="47"/><column index="3" value="50"/><column index="4" value="54"/><column index="5" value="56"/><column index="6" value="64"/><column index="7" value="31"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="spots" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="18"/><column index="2" value="75"/><column index="3" value="103"/><column index="4" value="105"/><column index="5" value="162"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="swell_data" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="18"/><column index="2" value="47"/><column index="3" value="50"/><column index="4" value="54"/><column index="5" value="56"/><column index="6" value="162"/><column index="7" value="300"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="all data query.sql">SELECT 
+--     s.id AS spot_id,
+    s.name AS spot_name,
+    m.buoy_id AS met_buoy_id,
+-- --     m.buoy_lat AS met_buoy_lat,
+-- --     m.buoy_lng AS met_buoy_lng,
+-- --     m.fetch_date AS met_fetch_date,
+    m.data AS met_data,
+    sw.buoy_id AS swell_buoy_id,
+-- --     sw.buoy_lat AS swell_buoy_lat,
+-- --     sw.buoy_lng AS swell_buoy_lng,
+-- --     sw.fetch_date AS swell_fetch_date,
+    sw.data AS swell_data,
+    t.station_id AS tide_station_id,
+--     t.station_lat AS tide_station_lat,
+--     t.station_lng AS tide_station_lng,
+--     t.fetch_date AS tide_fetch_date,
+    t.data AS tide_data
+FROM 
+    spots s
+LEFT JOIN 
+    met_data m ON s.id = m.spot_id
+LEFT JOIN 
+    swell_data sw ON s.id = sw.spot_id
+LEFT JOIN 
+    tide_data t ON s.id = t.spot_id
+ORDER BY 
+    s.id;</sql><sql name="SQL 2">SELECT 
+--     s.id AS spot_id
+    s.name AS spot_name,
+--     m.buoy_id AS met_buoy_id,
+-- --     m.buoy_lat AS met_buoy_lat,
+-- --     m.buoy_lng AS met_buoy_lng,
+-- --     m.fetch_date AS met_fetch_date,
+--     m.data AS met_data,
+--     sw.buoy_id AS swell_buoy_id,
+-- --     sw.buoy_lat AS swell_buoy_lat,
+-- --     sw.buoy_lng AS swell_buoy_lng,
+-- --     sw.fetch_date AS swell_fetch_date,
+    sw.data AS swell_data
+--     t.station_id AS tide_station_id,
+--     t.station_lat AS tide_station_lat,
+--     t.station_lng AS tide_station_lng,
+--     t.fetch_date AS tide_fetch_date,
+--     t.data AS tide_data
+FROM 
+    spots s
+-- LEFT JOIN 
+--     met_data m ON s.id = m.spot_id
+LEFT JOIN 
+    swell_data sw ON s.id = sw.spot_id
+-- LEFT JOIN 
+--     tide_data t ON s.id = t.spot_id
+ORDER BY 
+    s.id;</sql><current_tab id="1"/></tab_sql></sqlb_project>
