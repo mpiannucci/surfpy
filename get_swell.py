@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import surfpy
 import json
+import argparse
 import sys
 
 def find_closest_buoy(latitude, longitude, active=True):
@@ -56,6 +57,7 @@ def find_closest_data(data_list, target_datetime):
 
 def swell_data_to_json(wave_data, buoy=None):
     """Convert swell data to a JSON-serializable structure."""
+    METERS_TO_FEET = 3.28084
     wave_json = []
     if wave_data:
         for entry in wave_data:
@@ -67,7 +69,7 @@ def swell_data_to_json(wave_data, buoy=None):
                 for i, swell in enumerate(entry.swell_components):
                     swell_info = {}
                     if hasattr(swell, 'wave_height'):
-                        swell_info['height'] = swell.wave_height
+                        swell_info['height'] = round(swell.wave_height * METERS_TO_FEET, 1)
                     if hasattr(swell, 'period'):
                         swell_info['period'] = swell.period
                     if hasattr(swell, 'direction'):
@@ -85,6 +87,9 @@ def swell_data_to_json(wave_data, buoy=None):
                 if hasattr(entry, attr):
                     value = getattr(entry, attr)
                     if value is not None:
+                        # Convert any height attributes from meters to feet
+                        if 'height' in attr and value is not None:
+                            value = round(value * METERS_TO_FEET, 1)
                         data_point[attr] = value
             
             wave_json.append(data_point)
@@ -103,10 +108,28 @@ def swell_data_to_json(wave_data, buoy=None):
     
     return result
 
-def main(latitude, longitude):
-    """Main function that takes a location and finds closest buoy."""
-    target_datetime = datetime.now(timezone.utc)
-    count = 20
+def main(latitude, longitude, timestamp=None):
+    """
+    Main function that takes a location and finds closest buoy.
+   
+    Args:
+        latitude (float): Latitude coordinate
+        longitude (float): Longitude coordinate
+        timestamp (str, optional): ISO format timestamp (e.g., "2023-10-01T12:00:00")
+                                   Defaults to current time if None.
+    """
+    if timestamp:
+        try:
+            target_datetime = datetime.fromisoformat(timestamp).replace(tzinfo=timezone.utc)
+            print(f"Using specified timestamp: {target_datetime}")
+        except ValueError:
+            print(f"Invalid timestamp format: {timestamp}. Using current time instead.")
+            target_datetime = datetime.now(timezone.utc)
+    else:
+        target_datetime = datetime.now(timezone.utc)
+        print(f"Using current time: {target_datetime}")
+    
+    count = 1100
     
     print(f"Finding closest buoy to location: {latitude}, {longitude}")
     closest_buoy = find_closest_buoy(latitude, longitude)
@@ -149,17 +172,18 @@ def main(latitude, longitude):
     return result
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print("Usage: python get_swell.py LATITUDE LONGITUDE")
+    parser = argparse.ArgumentParser(description='Get swell data for a location')
+    parser.add_argument('latitude', type=float, help='Latitude coordinate')
+    parser.add_argument('longitude', type=float, help='Longitude coordinate')
+    parser.add_argument('--timestamp', '-t', help='ISO format timestamp (e.g., "2023-10-01T12:00:00")')
+    
+    if len(sys.argv) >= 3:
+        args = parser.parse_args()
+
+        result = main(args.latitude, args.longitude, args.timestamp)
+        print(json.dumps(result, indent=2))
+    else:
+        print("Usage: python get_swell.py LATITUDE LONGITUDE [--timestamp TIMESTAMP]")
         print("Example: python get_swell.py 36.6 -122.0")
+        print("Example with timestamp: python get_swell.py 36.6 -122.0 --timestamp 2023-10-01T12:00:00")
         sys.exit(1)
-    
-    try:
-        latitude = float(sys.argv[1])
-        longitude = float(sys.argv[2])
-    except ValueError:
-        print("Error: Latitude and longitude must be valid numbers")
-        sys.exit(1)
-    
-    result = main(latitude, longitude)
-    print(json.dumps(result, indent=2))
