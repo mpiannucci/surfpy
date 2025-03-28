@@ -219,16 +219,27 @@ def find_closest_data(data_list, target_datetime):
     return min(data_list, key=lambda entry: abs(entry.date.replace(tzinfo=timezone.utc) - target_datetime))
 
 def buoy_data_to_json(wave_data):
+    # Conversion factor from meters to feet
+    METERS_TO_FEET = 3.28084
     # Convert buoy data to a JSON-serializable structure
     wave_json = []
     if wave_data:
         for entry in wave_data:
-            swell_data = {f"swell_{i+1}": {"height": swell.wave_height, "period": swell.period, "direction": swell.direction}
-                          for i, swell in enumerate(entry.swell_components)}
+            swell_data = {}
+            for i, swell in enumerate(entry.swell_components):
+                swell_height_feet = swell.wave_height * METERS_TO_FEET
+
+                swell_data[f"swell_{i+1}"] = {
+                        "height": swell_height_feet,  # Now in feet
+                        "period": swell.period,
+                        "direction": swell.direction
+                    }
+
             wave_json.append({
                 "date": entry.date.isoformat(),
                 "swell_components": swell_data
             })
+
     return wave_json
 
 # if __name__ == '__main__':
