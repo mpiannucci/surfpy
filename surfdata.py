@@ -19,17 +19,40 @@ def create_surf_session():
             return jsonify({"status": "fail", "message": "No data provided"}), 400
         
         # Extract required fields for buoy data
-        buoy_id = session_data.get('buoy_id')
         session_date = session_data.get('date')
         session_time = session_data.get('time')
+        location = session_data.get('location')
         
-        if not buoy_id:
-            return jsonify({"status": "fail", "message": "buoy_id is required"}), 400
         if not session_date:
             return jsonify({"status": "fail", "message": "date is required"}), 400
         if not session_time:
             return jsonify({"status": "fail", "message": "time is required"}), 400
-            
+        if not location:
+            return jsonify({"status": "fail", "message": "location is required"}), 400
+        
+        location_to_buoy = {
+            "lido": "44065",
+            "manasquan": "44091",
+            "rockaways": "44065",
+            "belmar": "44091"
+        }
+
+        # Convert location to lowercase for case-insensitive matching
+        location_lower = location.lower()
+        
+        # Look up buoy_id based on location
+        buoy_id = location_to_buoy.get(location_lower)
+
+        if not buoy_id:
+            buoy_id = session_data.get('buoy_id')
+        
+        # If no buoy_id, check if it was directly provided
+        if not buoy_id:
+            return jsonify({
+                "status": "fail", 
+                "message": "Could not determine buoy ID from location. Please provide a valid location or buoy_id."
+            }), 400
+
         # Combine date and time to create a datetime object
         try:
             # Combining date and time strings
@@ -40,7 +63,7 @@ def create_surf_session():
                 "status": "fail", 
                 "message": "Invalid date/time format. Use ISO format for date (YYYY-MM-DD) and time (HH:MM:SS)"
             }), 400
-        
+
         # Fetch buoy data for the session
         wave_data = fetch_buoy_data(buoy_id, 500)  # Get 500 data points to find the closest match
         
@@ -75,6 +98,7 @@ def create_surf_session():
                 buoy_json = buoy_data_to_json([closest_wave_data])
                 # Add raw_data to the session data
                 session_data['raw_data'] = buoy_json
+                session_data['buoy_id'] = buoy_id
         
         # Create the session in the database
         new_session = create_session(session_data)
