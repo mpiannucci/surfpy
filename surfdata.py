@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import surfpy
 from database_utils import get_db_connection, create_session, update_session, get_session, get_all_sessions, delete_session
 import json
 from json_utils import CustomJSONEncoder
+import math
+import requests
 
 app = Flask(__name__)
 
@@ -30,28 +32,27 @@ def create_surf_session():
         if not location:
             return jsonify({"status": "fail", "message": "location is required"}), 400
         
-        location_to_buoy = {
-            "lido": "44065",
-            "manasquan": "44091",
-            "rockaways": "44065",
-            "belmar": "44091"
+        location_to_buoys = {
+            "lido": {"swell": "44065", "met": "44009", "tide": "8516402"},
+            "manasquan": {"swell": "44091", "met": "44009", "tide": "8533051"},
+            "rockaways": {"swell": "44065", "met": "44009", "tide": "8516881"},
+            "belmar": {"swell": "44091", "met": "44009", "tide": "8533051"}
         }
 
         # Convert location to lowercase for case-insensitive matching
         location_lower = location.lower()
         
-        # Look up buoy_id based on location
-        buoy_id = location_to_buoy.get(location_lower)
-
-        if not buoy_id:
-            buoy_id = session_data.get('buoy_id')
-        
-        # If no buoy_id, check if it was directly provided
-        if not buoy_id:
+        # Look up buoy IDs based on location
+        buoy_mapping = location_to_buoys.get(location_lower)
+        if not buoy_mapping:
             return jsonify({
                 "status": "fail", 
-                "message": "Could not determine buoy ID from location. Please provide a valid location or buoy_id."
+                "message": "Could not determine buoy IDs from location. Please provide a valid location."
             }), 400
+            
+        swell_buoy_id = buoy_mapping["swell"]
+        met_buoy_id = buoy_mapping["met"]
+        tide_station_id = buoy_mapping["tide"]
 
         # Combine date and time to create a datetime object
         try:
@@ -64,12 +65,20 @@ def create_surf_session():
                 "message": "Invalid date/time format. Use ISO format for date (YYYY-MM-DD) and time (HH:MM:SS)"
             }), 400
 
-        # Fetch buoy data for the session
-        wave_data = fetch_buoy_data(buoy_id, 500)  # Get 500 data points to find the closest match
+        # 1. Fetch swell buoy data
+        wave_data = fetch_swell_data(swell_buoy_id, 500)  # Get 500 data points to find the closest match
         
-        # If no buoy data found, we'll use dummy data for testing
+        # 2. Fetch meteorological buoy data
+        met_buoy = fetch_met_buoy(met_buoy_id)
+        met_data = fetch_meteorological_data(met_buoy, 500)
+
+        # 3. Fetch tide station data
+        tide_station = fetch_tide_station(tide_station_id)
+        tide_data = fetch_water_level(tide_station, target_datetime)
+
+        # Process swell data
         if not wave_data:
-            print(f"Warning: No buoy data found for station {buoy_id}. Using dummy data for testing.")
+            print(f"Warning: No buoy data found for station {swell_buoy_id}. Using dummy data for testing.")
             # Create dummy buoy data
             dummy_data = {
                 "date": target_datetime.isoformat(),
@@ -78,7 +87,7 @@ def create_surf_session():
                     "swell_2": {"height": 0.8, "period": 8, "direction": 295}
                 }
             }
-            session_data['raw_data'] = [dummy_data]
+            session_data['raw_swell'] = [dummy_data]
         else:
             # Find closest data point to the provided datetime
             closest_wave_data = find_closest_data(wave_data, target_datetime)
@@ -92,26 +101,89 @@ def create_surf_session():
                         "swell_2": {"height": 0.8, "period": 8, "direction": 295}
                     }
                 }
-                session_data['raw_data'] = [dummy_data]
+                session_data['raw_swell'] = [dummy_data]
             else:
                 # Convert buoy data to JSON
-                buoy_json = buoy_data_to_json([closest_wave_data])
-                # Add raw_data to the session data
-                session_data['raw_data'] = buoy_json
-                session_data['buoy_id'] = buoy_id
+                swell_json = swell_data_to_json([closest_wave_data])
+                # Add raw_swell to the session data
+                session_data['raw_swell'] = swell_json
+        
+        # Process meteorological data
+        if not met_data:
+            print(f"Warning: No meteorological data found for station {met_buoy_id}. Using dummy data for testing.")
+            # Create dummy meteorological data
+            dummy_met_data = {
+                "date": target_datetime.isoformat(),
+                "wind_speed": 5.0,
+                "wind_direction": 180.0,
+                "air_temperature": 20.0,
+                "water_temperature": 15.0
+            }
+            session_data['raw_met'] = [dummy_met_data]
+        else:
+            # Find closest data point to the provided datetime
+            closest_met_data = find_closest_data(met_data, target_datetime)
+            if not closest_met_data:
+                print(f"Warning: No matching meteorological data found for the given time. Using dummy data for testing.")
+                # Create dummy meteorological data
+                dummy_met_data = {
+                    "date": target_datetime.isoformat(),
+                    "wind_speed": 5.0,
+                    "wind_direction": 180.0,
+                    "air_temperature": 20.0,
+                    "water_temperature": 15.0
+                }
+                session_data['raw_met'] = [dummy_met_data]
+            else:
+                # Convert meteorological data to JSON
+                met_data_json = met_data_to_json([closest_met_data])
+                session_data['raw_met'] = met_data_json
+        
+        # Process tide data
+        if not tide_data or not tide_station:
+            print(f"Warning: No tide data found for station {tide_station_id}. Using dummy data for testing.")
+            # Create dummy tide data
+            dummy_tide_data = {
+                "station_id": tide_station_id,
+                "date": target_datetime.isoformat(),
+                "water_level": 1.2,
+                "units": "meters"
+            }
+            session_data['raw_tide'] = dummy_tide_data
+        else:
+            # Convert tide data to JSON
+            tide_data_json = water_level_to_json(tide_data, tide_station)
+            session_data['raw_tide'] = tide_data_json
+
+        # Add buoy IDs to session data
+        session_data['swell_buoy_id'] = swell_buoy_id
+        session_data['met_buoy_id'] = met_buoy_id
+        session_data['tide_station_id'] = tide_station_id
         
         # Create the session in the database
-        new_session = create_session(session_data)
+        session_id = create_session(session_data)
         
-        if new_session:
-            return jsonify({"status": "success", "data": new_session}), 201
-        else:
-            return jsonify({"status": "fail", "message": "Failed to create session"}), 500
-            
+        # Return a simple confirmation with just the basic data
+        return jsonify({
+            "status": "success",
+            "message": "Surf session updated successfully",
+            "data": {
+                "session_id": session_id,
+                "location": location,
+                "date": session_date,
+                "time": session_time,
+                "swell_buoy_id": session_data.get('buoy_id'),
+                "met_buoy_id": session_data.get('met_buoy_id'),
+                "tide_station_id": session_data.get('tide_station_id')
+            }
+        }), 200
+        
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())
-        return jsonify({"status": "fail", "message": f"Error creating surf session: {str(e)}"}), 500
+        print(f"Error creating surf session: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": f"An error occurred: {str(e)}"
+        }), 500
 
 # Get all surf sessions
 @app.route('/api/surf-sessions', methods=['GET'])
@@ -141,26 +213,46 @@ def get_surf_session(session_id):
 @app.route('/api/surf-sessions/<int:session_id>', methods=['PUT'])
 def update_surf_session(session_id):
     try:
-        update_data = request.get_json()
+        session_data = request.get_json()
         
-        if not update_data:
+        if not session_data:
             return jsonify({"status": "fail", "message": "No data provided"}), 400
         
-        # Check if we need to update buoy data
-        update_buoy_data = False
-        if ('buoy_id' in update_data or 'date' in update_data or 'time' in update_data):
-            update_buoy_data = True
+        # Get existing session
+        existing_session = get_session(session_id)
+        if not existing_session:
+            return jsonify({"status": "fail", "message": f"Session with id {session_id} not found"}), 404
+        
+        # Extract fields that might need to be updated
+        session_date = session_data.get('date', existing_session.get('date'))
+        session_time = session_data.get('time', existing_session.get('time'))
+        location = session_data.get('location', existing_session.get('location'))
+        
+        if location:
+            # Mapping for swell, meteorological buoys, and tide stations
+            location_to_buoys = {
+                "lido": {"swell": "44065", "met": "44009", "tide": "8516402"},
+                "manasquan": {"swell": "44091", "met": "44009", "tide": "8533051"},
+                "rockaways": {"swell": "44065", "met": "44009", "tide": "8516881"},
+                "belmar": {"swell": "44091", "met": "44009", "tide": "8533051"}
+            }
+
+            # Convert location to lowercase for case-insensitive matching
+            location_lower = location.lower()
             
-            # Get existing session to fill in any missing fields
-            existing_session = get_session(session_id)
-            if not existing_session:
-                return jsonify({"status": "fail", "message": f"Session with id {session_id} not found"}), 404
-                
-            buoy_id = update_data.get('buoy_id', existing_session.get('buoy_id'))
-            session_date = update_data.get('date', existing_session.get('date'))
-            session_time = update_data.get('time', existing_session.get('time'))
+            # Look up buoy IDs based on location
+            buoy_mapping = location_to_buoys.get(location_lower)
+            if buoy_mapping:
+                # Update buoy IDs if location changes
+                session_data['buoy_id'] = buoy_mapping["swell"]
+                session_data['met_buoy_id'] = buoy_mapping["met"]
+                session_data['tide_station_id'] = buoy_mapping["tide"]
+        
+        # If date or time changed, update buoy data
+        if (session_date != existing_session.get('date') or 
+            session_time != existing_session.get('time')):
             
-            # Fetch new buoy data
+            # Create a datetime object from the date and time
             try:
                 datetime_str = f"{session_date}T{session_time}"
                 target_datetime = datetime.fromisoformat(datetime_str).replace(tzinfo=timezone.utc)
@@ -170,35 +262,64 @@ def update_surf_session(session_id):
                     "message": "Invalid date/time format. Use ISO format for date (YYYY-MM-DD) and time (HH:MM:SS)"
                 }), 400
                 
-            wave_data = fetch_buoy_data(buoy_id, 500)
-            if wave_data:
-                closest_wave_data = find_closest_data(wave_data, target_datetime)
-                if closest_wave_data:
-                    buoy_json = buoy_data_to_json([closest_wave_data])
-                    update_data['raw_data'] = buoy_json
-            else:
-                # Create dummy buoy data
-                dummy_data = {
-                    "date": target_datetime.isoformat(),
-                    "swell_components": {
-                        "swell_1": {"height": 1.5, "period": 12, "direction": 270},
-                        "swell_2": {"height": 0.8, "period": 8, "direction": 295}
-                    }
-                }
-                update_data['raw_data'] = [dummy_data]
-        
-        # Update the session
-        updated_session = update_session(session_id, update_data)
-        
-        if updated_session:
-            return jsonify({"status": "success", "data": updated_session}), 200
-        else:
-            return jsonify({"status": "fail", "message": f"Failed to update session with id {session_id}"}), 500
+            # 1. Fetch updated swell data
+            swell_buoy_id = session_data.get('buoy_id', existing_session.get('buoy_id'))
+            if swell_buoy_id:
+                wave_data = fetch_buoy_data(swell_buoy_id, 500)
+                if wave_data:
+                    closest_wave_data = find_closest_data(wave_data, target_datetime)
+                    if closest_wave_data:
+                        buoy_data_json = buoy_data_to_json([closest_wave_data])
+                        session_data['raw_data'] = buoy_data_json
             
+            # 2. Fetch updated meteorological data
+            met_buoy_id = session_data.get('met_buoy_id', existing_session.get('met_buoy_id'))
+            if met_buoy_id:
+                met_buoy = fetch_met_buoy(met_buoy_id)
+                met_data = fetch_meteorological_data(met_buoy, 500)
+                if met_data:
+                    closest_met_data = find_closest_data(met_data, target_datetime)
+                    if closest_met_data:
+                        met_data_json = met_data_to_json([closest_met_data])
+                        session_data['raw_met'] = met_data_json
+                        
+            # 3. Fetch updated tide data
+            tide_station_id = session_data.get('tide_station_id', existing_session.get('tide_station_id'))
+            if tide_station_id:
+                tide_station = fetch_tide_station(tide_station_id)
+                tide_data = fetch_water_level(tide_station, target_datetime)
+                if tide_data and tide_station:
+                    tide_data_json = water_level_to_json(tide_data, tide_station)
+                    session_data['raw_tide'] = tide_data_json
+        
+        # Update the session in the database
+        success = update_session(session_id, session_data)
+        
+        if success:
+            return jsonify({
+                "status": "success",
+                "message": "Surf session updated successfully",
+                "data": {
+                    "session_id": session_id,
+                    "location": location,
+                    "date": session_date,
+                    "time": session_time,
+                    "swell_buoy_id": session_data.get('buoy_id'),
+                    "met_buoy_id": session_data.get('met_buoy_id'),
+                    "tide_station_id": session_data.get('tide_station_id')
+                }
+            }), 200
+        else:
+            return jsonify({"status": "fail", "message": "Failed to update surf session"}), 500
+    
     except Exception as e:
+        print(f"Error updating surf session: {str(e)}")
         import traceback
-        print(traceback.format_exc())
-        return jsonify({"status": "fail", "message": f"Error updating surf session: {str(e)}"}), 500
+        traceback.print_exc()
+        return jsonify({
+            "status": "error",
+            "message": f"An error occurred: {str(e)}"
+        }), 500
 
 # Delete a surf session
 @app.route('/api/surf-sessions/<int:session_id>', methods=['DELETE'])
@@ -219,7 +340,31 @@ def test_route():
     return jsonify({"status": "success", "message": "API is working"}), 200
 
 # Buoy data utility functions
-def fetch_buoy_data(station_id, count):
+def fetch_met_buoy(buoy_id):
+    """Fetch a meteorological buoy object by ID."""
+    try:
+        stations = surfpy.BuoyStations()
+        stations.fetch_stations()
+        station = next((s for s in stations.stations if s.station_id == buoy_id), None)
+        return station
+    except Exception as e:
+        print(f"Error fetching met buoy: {str(e)}")
+        return None
+
+def fetch_tide_station(station_id):
+    """Fetch a tide station object by ID."""
+    try:
+        # Create a dummy location (since we already have the station ID)
+        dummy_location = surfpy.Location(0, 0)
+        
+        # Create a TideStation object directly
+        tide_station = surfpy.TideStation(station_id, dummy_location)
+        return tide_station
+    except Exception as e:
+        print(f"Error fetching tide station: {str(e)}")
+        return None
+
+def fetch_swell_data(station_id, count):
     try:
         # Fetch buoy data for the given station_id and count
         stations = surfpy.BuoyStations()
@@ -235,6 +380,89 @@ def fetch_buoy_data(station_id, count):
         print(f"Error fetching buoy data: {str(e)}")
         return None
 
+def fetch_meteorological_data(buoy, count=500):
+    """Fetch meteorological data for a given buoy."""
+    if not buoy:
+        return None
+        
+    try:
+        met_data = buoy.fetch_meteorological_reading(count)
+        
+        if not met_data:
+            # Try fetch_latest_reading as an alternative
+            latest_data = buoy.fetch_latest_reading()
+            if latest_data:
+                return [latest_data]
+                
+        return met_data
+    except Exception as e:
+        print(f"Error fetching meteorological data: {str(e)}")
+        return None
+
+def fetch_water_level(station, target_datetime=None):
+    """Fetch water level for a given tide station at a specific time."""
+    if target_datetime is None:
+        target_datetime = datetime.now(timezone.utc)
+    
+    # Calculate start and end time - smaller window around target time
+    start_time = target_datetime - timedelta(hours=1)
+    end_time = target_datetime + timedelta(hours=1)
+    
+    try:
+        # Generate URL for water level data with a smaller interval
+        tide_url = station.create_tide_data_url(
+            start_time,
+            end_time,
+            datum=surfpy.TideStation.TideDatum.mean_lower_low_water,
+            # Use 6-minute interval for more precise water level
+            interval=surfpy.TideStation.DataInterval.default,
+            unit=surfpy.units.Units.metric
+        )
+        
+        # Fetch the water level data
+        response = requests.get(tide_url)
+        
+        if response.status_code != 200:
+            print(f"Error fetching water level data: HTTP {response.status_code}")
+            return None
+        
+        data_json = response.json()
+        
+        if 'predictions' not in data_json or not data_json['predictions']:
+            print(f"No water level predictions found in response")
+            return None
+        
+        # Parse water level data
+        water_levels = []
+        for pred in data_json['predictions']:
+            date_str = pred.get('t', '')
+            height = float(pred.get('v', 0))
+            
+            try:
+                # Parse the date
+                date = datetime.strptime(date_str, "%Y-%m-%d %H:%M")
+                water_levels.append({
+                    "date": date,
+                    "height": height
+                })
+            except ValueError as e:
+                print(f"Could not parse date: {date_str}, error: {e}")
+        
+        # Find the closest water level reading to target time
+        if not water_levels:
+            return None
+        
+        closest_reading = min(water_levels, 
+                             key=lambda x: abs(x["date"].replace(tzinfo=timezone.utc) - target_datetime))
+        
+        return closest_reading
+    
+    except Exception as e:
+        print(f"Error retrieving water level data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
 def find_closest_data(data_list, target_datetime):
     if not data_list:
         return None
@@ -242,7 +470,7 @@ def find_closest_data(data_list, target_datetime):
     # Make sure the entry.date is timezone-aware
     return min(data_list, key=lambda entry: abs(entry.date.replace(tzinfo=timezone.utc) - target_datetime))
 
-def buoy_data_to_json(wave_data):
+def swell_data_to_json(wave_data):
     # Conversion factor from meters to feet
     METERS_TO_FEET = 3.28084
     # Convert buoy data to a JSON-serializable structure
@@ -266,5 +494,47 @@ def buoy_data_to_json(wave_data):
 
     return wave_json
 
+def met_data_to_json(met_data):
+    """Convert meteorological data to JSON format."""
+    met_json = []
+    if met_data:
+        for entry in met_data:
+            data_point = {
+                "date": entry.date.isoformat() if hasattr(entry, 'date') else datetime.now().isoformat()
+            }
+            
+            # Add meteorological attributes
+            for attr in ['wind_speed', 'wind_direction', 'wind_gust', 'pressure', 
+                        'air_temperature', 'water_temperature', 'dewpoint_temperature',
+                        'visibility', 'pressure_tendency']:
+                if hasattr(entry, attr):
+                    value = getattr(entry, attr)
+                    # Don't include None or NaN values
+                    if value is not None and not (isinstance(value, float) and math.isnan(value)):
+                        data_point[attr] = value
+            
+            met_json.append(data_point)
+    
+    return met_json
+
+def water_level_to_json(water_level, station):
+    """Convert water level data to a JSON-serializable structure."""
+    if not water_level:
+        return {"error": "No water level data available"}
+    
+    # Convert feet to meters if needed (optional)
+    FEET_TO_METERS = 0.3048
+    
+    return {
+        "station_id": station.station_id,
+        "location": {
+            "latitude": station.location.latitude,
+            "longitude": station.location.longitude
+        },
+        "state": station.state if hasattr(station, 'state') else None,
+        "date": water_level["date"].isoformat(),
+        "water_level": water_level["height"],  # Height in meters
+        "units": "meters"  # Assumes the data is in meters
+    }
 # if __name__ == '__main__':
 #     app.run(debug=True, host='0.0.0.0', port=5000) I snaked yo momma

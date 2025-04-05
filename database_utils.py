@@ -25,7 +25,7 @@ def get_all_sessions():
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM surf_sessions ORDER BY created_at DESC")
+            cur.execute("SELECT * FROM surf_sessions_duplicate ORDER BY created_at DESC")
             sessions = cur.fetchall()
             # Convert to a list so we can modify it
             sessions_list = list(sessions)
@@ -55,7 +55,7 @@ def get_session(session_id):
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM surf_sessions WHERE id = %s", (session_id,))
+            cur.execute("SELECT * FROM surf_sessions_duplicate WHERE id = %s", (session_id,))
             session = cur.fetchone()
             if session:
                 # Convert time objects to strings
@@ -85,12 +85,12 @@ def create_session(session_data):
             cur.execute("""
                 SELECT column_name, column_default, is_identity 
                 FROM information_schema.columns 
-                WHERE table_name = 'surf_sessions' AND column_name = 'id'
+                WHERE table_name = 'surf_sessions_duplicate' AND column_name = 'id'
             """)
             id_info = cur.fetchone()
             
             # Find the maximum ID value currently in the table
-            cur.execute("SELECT MAX(id) FROM surf_sessions")
+            cur.execute("SELECT MAX(id) FROM surf_sessions_duplicate")
             max_id_result = cur.fetchone()
             max_id = max_id_result['max'] if max_id_result and 'max' in max_id_result else None
             
@@ -101,10 +101,18 @@ def create_session(session_data):
             # Always include the ID in the data to avoid conflicts
             session_data['id'] = next_id
             
-            # Handle raw_data as JSONB
-            if 'raw_data' in session_data:
-                session_data['raw_data'] = Json(session_data['raw_data'])
+            # Handle raw_swell as JSONB
+            if 'raw_swell' in session_data:
+                session_data['raw_swell'] = Json(session_data['raw_swell'])
+
+            # Handle raw_met as JSONB
+            if 'raw_met' in session_data:
+                session_data['raw_met'] = Json(session_data['raw_met'])
             
+            # Handle raw_tide as JSONB
+            if 'raw_tide' in session_data:
+                session_data['raw_tide'] = Json(session_data['raw_tide'])
+
             # Remove created_at if present
             if 'created_at' in session_data:
                 del session_data['created_at']
@@ -113,7 +121,7 @@ def create_session(session_data):
             placeholders = ', '.join(['%s'] * len(session_data))
             
             query = f"""
-            INSERT INTO surf_sessions ({columns}) 
+            INSERT INTO surf_sessions_duplicate ({columns}) 
             VALUES ({placeholders})
             RETURNING *
             """
@@ -154,15 +162,23 @@ def update_session(session_id, update_data):
             if 'created_at' in update_data:
                 del update_data['created_at']
             
-            # Handle raw_data as JSONB
-            if 'raw_data' in update_data:
-                update_data['raw_data'] = Json(update_data['raw_data'])
+            # Handle raw_swell as JSONB
+            if 'raw_swell' in update_data:
+                update_data['raw_swell'] = Json(update_data['raw_swell'])
                 
+            # Handle raw_met as JSONB
+            if 'raw_met' in session_data:
+                session_data['raw_met'] = Json(session_data['raw_met'])
+            
+            # Handle raw_tide as JSONB
+            if 'raw_tide' in session_data:
+                session_data['raw_tide'] = Json(session_data['raw_tide'])
+
             # Build SET clause for the SQL query
             set_clause = ', '.join([f"{key} = %s" for key in update_data.keys()])
             
             query = f"""
-            UPDATE surf_sessions 
+            UPDATE surf_sessions_duplicate 
             SET {set_clause} 
             WHERE id = %s
             RETURNING *
@@ -201,7 +217,7 @@ def delete_session(session_id):
     
     try:
         with conn.cursor() as cur:
-            cur.execute("DELETE FROM surf_sessions WHERE id = %s RETURNING id", (session_id,))
+            cur.execute("DELETE FROM surf_sessions_duplicate WHERE id = %s RETURNING id", (session_id,))
             deleted = cur.fetchone()
             conn.commit()
             return deleted is not None
