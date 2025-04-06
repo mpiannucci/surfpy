@@ -2,7 +2,6 @@ import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 import json
 from datetime import datetime, time, date
-# from json_utils import CustomJSONEncoder
 
 # Database connection string
 # db_url = "postgresql://postgres:kooksinthekitchen@db.ehrfwjekssrnbgmgxctg.supabase.co:5432/postgres"
@@ -17,15 +16,16 @@ def get_db_connection():
         print(f"Error connecting to database: {e}")
         return None
 
-def get_all_sessions():
-    """Retrieve all surf sessions"""
+def get_all_sessions(user_id):
+    """Retrieve all surf sessions for a specific user"""
     conn = get_db_connection()
     if not conn:
         return []
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM surf_sessions_duplicate ORDER BY created_at DESC")
+            # Add user_id filter to the query
+            cur.execute("SELECT * FROM surf_sessions_duplicate WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
             sessions = cur.fetchall()
             # Convert to a list so we can modify it
             sessions_list = list(sessions)
@@ -47,15 +47,16 @@ def get_all_sessions():
     finally:
         conn.close()
 
-def get_session(session_id):
-    """Retrieve a single surf session by its ID"""
+def get_session(session_id, user_id):
+    """Retrieve a single surf session by its ID for a specific user"""
     conn = get_db_connection()
     if not conn:
         return None
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM surf_sessions_duplicate WHERE id = %s", (session_id,))
+            # Add user_id filter to ensure users can only access their own data
+            cur.execute("SELECT * FROM surf_sessions_duplicate WHERE id = %s AND user_id = %s", (session_id, user_id))
             session = cur.fetchone()
             if session:
                 # Convert time objects to strings
@@ -73,8 +74,8 @@ def get_session(session_id):
     finally:
         conn.close()
 
-def create_session(session_data):
-    """Create a new surf session in the database"""
+def create_session(session_data, user_id):
+    """Create a new surf session in the database for a specific user"""
     conn = get_db_connection()
     if not conn:
         return None
@@ -100,6 +101,9 @@ def create_session(session_data):
             
             # Always include the ID in the data to avoid conflicts
             session_data['id'] = next_id
+            
+            # Add user_id to the session data
+            session_data['user_id'] = user_id
             
             # Handle raw_swell as JSONB
             if 'raw_swell' in session_data:
@@ -148,31 +152,39 @@ def create_session(session_data):
     finally:
         conn.close()
 
-def update_session(session_id, update_data):
-    """Update an existing surf session"""
+def update_session(session_id, update_data, user_id):
+    """Update an existing surf session for a specific user"""
     conn = get_db_connection()
     if not conn:
         return None
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            # Ensure id and created_at aren't in the update data
+            # First check if the session belongs to the user
+            cur.execute("SELECT id FROM surf_sessions_duplicate WHERE id = %s AND user_id = %s", (session_id, user_id))
+            if not cur.fetchone():
+                # Session doesn't exist or doesn't belong to user
+                return None
+            
+            # Ensure id, created_at, and user_id aren't in the update data
             if 'id' in update_data:
                 del update_data['id']
             if 'created_at' in update_data:
                 del update_data['created_at']
+            if 'user_id' in update_data:
+                del update_data['user_id']  # Prevent user_id from being changed
             
             # Handle raw_swell as JSONB
             if 'raw_swell' in update_data:
                 update_data['raw_swell'] = Json(update_data['raw_swell'])
                 
             # Handle raw_met as JSONB
-            if 'raw_met' in session_data:
-                session_data['raw_met'] = Json(session_data['raw_met'])
+            if 'raw_met' in update_data:
+                update_data['raw_met'] = Json(update_data['raw_met'])
             
             # Handle raw_tide as JSONB
-            if 'raw_tide' in session_data:
-                session_data['raw_tide'] = Json(session_data['raw_tide'])
+            if 'raw_tide' in update_data:
+                update_data['raw_tide'] = Json(update_data['raw_tide'])
 
             # Build SET clause for the SQL query
             set_clause = ', '.join([f"{key} = %s" for key in update_data.keys()])
@@ -180,12 +192,12 @@ def update_session(session_id, update_data):
             query = f"""
             UPDATE surf_sessions_duplicate 
             SET {set_clause} 
-            WHERE id = %s
+            WHERE id = %s AND user_id = %s
             RETURNING *
             """
             
-            # Add the session_id as the last parameter
-            values = list(update_data.values()) + [session_id]
+            # Add the session_id and user_id as the last parameters
+            values = list(update_data.values()) + [session_id, user_id]
             
             cur.execute(query, values)
             conn.commit()
@@ -209,15 +221,16 @@ def update_session(session_id, update_data):
     finally:
         conn.close()
 
-def delete_session(session_id):
-    """Delete a surf session by its ID"""
+def delete_session(session_id, user_id):
+    """Delete a surf session by its ID for a specific user"""
     conn = get_db_connection()
     if not conn:
         return False
     
     try:
         with conn.cursor() as cur:
-            cur.execute("DELETE FROM surf_sessions_duplicate WHERE id = %s RETURNING id", (session_id,))
+            cur.execute("DELETE FROM surf_sessions_duplicate WHERE id = %s AND user_id = %s RETURNING id", 
+                        (session_id, user_id))
             deleted = cur.fetchone()
             conn.commit()
             return deleted is not None
@@ -225,5 +238,46 @@ def delete_session(session_id):
         print(f"Error deleting session: {e}")
         conn.rollback()
         raise  # Re-raise to see the actual error
+    finally:
+        conn.close()
+
+def get_user_by_email(email):
+    """Get user details by email"""
+    conn = get_db_connection()
+    if not conn:
+        return None
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Query the auth.users table (Supabase's built-in users table)
+            cur.execute("SELECT * FROM auth.users WHERE email = %s", (email,))
+            user = cur.fetchone()
+            return user
+    except Exception as e:
+        print(f"Error retrieving user: {e}")
+        return None
+    finally:
+        conn.close()
+
+def verify_user_session(access_token):
+    """Verify a user's JWT token and return user_id if valid"""
+    conn = get_db_connection()
+    if not conn:
+        return None
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Query Supabase's sessions table to verify the token
+            cur.execute("""
+                SELECT user_id FROM auth.sessions 
+                WHERE token = %s AND expires_at > NOW()
+            """, (access_token,))
+            session = cur.fetchone()
+            if session:
+                return session['user_id']
+            return None
+    except Exception as e:
+        print(f"Error verifying user session: {e}")
+        return None
     finally:
         conn.close()
