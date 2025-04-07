@@ -1,19 +1,150 @@
 from flask import Flask, jsonify, request
 from datetime import datetime, timezone, timedelta
 import surfpy
-from database_utils import get_db_connection, create_session, update_session, get_session, get_all_sessions, delete_session
+from database_utils import get_db_connection, create_session, update_session, get_session, get_all_sessions, delete_session, verify_user_session
 import json
 from json_utils import CustomJSONEncoder
 import math
 import requests
+import jwt
+from functools import wraps
 
 app = Flask(__name__)
 
 # Configure Flask to use our custom JSON encoder
 app.json_encoder = CustomJSONEncoder
 
+# Configuration for Supabase
+SUPABASE_URL = "https://ehrfwjekssrnbgmgxctg.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVocmZ3amVrc3NybmJnbWd4Y3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA4NTc0NDksImV4cCI6MjA1NjQzMzQ0OX0.x0ig53ygst9XSZcsWwh4aDW8_TM9Es-cX-1cRVP0WF4"
+
+# Authentication middleware
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        # Get the token from the Authorization header
+        token = None
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            # Expected format: "Bearer <token>"
+            try:
+                token = auth_header.split(" ")[1]
+            except IndexError:
+                return jsonify({"status": "fail", "message": "Invalid Authorization header format"}), 401
+        
+        # Check if token exists
+        if not token:
+            return jsonify({"status": "fail", "message": "Authentication token is missing"}), 401
+        
+        try:
+            # Decode the token (without verification first just to get the user ID)
+            payload = jwt.decode(token, options={"verify_signature": False})
+            user_id = payload.get('sub')  # 'sub' is typically the user ID in JWTs
+            
+            if not user_id:
+                return jsonify({"status": "fail", "message": "Invalid token"}), 401
+            
+            # Verify the token with Supabase through our database function
+            # This is more secure than just decoding
+            if not verify_user_session(token):
+                return jsonify({"status": "fail", "message": "Invalid or expired token"}), 401
+                
+        except jwt.ExpiredSignatureError:
+            return jsonify({"status": "fail", "message": "Token has expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"status": "fail", "message": "Invalid token"}), 401
+        
+        # Pass the user_id to the route handler
+        return f(user_id, *args, **kwargs)
+    
+    return decorated
+
+# Authentication endpoints
+@app.route('/api/auth/signup', methods=['POST'])
+def signup():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "fail", "message": "No data provided"}), 400
+            
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({"status": "fail", "message": "Email and password are required"}), 400
+            
+        # Use Supabase's REST API for signup
+        signup_url = f"{SUPABASE_URL}/auth/v1/signup"
+        headers = {
+            "apikey": SUPABASE_KEY,
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "email": email,
+            "password": password
+        }
+        
+        response = requests.post(signup_url, headers=headers, json=payload)
+        
+        if response.status_code == 200:
+            return jsonify({"status": "success", "message": "User registered successfully"}), 201
+        else:
+            return jsonify({"status": "fail", "message": response.json().get('message', 'Registration failed')}), response.status_code
+            
+    except Exception as e:
+        print(f"Error during signup: {str(e)}")
+        return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "fail", "message": "No data provided"}), 400
+            
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({"status": "fail", "message": "Email and password are required"}), 400
+            
+        # Use Supabase's REST API for login
+        login_url = f"{SUPABASE_URL}/auth/v1/token?grant_type=password"
+        headers = {
+            "apikey": SUPABASE_KEY,
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "email": email,
+            "password": password
+        }
+        
+        response = requests.post(login_url, headers=headers, json=payload)
+        
+        if response.status_code == 200:
+            auth_data = response.json()
+            return jsonify({
+                "status": "success", 
+                "data": {
+                    "access_token": auth_data.get("access_token"),
+                    "refresh_token": auth_data.get("refresh_token"),
+                    "user": {
+                        "id": auth_data.get("user", {}).get("id"),
+                        "email": auth_data.get("user", {}).get("email")
+                    }
+                }
+            }), 200
+        else:
+            return jsonify({"status": "fail", "message": response.json().get('message', 'Login failed')}), response.status_code
+            
+    except Exception as e:
+        print(f"Error during login: {str(e)}")
+        return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
+
+# Surf Session endpoints (protected)
 @app.route('/api/surf-sessions', methods=['POST'])
-def create_surf_session():
+@token_required
+def create_surf_session(user_id):
     try:
         session_data = request.get_json()
         
@@ -160,19 +291,19 @@ def create_surf_session():
         session_data['met_buoy_id'] = met_buoy_id
         session_data['tide_station_id'] = tide_station_id
         
-        # Create the session in the database
-        session_id = create_session(session_data)
+        # Create the session in the database with user_id
+        created_session = create_session(session_data, user_id)
         
         # Return a simple confirmation with just the basic data
         return jsonify({
             "status": "success",
-            "message": "Surf session updated successfully",
+            "message": "Surf session created successfully",
             "data": {
-                "session_id": session_id,
+                "session_id": created_session["id"],
                 "location": location,
                 "date": session_date,
                 "time": session_time,
-                "swell_buoy_id": session_data.get('buoy_id'),
+                "swell_buoy_id": session_data.get('swell_buoy_id'),
                 "met_buoy_id": session_data.get('met_buoy_id'),
                 "tide_station_id": session_data.get('tide_station_id')
             }
@@ -187,9 +318,10 @@ def create_surf_session():
 
 # Get all surf sessions
 @app.route('/api/surf-sessions', methods=['GET'])
-def get_surf_sessions():
+@token_required
+def get_surf_sessions(user_id):
     try:
-        sessions = get_all_sessions()
+        sessions = get_all_sessions(user_id)
         return jsonify({"status": "success", "data": sessions}), 200
     except Exception as e:
         import traceback
@@ -198,9 +330,10 @@ def get_surf_sessions():
 
 # Get a specific surf session
 @app.route('/api/surf-sessions/<int:session_id>', methods=['GET'])
-def get_surf_session(session_id):
+@token_required
+def get_surf_session(user_id, session_id):
     try:
-        session = get_session(session_id)
+        session = get_session(session_id, user_id)
         if not session:
             return jsonify({"status": "fail", "message": f"Session with id {session_id} not found"}), 404
         return jsonify({"status": "success", "data": session}), 200
@@ -211,7 +344,8 @@ def get_surf_session(session_id):
 
 # Update a surf session
 @app.route('/api/surf-sessions/<int:session_id>', methods=['PUT'])
-def update_surf_session(session_id):
+@token_required
+def update_surf_session(user_id, session_id):
     try:
         session_data = request.get_json()
         
@@ -219,7 +353,7 @@ def update_surf_session(session_id):
             return jsonify({"status": "fail", "message": "No data provided"}), 400
         
         # Get existing session
-        existing_session = get_session(session_id)
+        existing_session = get_session(session_id, user_id)
         if not existing_session:
             return jsonify({"status": "fail", "message": f"Session with id {session_id} not found"}), 404
         
@@ -244,7 +378,7 @@ def update_surf_session(session_id):
             buoy_mapping = location_to_buoys.get(location_lower)
             if buoy_mapping:
                 # Update buoy IDs if location changes
-                session_data['buoy_id'] = buoy_mapping["swell"]
+                session_data['swell_buoy_id'] = buoy_mapping["swell"]
                 session_data['met_buoy_id'] = buoy_mapping["met"]
                 session_data['tide_station_id'] = buoy_mapping["tide"]
         
@@ -263,14 +397,14 @@ def update_surf_session(session_id):
                 }), 400
                 
             # 1. Fetch updated swell data
-            swell_buoy_id = session_data.get('buoy_id', existing_session.get('buoy_id'))
+            swell_buoy_id = session_data.get('swell_buoy_id', existing_session.get('swell_buoy_id'))
             if swell_buoy_id:
-                wave_data = fetch_buoy_data(swell_buoy_id, 500)
+                wave_data = fetch_swell_data(swell_buoy_id, 500)
                 if wave_data:
                     closest_wave_data = find_closest_data(wave_data, target_datetime)
                     if closest_wave_data:
-                        buoy_data_json = buoy_data_to_json([closest_wave_data])
-                        session_data['raw_data'] = buoy_data_json
+                        swell_json = swell_data_to_json([closest_wave_data])
+                        session_data['raw_swell'] = swell_json
             
             # 2. Fetch updated meteorological data
             met_buoy_id = session_data.get('met_buoy_id', existing_session.get('met_buoy_id'))
@@ -293,20 +427,20 @@ def update_surf_session(session_id):
                     session_data['raw_tide'] = tide_data_json
         
         # Update the session in the database
-        success = update_session(session_id, session_data)
+        updated_session = update_session(session_id, session_data, user_id)
         
-        if success:
+        if updated_session:
             return jsonify({
                 "status": "success",
                 "message": "Surf session updated successfully",
                 "data": {
                     "session_id": session_id,
-                    "location": location,
-                    "date": session_date,
-                    "time": session_time,
-                    "swell_buoy_id": session_data.get('buoy_id'),
-                    "met_buoy_id": session_data.get('met_buoy_id'),
-                    "tide_station_id": session_data.get('tide_station_id')
+                    "location": updated_session.get('location'),
+                    "date": updated_session.get('date'),
+                    "time": updated_session.get('time'),
+                    "swell_buoy_id": updated_session.get('swell_buoy_id'),
+                    "met_buoy_id": updated_session.get('met_buoy_id'),
+                    "tide_station_id": updated_session.get('tide_station_id')
                 }
             }), 200
         else:
@@ -323,9 +457,10 @@ def update_surf_session(session_id):
 
 # Delete a surf session
 @app.route('/api/surf-sessions/<int:session_id>', methods=['DELETE'])
-def delete_surf_session(session_id):
+@token_required
+def delete_surf_session(user_id, session_id):
     try:
-        result = delete_session(session_id)
+        result = delete_session(session_id, user_id)
         if result:
             return jsonify({"status": "success", "message": f"Session with id {session_id} deleted"}), 200
         else:
@@ -536,5 +671,6 @@ def water_level_to_json(water_level, station):
         "water_level": water_level["height"],  # Height in meters
         "units": "meters"  # Assumes the data is in meters
     }
-# if __name__ == '__main__':
-#     app.run(debug=True, host='0.0.0.0', port=5000) I snaked yo momma
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)

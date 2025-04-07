@@ -2,3 +2,4 @@ flask
 requests
 psycopg2-binary
 pytz
+PyJWT
