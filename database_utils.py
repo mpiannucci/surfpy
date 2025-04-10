@@ -16,16 +16,20 @@ def get_db_connection():
         print(f"Error connecting to database: {e}")
         return None
 
-def get_all_sessions(user_id):
-    """Retrieve all surf sessions for a specific user"""
+def get_all_sessions(user_id=None):
+    """Retrieve all surf sessions or filter by user if user_id provided"""
     conn = get_db_connection()
     if not conn:
         return []
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            # Add user_id filter to the query
-            cur.execute("SELECT * FROM surf_sessions_duplicate WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
+            if user_id:
+                # Filter by user_id if provided
+                cur.execute("SELECT * FROM surf_sessions_duplicate WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
+            else:
+                # Return all sessions
+                cur.execute("SELECT * FROM surf_sessions_duplicate ORDER BY created_at DESC")
             sessions = cur.fetchall()
             # Convert to a list so we can modify it
             sessions_list = list(sessions)
@@ -47,16 +51,21 @@ def get_all_sessions(user_id):
     finally:
         conn.close()
 
-def get_session(session_id, user_id):
-    """Retrieve a single surf session by its ID for a specific user"""
+# Modified function without user_id requirement
+def get_session(session_id, user_id=None):
+    """Retrieve a single surf session by its ID, optionally filtered by user_id"""
     conn = get_db_connection()
     if not conn:
         return None
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            # Add user_id filter to ensure users can only access their own data
-            cur.execute("SELECT * FROM surf_sessions_duplicate WHERE id = %s AND user_id = %s", (session_id, user_id))
+            if user_id:
+                # Filter by user_id if provided
+                cur.execute("SELECT * FROM surf_sessions_duplicate WHERE id = %s AND user_id = %s", (session_id, user_id))
+            else:
+                # Get session regardless of user
+                cur.execute("SELECT * FROM surf_sessions_duplicate WHERE id = %s", (session_id,))
             session = cur.fetchone()
             if session:
                 # Convert time objects to strings
