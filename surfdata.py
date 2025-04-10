@@ -323,19 +323,21 @@ def create_surf_session(user_id):
 @token_required
 def get_surf_sessions(user_id):
     try:
-        sessions = get_all_sessions(user_id)
+        # Get all sessions regardless of user
+        sessions = get_all_sessions()
         return jsonify({"status": "success", "data": sessions}), 200
     except Exception as e:
         import traceback
         print(traceback.format_exc())
         return jsonify({"status": "fail", "message": f"Error retrieving surf sessions: {str(e)}"}), 500
-
+    
 # Get a specific surf session
 @app.route('/api/surf-sessions/<int:session_id>', methods=['GET'])
 @token_required
 def get_surf_session(user_id, session_id):
     try:
-        session = get_session(session_id, user_id)
+        # Get session regardless of user
+        session = get_session(session_id)
         if not session:
             return jsonify({"status": "fail", "message": f"Session with id {session_id} not found"}), 404
         return jsonify({"status": "success", "data": session}), 200
