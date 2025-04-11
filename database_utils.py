@@ -16,20 +16,21 @@ def get_db_connection():
         print(f"Error connecting to database: {e}")
         return None
 
-def get_all_sessions(user_id=None):
-    """Retrieve all surf sessions or filter by user if user_id provided"""
+def get_all_sessions():
+    """Retrieve all surf sessions with user email information"""
     conn = get_db_connection()
     if not conn:
         return []
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            if user_id:
-                # Filter by user_id if provided
-                cur.execute("SELECT * FROM surf_sessions_duplicate WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
-            else:
-                # Return all sessions
-                cur.execute("SELECT * FROM surf_sessions_duplicate ORDER BY created_at DESC")
+            # Get all session data plus the user email
+            cur.execute("""
+                SELECT s.*, u.email as user_email 
+                FROM surf_sessions_duplicate s
+                LEFT JOIN auth.users u ON s.user_id = u.id
+                ORDER BY s.created_at DESC
+            """)
             sessions = cur.fetchall()
             # Convert to a list so we can modify it
             sessions_list = list(sessions)
@@ -51,21 +52,20 @@ def get_all_sessions(user_id=None):
     finally:
         conn.close()
 
-# Modified function without user_id requirement
-def get_session(session_id, user_id=None):
-    """Retrieve a single surf session by its ID, optionally filtered by user_id"""
+def get_session(session_id):
+    """Retrieve a single surf session including user email"""
     conn = get_db_connection()
     if not conn:
         return None
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            if user_id:
-                # Filter by user_id if provided
-                cur.execute("SELECT * FROM surf_sessions_duplicate WHERE id = %s AND user_id = %s", (session_id, user_id))
-            else:
-                # Get session regardless of user
-                cur.execute("SELECT * FROM surf_sessions_duplicate WHERE id = %s", (session_id,))
+            cur.execute("""
+                SELECT s.*, u.email as user_email 
+                FROM surf_sessions_duplicate s
+                LEFT JOIN auth.users u ON s.user_id = u.id
+                WHERE s.id = %s
+            """, (session_id,))
             session = cur.fetchone()
             if session:
                 # Convert time objects to strings
