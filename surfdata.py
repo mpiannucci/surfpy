@@ -8,6 +8,7 @@ import math
 import requests
 import jwt
 from functools import wraps
+import pytz
 
 app = Flask(__name__)
 
@@ -191,7 +192,18 @@ def create_surf_session(user_id):
         try:
             # Combining date and time strings
             datetime_str = f"{session_date}T{session_time}"
-            target_datetime = datetime.fromisoformat(datetime_str).replace(tzinfo=timezone.utc)
+            
+            # Parse as naive datetime
+            naive_datetime = datetime.fromisoformat(datetime_str)
+            
+            # Assume this is Eastern Time
+            eastern = pytz.timezone('America/New_York')
+            # Localize to Eastern Time
+            localized_datetime = eastern.localize(naive_datetime)
+            # Convert to UTC for data retrieval
+            target_datetime = localized_datetime.astimezone(timezone.utc)
+    
+            print(f"Eastern time: {localized_datetime}, converted to UTC: {target_datetime}")
         except ValueError:
             return jsonify({
                 "status": "fail", 
