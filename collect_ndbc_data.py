@@ -8,13 +8,46 @@ import pytz
 # Import from ocean_data
 from ocean_data import swell, location, utils
 
+def setup_database():
+    """Create the database schema if it doesn't exist."""
+    conn = sqlite3.connect('swell_data.db')
+    cursor = conn.cursor()
+    
+    # Main table for all swell readings
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS swell_readings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        source TEXT NOT NULL,                      -- 'surfline_lotus', 'surfline_buoy', or 'ndbc_buoy'
+        location TEXT NOT NULL,                    -- Location name (e.g., 'lido', 'manasquan')
+        buoy_id TEXT,                              -- Buoy ID if applicable
+        timestamp DATETIME NOT NULL,               -- Time of reading
+        significant_height REAL,                   -- Significant wave height in feet
+        primary_swell_height REAL,                 -- Primary swell component height in feet
+        primary_swell_period REAL,                 -- Primary swell period in seconds
+        primary_swell_direction REAL,              -- Primary swell direction in degrees
+        secondary_swell_height REAL,               -- Secondary swell height in feet
+        secondary_swell_period REAL,               -- Secondary swell period in seconds
+        secondary_swell_direction REAL,            -- Secondary swell direction in degrees
+        raw_data TEXT,                             -- JSON representation of full raw data
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP  -- When this record was added
+    )
+    ''')
+    
+    # Create indexes for faster querying
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_source_location_time ON swell_readings (source, location, timestamp)')
+    
+    conn.commit()
+    conn.close()
+    
+    print("Database schema setup complete")
+
 def collect_data_for_location(loc_name, date_obj):
     """
     Collect NDBC buoy data for a specific location and date.
     
     Args:
         loc_name (str): Location name (e.g., 'lido')
-        date_obj (datetime.date): Date to collect data for (in Eastern Time)
+        date_obj (datetime.date): Date to collect data for (in user's local time)
         
     Returns:
         list: Processed data points
@@ -32,23 +65,30 @@ def collect_data_for_location(loc_name, date_obj):
     eastern = pytz.timezone('America/New_York')
     
     # Start and end of the requested date in Eastern Time
-    # Add a buffer of 1 hour before and after to catch readings near the boundaries
-    start_of_day_eastern = eastern.localize(datetime.combine(date_obj, datetime.min.time())) - timedelta(hours=1)
-    end_of_day_eastern = eastern.localize(datetime.combine(date_obj, datetime.max.time())) + timedelta(hours=1)
+    start_of_day_eastern = eastern.localize(datetime.combine(date_obj, datetime.min.time()))
+    end_of_day_eastern = eastern.localize(datetime.combine(date_obj, datetime.max.time()))
     
     # Convert to UTC for API calls
     start_utc = start_of_day_eastern.astimezone(pytz.UTC)
     end_utc = end_of_day_eastern.astimezone(pytz.UTC)
     
-    print(f"Fetching swell data for buoy {swell_buoy_id} from {start_utc} to {end_utc}")
+    # Use current time as reference for the fetch, but don't filter to closest match
+    reference_time = datetime.now(timezone.utc)
     
-    # Fetch swell data for this period
-    swell_data = swell.fetch_swell_data(swell_buoy_id, start_utc, count=500)
+    print(f"Fetching all swell data for buoy {swell_buoy_id}")
+    
+    # Pass find_closest_only=False to get all data points
+    swell_data = swell.fetch_swell_data(
+        swell_buoy_id, 
+        reference_time, 
+        count=500, 
+        find_closest_only=False
+    )
     
     print(f"Received {len(swell_data) if swell_data else 0} swell data entries")
     
     if not swell_data:
-        print(f"No swell data found for {loc_name} on {date_obj}")
+        print(f"No swell data found for {loc_name}")
         return []
     
     # Show a sample of the data
@@ -82,12 +122,12 @@ def collect_data_for_location(loc_name, date_obj):
         entry_time_eastern = entry_time.astimezone(eastern)
         entry_date_eastern = entry_time_eastern.date()
         
-        # Check if the Eastern date matches our target date
-        if entry_date_eastern != date_obj:
+        # Filter to only include entries from the requested date in Eastern Time
+        if date_obj and entry_date_eastern != date_obj:
             print(f"Entry date in Eastern time {entry_date_eastern} doesn't match target date {date_obj}, skipping")
             continue
         
-        # Proceed with processing the data point since it's for our target date
+        # Process the swell components
         data_point = {
             "timestamp": entry_time,
             "significant_height": entry.get("significant_wave_height")
@@ -122,7 +162,7 @@ def collect_data_for_location(loc_name, date_obj):
         processed_data.append(data_point)
         print(f"Added data point: {data_point}")
     
-    print(f"Processed {len(processed_data)} data points for {loc_name} on {date_obj}")
+    print(f"Processed {len(processed_data)} data points for {loc_name}")
     return processed_data
 
 def save_to_database(location_name, data, buoy_id):
@@ -134,7 +174,23 @@ def save_to_database(location_name, data, buoy_id):
     conn = sqlite3.connect('swell_data.db')
     cursor = conn.cursor()
     
+    # Track saved entries to avoid duplicates
+    saved_count = 0
+    
     for entry in data:
+        # Check if this entry already exists in the database
+        timestamp_str = entry["timestamp"].isoformat()
+        cursor.execute('''
+        SELECT id FROM swell_readings 
+        WHERE source = ? AND location = ? AND buoy_id = ? AND timestamp = ?
+        ''', ('ndbc_buoy', location_name, buoy_id, timestamp_str))
+        
+        existing = cursor.fetchone()
+        if existing:
+            print(f"Entry for {timestamp_str} already exists, skipping")
+            continue
+        
+        # Insert the new entry
         cursor.execute('''
         INSERT INTO swell_readings (
             source, location, buoy_id, timestamp, 
@@ -146,7 +202,7 @@ def save_to_database(location_name, data, buoy_id):
             'ndbc_buoy', 
             location_name, 
             buoy_id, 
-            entry["timestamp"].isoformat(),
+            timestamp_str,
             entry.get("significant_height"),
             entry.get("primary_swell_height"),
             entry.get("primary_swell_period"),
@@ -156,27 +212,36 @@ def save_to_database(location_name, data, buoy_id):
             entry.get("secondary_swell_direction"),
             entry.get("raw_data")
         ))
+        saved_count += 1
     
     conn.commit()
-    print(f"Saved {len(data)} NDBC buoy readings to database")
+    print(f"Saved {saved_count} new NDBC buoy readings to database")
     conn.close()
 
 def main():
+    # Make sure the database exists
+    setup_database()
+    
     # Check command line arguments
-    if len(sys.argv) < 3:
-        print("Usage: python collect_ndbc_data.py <location> <date>")
+    if len(sys.argv) < 2:
+        print("Usage: python collect_ndbc_data.py <location> [date]")
         print("Example: python collect_ndbc_data.py lido 2025-05-19")
+        print("If date is omitted, all available data will be collected")
         return
     
     # Use a different variable name to avoid conflict with the imported module
     loc_name = sys.argv[1]
-    date_str = sys.argv[2]
     
-    try:
-        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
-    except ValueError:
-        print("Invalid date format. Please use YYYY-MM-DD")
-        return
+    # Date is now optional - if provided, it's just used for information
+    date_obj = None
+    if len(sys.argv) >= 3:
+        date_str = sys.argv[2]
+        try:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+            print(f"Date parameter provided: {date_obj} (used only for information)")
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD")
+            return
     
     # Get buoy information for location
     buoy_mapping = location.get_buoys_for_location(loc_name)
@@ -193,7 +258,7 @@ def main():
     if processed_data:
         save_to_database(loc_name, processed_data, buoy_id)
     else:
-        print(f"No data to save for {loc_name} on {date_obj}")
+        print(f"No data to save for {loc_name}")
 
 if __name__ == "__main__":
     main()

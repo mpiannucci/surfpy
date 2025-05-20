@@ -35,7 +35,8 @@ def fetch_buoy_by_id(buoy_id: str) -> Optional[surfpy.BuoyStation]:
 def fetch_swell_data(
     buoy_id: str, 
     target_datetime: Optional[datetime] = None, 
-    count: int = 500
+    count: int = 500,
+    find_closest_only: bool = True  # New parameter
 ) -> List[Dict[str, Any]]:
     """
     Fetch swell data for a specific buoy and time.
@@ -49,6 +50,8 @@ def fetch_swell_data(
         target_datetime (datetime, optional): Target datetime for fetching specific data.
             If None, returns the most recent data.
         count (int, optional): Number of data points to fetch. Defaults to 500.
+        find_closest_only (bool, optional): If True, only returns the closest data point to target_datetime.
+            If False, returns all data points. Defaults to True.
         
     Returns:
         list: List of processed swell data points
@@ -74,8 +77,8 @@ def fetch_swell_data(
             print(f"No wave data found for buoy {buoy_id}")
             return [generate_dummy_swell_data(target_datetime or datetime.now(timezone.utc))]
             
-        # If a specific time is requested, find the closest data point
-        if target_datetime:
+        # If a specific time is requested and we only want the closest data point
+        if target_datetime and find_closest_only:
             closest_data = find_closest_data(wave_data, target_datetime)
             if closest_data:
                 wave_data = [closest_data]
