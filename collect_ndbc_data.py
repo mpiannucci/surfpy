@@ -41,13 +41,13 @@ def setup_database():
     
     print("Database schema setup complete")
 
-def collect_data_for_location(loc_name, date_obj):
+def collect_data_for_specific_times(loc_name, date_obj):
     """
-    Collect NDBC buoy data for a specific location and date.
+    Collect NDBC buoy data for a specific location at 6am, 12pm, and 6pm.
     
     Args:
         loc_name (str): Location name (e.g., 'lido')
-        date_obj (datetime.date): Date to collect data for (in user's local time)
+        date_obj (datetime.date): Date to collect data for
         
     Returns:
         list: Processed data points
@@ -61,106 +61,98 @@ def collect_data_for_location(loc_name, date_obj):
     print(f"Buoy info for {loc_name}: {buoy_info}")
     swell_buoy_id = buoy_info["swell"]
     
-    # Create datetime range for the day (in Eastern Time)
-    eastern = pytz.timezone('America/New_York')
+    # Determine timezone based on location
+    if loc_name.lower() in ['lido', 'rockaways', 'manasquan', 'belmar']:
+        local_tz = pytz.timezone('America/New_York')
+        print(f"Using Eastern timezone for {loc_name}")
+    else:  # West coast locations
+        local_tz = pytz.timezone('America/Los_Angeles')
+        print(f"Using Pacific timezone for {loc_name}")
     
-    # Start and end of the requested date in Eastern Time
-    start_of_day_eastern = eastern.localize(datetime.combine(date_obj, datetime.min.time()))
-    end_of_day_eastern = eastern.localize(datetime.combine(date_obj, datetime.max.time()))
+    # Define target times in local timezone
+    target_times = [
+        local_tz.localize(datetime.combine(date_obj, datetime.strptime("06:00", "%H:%M").time())),
+        local_tz.localize(datetime.combine(date_obj, datetime.strptime("12:00", "%H:%M").time())),
+        local_tz.localize(datetime.combine(date_obj, datetime.strptime("18:00", "%H:%M").time()))
+    ]
     
-    # Convert to UTC for API calls
-    start_utc = start_of_day_eastern.astimezone(pytz.UTC)
-    end_utc = end_of_day_eastern.astimezone(pytz.UTC)
+    # Convert target times to UTC for API calls
+    target_times_utc = [t.astimezone(pytz.UTC) for t in target_times]
     
-    # Use current time as reference for the fetch, but don't filter to closest match
-    reference_time = datetime.now(timezone.utc)
-    
-    print(f"Fetching all swell data for buoy {swell_buoy_id}")
-    
-    # Pass find_closest_only=False to get all data points
-    swell_data = swell.fetch_swell_data(
-        swell_buoy_id, 
-        reference_time, 
-        count=500, 
-        find_closest_only=False
-    )
-    
-    print(f"Received {len(swell_data) if swell_data else 0} swell data entries")
-    
-    if not swell_data:
-        print(f"No swell data found for {loc_name}")
-        return []
-    
-    # Show a sample of the data
-    print(f"Sample data entry: {json.dumps(swell_data[0], indent=2) if swell_data else 'None'}")
-    
-    # Process the data
     processed_data = []
-    for i, entry in enumerate(swell_data):
-        # Parse the buoy data structure from swell.py into our database format
-        print(f"Processing entry {i+1}/{len(swell_data)}")
+    
+    # Collect data for each target time
+    for i, target_time in enumerate(target_times_utc):
+        local_time = target_times[i]
+        print(f"Fetching data for {local_time.strftime('%Y-%m-%d %H:%M')} local time ({target_time.strftime('%Y-%m-%d %H:%M')} UTC)")
         
-        # Extract timestamp - handle both string and datetime formats
-        if 'date' in entry:
-            if isinstance(entry['date'], str):
-                try:
-                    entry_time = datetime.fromisoformat(entry['date'])
-                    if entry_time.tzinfo is None:
-                        entry_time = entry_time.replace(tzinfo=timezone.utc)
-                    print(f"Parsed date string: {entry['date']} to {entry_time}")
-                except ValueError:
-                    print(f"Could not parse date string: {entry['date']}")
-                    continue
+        # Use find_closest_only=True to get just the closest match
+        swell_data = swell.fetch_swell_data(
+            swell_buoy_id, 
+            target_time, 
+            count=500,
+            find_closest_only=True
+        )
+        
+        if not swell_data:
+            print(f"No swell data found for {loc_name} at {local_time.strftime('%H:%M')}")
+            continue
+        
+        # Convert the single entry to a list if it's not already
+        if not isinstance(swell_data, list):
+            swell_data = [swell_data]
+        
+        # Show the data
+        print(f"Found {len(swell_data)} data points for {local_time.strftime('%H:%M')}")
+        
+        # Process the data
+        for entry in swell_data:
+            # Parse the buoy data structure from swell.py into our database format
+            # Extract timestamp - handle both string and datetime formats
+            if 'date' in entry:
+                if isinstance(entry['date'], str):
+                    try:
+                        entry_time = datetime.fromisoformat(entry['date'])
+                        if entry_time.tzinfo is None:
+                            entry_time = entry_time.replace(tzinfo=timezone.utc)
+                    except ValueError:
+                        print(f"Could not parse date string: {entry['date']}")
+                        continue
+                else:
+                    entry_time = utils.convert_to_utc(entry['date'])
             else:
-                entry_time = utils.convert_to_utc(entry['date'])
-                print(f"Converted datetime object: {entry['date']} to {entry_time}")
-        else:
-            print("Entry missing date field, skipping")
-            continue
-        
-        # Convert to Eastern time for date comparison
-        entry_time_eastern = entry_time.astimezone(eastern)
-        entry_date_eastern = entry_time_eastern.date()
-        
-        # Filter to only include entries from the requested date in Eastern Time
-        if date_obj and entry_date_eastern != date_obj:
-            print(f"Entry date in Eastern time {entry_date_eastern} doesn't match target date {date_obj}, skipping")
-            continue
-        
-        # Process the swell components
-        data_point = {
-            "timestamp": entry_time,
-            "significant_height": entry.get("significant_wave_height")
-        }
-        
-        # Get swell components
-        if 'swell_components' in entry:
-            components = entry['swell_components']
-            print(f"Found {len(components)} swell components")
+                print("Entry missing date field, skipping")
+                continue
             
-            # Primary swell
-            if 'swell_1' in components:
-                primary = components['swell_1']
-                data_point["primary_swell_height"] = primary.get('height')
-                data_point["primary_swell_period"] = primary.get('period')
-                data_point["primary_swell_direction"] = primary.get('direction')
-                print(f"Primary swell: {primary}")
+            # Process the swell components
+            data_point = {
+                "timestamp": entry_time,
+                "significant_height": entry.get("significant_wave_height")
+            }
             
-            # Secondary swell
-            if 'swell_2' in components:
-                secondary = components['swell_2']
-                data_point["secondary_swell_height"] = secondary.get('height')
-                data_point["secondary_swell_period"] = secondary.get('period')
-                data_point["secondary_swell_direction"] = secondary.get('direction')
-                print(f"Secondary swell: {secondary}")
-        else:
-            print("No swell components found in entry")
-        
-        # Store raw data
-        data_point["raw_data"] = json.dumps(entry)
-        
-        processed_data.append(data_point)
-        print(f"Added data point: {data_point}")
+            # Get swell components
+            if 'swell_components' in entry:
+                components = entry['swell_components']
+                
+                # Primary swell
+                if 'swell_1' in components:
+                    primary = components['swell_1']
+                    data_point["primary_swell_height"] = primary.get('height')
+                    data_point["primary_swell_period"] = primary.get('period')
+                    data_point["primary_swell_direction"] = primary.get('direction')
+                
+                # Secondary swell
+                if 'swell_2' in components:
+                    secondary = components['swell_2']
+                    data_point["secondary_swell_height"] = secondary.get('height')
+                    data_point["secondary_swell_period"] = secondary.get('period')
+                    data_point["secondary_swell_direction"] = secondary.get('direction')
+            
+            # Store raw data
+            data_point["raw_data"] = json.dumps(entry)
+            
+            processed_data.append(data_point)
+            print(f"Added data point: {entry_time}")
     
     print(f"Processed {len(processed_data)} data points for {loc_name}")
     return processed_data
@@ -226,22 +218,23 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python collect_ndbc_data.py <location> [date]")
         print("Example: python collect_ndbc_data.py lido 2025-05-19")
-        print("If date is omitted, all available data will be collected")
         return
     
     # Use a different variable name to avoid conflict with the imported module
     loc_name = sys.argv[1]
     
-    # Date is now optional - if provided, it's just used for information
+    # Date is optional - defaults to today
     date_obj = None
     if len(sys.argv) >= 3:
         date_str = sys.argv[2]
         try:
             date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
-            print(f"Date parameter provided: {date_obj} (used only for information)")
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD")
             return
+    else:
+        date_obj = datetime.now().date()
+        print(f"No date provided, using today: {date_obj}")
     
     # Get buoy information for location
     buoy_mapping = location.get_buoys_for_location(loc_name)
@@ -251,8 +244,8 @@ def main():
     
     buoy_id = buoy_mapping["swell"]
     
-    # Collect and process data
-    processed_data = collect_data_for_location(loc_name, date_obj)
+    # Collect and process data for specific times
+    processed_data = collect_data_for_specific_times(loc_name, date_obj)
     
     # Save to database
     if processed_data:

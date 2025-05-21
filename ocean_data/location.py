@@ -15,7 +15,9 @@ LOCATION_TO_BUOYS = {
     "lido": {"swell": "44065", "met": "44009", "tide": "8516402"},
     "manasquan": {"swell": "44091", "met": "44009", "tide": "8533051"},
     "rockaways": {"swell": "44065", "met": "44009", "tide": "8516881"},
-    "belmar": {"swell": "44091", "met": "44009", "tide": "8533051"}
+    "belmar": {"swell": "44091", "met": "44009", "tide": "8533051"},
+    "steamer_lane": {"swell": "46042", "met": "46042", "tide": "9413450"},
+    "trestles": {"swell": "46277", "met": "46277", "tide": "9410230"}
 }
 
 def get_buoys_for_location(location):
