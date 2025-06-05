@@ -17,16 +17,22 @@ def get_db_connection():
         return None
 
 def get_all_sessions():
-    """Retrieve all surf sessions with user email information"""
+    """Retrieve all surf sessions with user display name information"""
     conn = get_db_connection()
     if not conn:
         return []
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            # Get all session data plus the user email
+            # Get all session data plus the user display name from metadata
             cur.execute("""
-                SELECT s.*, u.email as user_email 
+                SELECT s.*, 
+                       u.email as user_email,
+                       COALESCE(
+                           u.raw_user_meta_data->>'display_name',
+                           NULLIF(TRIM(COALESCE(u.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u.raw_user_meta_data->>'last_name', '')), ''),
+                           split_part(u.email, '@', 1)
+                       ) as display_name
                 FROM surf_sessions_duplicate s
                 LEFT JOIN auth.users u ON s.user_id = u.id
                 ORDER BY s.created_at DESC
@@ -52,8 +58,9 @@ def get_all_sessions():
     finally:
         conn.close()
 
+
 def get_session(session_id):
-    """Retrieve a single surf session including user email"""
+    """Retrieve a single surf session including user display name"""
     conn = get_db_connection()
     if not conn:
         return None
@@ -61,7 +68,13 @@ def get_session(session_id):
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
-                SELECT s.*, u.email as user_email 
+                SELECT s.*, 
+                       u.email as user_email,
+                       COALESCE(
+                           u.raw_user_meta_data->>'display_name',
+                           NULLIF(TRIM(COALESCE(u.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u.raw_user_meta_data->>'last_name', '')), ''),
+                           split_part(u.email, '@', 1)
+                       ) as display_name
                 FROM surf_sessions_duplicate s
                 LEFT JOIN auth.users u ON s.user_id = u.id
                 WHERE s.id = %s

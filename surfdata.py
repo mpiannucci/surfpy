@@ -63,6 +63,8 @@ def token_required(f):
     return decorated
 
 # Authentication endpoints
+# Replace your existing signup endpoint in surfdata.py with this:
+
 @app.route('/api/auth/signup', methods=['POST'])
 def signup():
     try:
@@ -72,9 +74,17 @@ def signup():
             
         email = data.get('email')
         password = data.get('password')
+        first_name = data.get('first_name', '')  # Optional, defaults to empty string
+        last_name = data.get('last_name', '')    # Optional, defaults to empty string
         
         if not email or not password:
             return jsonify({"status": "fail", "message": "Email and password are required"}), 400
+        
+        # Create display name from first and last name
+        display_name = f"{first_name} {last_name}".strip()
+        if not display_name:
+            # If no names provided, use email prefix as fallback
+            display_name = email.split('@')[0]
             
         # Use Supabase's REST API for signup
         signup_url = f"{SUPABASE_URL}/auth/v1/signup"
@@ -84,7 +94,12 @@ def signup():
         }
         payload = {
             "email": email,
-            "password": password
+            "password": password,
+            "data": {  # This goes into raw_user_meta_data
+                "first_name": first_name,
+                "last_name": last_name,
+                "display_name": display_name
+            }
         }
         
         response = requests.post(signup_url, headers=headers, json=payload)
