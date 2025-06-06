@@ -1,131 +1,60 @@
-from database_utils import get_all_sessions, get_session, create_session, update_session, delete_session
+# simple_test_dashboard.py
+# Simple test with your specific user ID
+
+from database_utils import get_dashboard_stats
 import json
-from datetime import datetime
 
-def test_get_all_sessions():
-    print("\n=== Testing get_all_sessions ===")
-    sessions = get_all_sessions()
-    print(f"Found {len(sessions)} sessions")
+def test_with_your_user_id():
+    # Your specific user ID
+    user_id = "48ec6da1-cb94-4632-9c2f-5563aa2133f8"
     
-    # Print first session if available
-    if sessions:
-        first = sessions[0]
-        print("\nFirst session details:")
-        for key in ['id', 'session_name', 'location', 'fun_rating']:
-            if key in first:
-                print(f"  {key}: {first[key]}")
+    print(f"Testing dashboard stats with user_id: {user_id}")
+    print("="*60)
     
-    return sessions
-
-def test_get_session(session_id):
-    print(f"\n=== Testing get_session with ID: {session_id} ===")
-    session = get_session(session_id)
-    
-    if session:
-        print("Session details:")
-        for key in ['id', 'session_name', 'location', 'fun_rating', 'time']:
-            if key in session:
-                print(f"  {key}: {session[key]}")
-    else:
-        print(f"No session found with ID: {session_id}")
-    
-    return session
-
-def test_create_session():
-    print("\n=== Testing create_session ===")
-    
-    # Sample NOAA data
-    sample_noaa_data = {
-        "wave_height": 3.5,
-        "period": 12,
-        "wind_speed": 8,
-        "wind_direction": "NW",
-        "timestamp": datetime.now().isoformat()
-    }
-    
-    # Create test data
-    new_session = {
-        'session_name': f'Test Session {datetime.now().strftime("%H:%M:%S")}',
-        'location': 'Mavericks',
-        'fun_rating': 5,
-        'time': datetime.now().strftime("%Y-%m-%d %H:%M"),
-        'session_notes': 'Created by test script',
-        'raw_data': json.dumps(sample_noaa_data)
-    }
-    
-    print("Creating session with data:")
-    for key, value in new_session.items():
-        if key != 'raw_data':  # Skip printing raw_data for clarity
-            print(f"  {key}: {value}")
-    
-    # Create the session
-    created_session = create_session(new_session)
-    if created_session:
-        print(f"Session created successfully with ID: {created_session['id']}")
-    else:
-        print("Failed to create session")
-    
-    return created_session
-
-def test_update_session(session_id):
-    print(f"\n=== Testing update_session with ID: {session_id} ===")
-    
-    # Data to update
-    update_data = {
-        'fun_rating': 4,
-        'session_notes': 'Updated by test script'
-    }
-    
-    print("Updating with data:")
-    for key, value in update_data.items():
-        print(f"  {key}: {value}")
-    
-    # Update the session
-    updated_session = update_session(session_id, update_data)
-    if updated_session:
-        print("Session updated successfully")
-        print("Updated session details:")
-        for key in ['id', 'session_name', 'fun_rating', 'session_notes']:
-            if key in updated_session:
-                print(f"  {key}: {updated_session[key]}")
-    else:
-        print(f"Failed to update session with ID: {session_id}")
-    
-    return updated_session
-
-def test_delete_session(session_id):
-    print(f"\n=== Testing delete_session with ID: {session_id} ===")
-    
-    # Delete the session
-    result = delete_session(session_id)
-    if result:
-        print(f"Session with ID {session_id} deleted successfully")
-    else:
-        print(f"Failed to delete session with ID: {session_id}")
-    
-    return result
-
-def run_all_tests():
-    print("======= SURF DATABASE FUNCTION TESTS =======")
-    
-    # Test getting all sessions
-    sessions = test_get_all_sessions()
-    
-    # If there are sessions, test getting a specific one
-    if sessions:
-        first_id = sessions[0]['id']
-        test_get_session(first_id)
-    
-    # Test creating a session
-    new_session = test_create_session()
-    
-    # If session was created, test updating and then deleting it
-    if new_session:
-        session_id = new_session['id']
-        test_update_session(session_id)
-        test_delete_session(session_id)
-    
-    print("\n======= TESTS COMPLETED =======")
+    try:
+        result = get_dashboard_stats(user_id)
+        
+        if result is None:
+            print("❌ Function returned None")
+            return
+        
+        print("✅ SUCCESS! Function executed without errors")
+        print("\n" + "="*60)
+        print("COMPLETE RESULT:")
+        print("="*60)
+        print(json.dumps(result, indent=2, default=str))
+        
+        print("\n" + "="*60)
+        print("SUMMARY:")
+        print("="*60)
+        
+        # Current user summary
+        if 'current_user' in result:
+            cu = result['current_user']
+            print(f"YOUR STATS:")
+            print(f"  All-time sessions: {cu.get('total_sessions_all_time', 0)}")
+            print(f"  This year sessions: {cu.get('total_sessions_this_year', 0)}")
+            print(f"  Sessions/week: {cu.get('sessions_per_week_this_year', 0)}")
+            print(f"  Avg rating: {cu.get('avg_fun_rating_this_year', 'N/A')}")
+        
+        # Other users summary
+        if 'other_users' in result:
+            others = result['other_users']
+            print(f"\nOTHER USERS: {len(others)} found")
+            for user in others[:3]:  # Show first 3
+                print(f"  {user.get('display_name', 'Unknown')}: {user.get('total_sessions_all_time', 0)} sessions")
+        
+        # Community summary
+        if 'community' in result:
+            comm = result['community']
+            print(f"\nCOMMUNITY:")
+            print(f"  Total sessions: {comm.get('total_sessions', 0)}")
+            print(f"  Total stoke: {comm.get('total_stoke', 0)}")
+            
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
-    run_all_tests()
+    test_with_your_user_id()

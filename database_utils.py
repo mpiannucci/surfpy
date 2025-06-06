@@ -303,3 +303,115 @@ def verify_user_session(access_token):
         return None
     finally:
         conn.close()
+
+def get_dashboard_stats(current_user_id):
+    """Get comprehensive dashboard statistics for current user, other users, and community"""
+    conn = get_db_connection()
+    if not conn:
+        return None
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Get current year for filtering
+            current_year = datetime.now().year
+            
+            # 1. CURRENT USER STATS
+            cur.execute("""
+                SELECT 
+                    -- All-time stats
+                    COUNT(*) as total_sessions_all_time,
+                    
+                    -- This year stats
+                    COUNT(CASE WHEN EXTRACT(YEAR FROM date) = %s THEN 1 END) as total_sessions_this_year,
+                    
+                    -- Sessions per week this year (approximate)
+                    ROUND(
+                        (COUNT(CASE WHEN EXTRACT(YEAR FROM date) = %s THEN 1 END)::numeric / 
+                        GREATEST(EXTRACT(WEEK FROM CURRENT_DATE), 1))::numeric, 2
+                    ) as sessions_per_week_this_year,
+                    
+                    -- Average fun rating this year
+                    ROUND(
+                        AVG(CASE WHEN EXTRACT(YEAR FROM date) = %s THEN CAST(fun_rating AS FLOAT) END)::numeric, 2
+                    ) as avg_fun_rating_this_year
+                    
+                FROM surf_sessions_duplicate 
+                WHERE user_id = %s
+            """, (current_year, current_year, current_year, current_user_id))
+            
+            current_user_stats = cur.fetchone()
+            
+            # 2. OTHER USERS STATS
+            cur.execute("""
+                SELECT 
+                    s.user_id,
+                    COALESCE(
+                        u.raw_user_meta_data->>'display_name',
+                        NULLIF(TRIM(COALESCE(u.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u.raw_user_meta_data->>'last_name', '')), ''),
+                        split_part(u.email, '@', 1)
+                    ) as display_name,
+                    
+                    -- All-time stats
+                    COUNT(*) as total_sessions_all_time,
+                    
+                    -- This year stats
+                    COUNT(CASE WHEN EXTRACT(YEAR FROM s.date) = %s THEN 1 END) as total_sessions_this_year,
+                    
+                    -- Sessions per week this year
+                    ROUND(
+                        (COUNT(CASE WHEN EXTRACT(YEAR FROM s.date) = %s THEN 1 END)::numeric / 
+                        GREATEST(EXTRACT(WEEK FROM CURRENT_DATE), 1))::numeric, 2
+                    ) as sessions_per_week_this_year,
+                    
+                    -- Average fun rating this year
+                    ROUND(
+                        AVG(CASE WHEN EXTRACT(YEAR FROM s.date) = %s THEN CAST(s.fun_rating AS FLOAT) END)::numeric, 2
+                    ) as avg_fun_rating_this_year
+                    
+                FROM surf_sessions_duplicate s
+                LEFT JOIN auth.users u ON s.user_id = u.id
+                WHERE s.user_id != %s  -- Exclude current user
+                GROUP BY s.user_id, u.raw_user_meta_data, u.email
+                ORDER BY total_sessions_all_time DESC
+            """, (current_year, current_year, current_year, current_user_id))
+            
+            other_users_stats = cur.fetchall()
+            
+            # 3. COMMUNITY STATS (ALL USERS COMBINED)
+            cur.execute("""
+                SELECT 
+                    COUNT(*) as total_sessions,
+                    ROUND(SUM(CAST(fun_rating AS FLOAT))::numeric, 1) as total_stoke
+                FROM surf_sessions_duplicate
+            """)
+            
+            community_stats = cur.fetchone()
+            
+            # Convert results to dictionaries and handle None values
+            current_user_data = dict(current_user_stats) if current_user_stats else {
+                'total_sessions_all_time': 0,
+                'total_sessions_this_year': 0,
+                'sessions_per_week_this_year': 0,
+                'avg_fun_rating_this_year': None
+            }
+            
+            other_users_data = [dict(user) for user in other_users_stats] if other_users_stats else []
+            
+            community_data = dict(community_stats) if community_stats else {
+                'total_sessions': 0,
+                'total_stoke': 0
+            }
+            
+            return {
+                'current_user': current_user_data,
+                'other_users': other_users_data,
+                'community': community_data
+            }
+            
+    except Exception as e:
+        print(f"Error getting dashboard stats: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+    finally:
+        conn.close()
