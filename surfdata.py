@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from datetime import datetime, timezone, timedelta
 import surfpy
-from database_utils import get_db_connection, create_session, update_session, get_session, get_all_sessions, delete_session, verify_user_session
+from database_utils import get_db_connection, create_session, update_session, get_session, get_all_sessions, delete_session, verify_user_session, get_dashboard_stats
 import json
 from json_utils import CustomJSONEncoder
 import math
@@ -705,3 +705,26 @@ def water_level_to_json(water_level, station):
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+@app.route('/api/dashboard', methods=['GET'])
+@token_required
+def get_dashboard(user_id):
+    try:
+        dashboard_data = get_dashboard_stats(user_id)
+        
+        if dashboard_data is None:
+            return jsonify({"status": "fail", "message": "Failed to retrieve dashboard data"}), 500
+        
+        return jsonify({
+            "status": "success",
+            "data": dashboard_data
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in dashboard endpoint: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "status": "error",
+            "message": f"An error occurred: {str(e)}"
+        }), 500
