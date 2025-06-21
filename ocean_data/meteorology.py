@@ -16,7 +16,7 @@ import surfpy
 import math
 
 # Import shared utilities
-from .utils import find_closest_data
+from .utils import find_closest_data, is_valid_data, convert_met_data_to_imperial
 
 def fetch_met_buoy(buoy_id):
     """
@@ -37,7 +37,7 @@ def fetch_met_buoy(buoy_id):
         print(f"Error fetching met buoy: {str(e)}")
         return None
 
-def fetch_meteorological_data(buoy_id, target_datetime, count=500):
+def fetch_meteorological_data(buoy_id, target_datetime, count=500, use_imperial_units=True):
     """
     Fetch and process meteorological data for a specific buoy and time.
     
@@ -45,6 +45,7 @@ def fetch_meteorological_data(buoy_id, target_datetime, count=500):
         buoy_id (str): NDBC buoy ID
         target_datetime (datetime): Target datetime (timezone-aware)
         count (int, optional): Number of data points to fetch. Defaults to 500.
+        use_imperial_units (bool, optional): Convert to imperial units (knots, °F). Defaults to True.
         
     Returns:
         list: List of processed meteorological data points in JSON format
@@ -59,7 +60,7 @@ def fetch_meteorological_data(buoy_id, target_datetime, count=500):
         
         if not buoy:
             print(f"No meteorological buoy found with ID {buoy_id}")
-            return [generate_dummy_met_data(target_datetime)]
+            return [generate_dummy_met_data(target_datetime, use_imperial_units)]
             
         # Fetch meteorological data
         met_data = buoy.fetch_meteorological_reading(count)
@@ -71,23 +72,29 @@ def fetch_meteorological_data(buoy_id, target_datetime, count=500):
                 met_data = [latest_data]
             else:
                 print(f"No meteorological data found for buoy {buoy_id}")
-                return [generate_dummy_met_data(target_datetime)]
+                return [generate_dummy_met_data(target_datetime, use_imperial_units)]
                 
         # Find closest data point to target time
         closest_data = find_closest_data(met_data, target_datetime)
         
         if not closest_data:
             print(f"No matching meteorological data found for time {target_datetime}")
-            return [generate_dummy_met_data(target_datetime)]
+            return [generate_dummy_met_data(target_datetime, use_imperial_units)]
             
         # Convert to JSON format
-        return met_data_to_json([closest_data])
+        json_data = met_data_to_json([closest_data])
+        
+        # Convert units if requested
+        if use_imperial_units:
+            json_data = convert_met_data_to_imperial(json_data)
+            
+        return json_data
         
     except Exception as e:
         print(f"Error fetching meteorological data: {str(e)}")
         import traceback
         traceback.print_exc()
-        return [generate_dummy_met_data(target_datetime)]
+        return [generate_dummy_met_data(target_datetime, use_imperial_units)]
 
 def met_data_to_json(met_data):
     """
@@ -97,7 +104,7 @@ def met_data_to_json(met_data):
         met_data (list): List of meteorological data objects
         
     Returns:
-        list: JSON-serializable structure with meteorological data
+        list: JSON-serializable structure with meteorological data (in metric units)
     """
     met_json = []
     if met_data:
@@ -112,20 +119,21 @@ def met_data_to_json(met_data):
                         'visibility', 'pressure_tendency']:
                 if hasattr(entry, attr):
                     value = getattr(entry, attr)
-                    # Don't include None or NaN values
-                    if value is not None and not (isinstance(value, float) and math.isnan(value)):
+                    # Only include valid values
+                    if is_valid_data(value):
                         data_point[attr] = value
             
             met_json.append(data_point)
     
     return met_json
 
-def generate_dummy_met_data(target_datetime):
+def generate_dummy_met_data(target_datetime, use_imperial_units=True):
     """
     Generate dummy meteorological data for testing or when real data is unavailable.
     
     Args:
         target_datetime (datetime): Target datetime
+        use_imperial_units (bool, optional): Whether to use imperial units. Defaults to True.
         
     Returns:
         dict: Dummy meteorological data matching the structure of real data
@@ -133,16 +141,29 @@ def generate_dummy_met_data(target_datetime):
     # Format target_datetime for the dummy data
     datetime_str = target_datetime.isoformat()
     
-    # Create dummy meteorological data
-    dummy_data = {
-        "date": datetime_str,
-        "wind_speed": 5.0,
-        "wind_direction": 180.0,
-        "wind_gust": 7.0,
-        "air_temperature": 20.0,
-        "water_temperature": 15.0,
-        "pressure": 1013.2,
-        "dewpoint_temperature": 12.0
-    }
+    if use_imperial_units:
+        # Create dummy meteorological data in imperial units (matching NDBC website)
+        dummy_data = {
+            "date": datetime_str,
+            "wind_speed": 10.0,      # knots
+            "wind_direction": 180.0,  # degrees
+            "wind_gust": 14.0,       # knots
+            "air_temperature": 68.0,  # °F
+            "water_temperature": 60.0, # °F
+            "pressure": 1013.2,       # hPa (mb)
+            "dewpoint_temperature": 54.0  # °F
+        }
+    else:
+        # Create dummy meteorological data in metric units (raw NOAA data format)
+        dummy_data = {
+            "date": datetime_str,
+            "wind_speed": 5.0,        # m/s
+            "wind_direction": 180.0,   # degrees
+            "wind_gust": 7.0,         # m/s
+            "air_temperature": 20.0,   # °C
+            "water_temperature": 15.0, # °C
+            "pressure": 1013.2,        # hPa
+            "dewpoint_temperature": 12.0  # °C
+        }
     
     return dummy_data

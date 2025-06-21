@@ -7,6 +7,9 @@ Functions:
     - find_closest_data: Find data point closest to a specific time
     - convert_to_utc: Ensure datetime is in UTC
     - meters_to_feet: Convert measurements from meters to feet
+    - mps_to_knots: Convert wind speed from m/s to knots
+    - celsius_to_fahrenheit: Convert temperature from Celsius to Fahrenheit
+    - convert_met_data_to_imperial: Convert all meteorological data to imperial units
 """
 
 from datetime import datetime, timezone
@@ -62,6 +65,69 @@ def meters_to_feet(meters):
     """
     METERS_TO_FEET = 3.28084
     return meters * METERS_TO_FEET
+
+def mps_to_knots(mps):
+    """
+    Convert wind speed from meters per second to knots.
+    
+    Args:
+        mps (float): Wind speed in meters per second
+        
+    Returns:
+        float: Wind speed in knots
+    """
+    MPS_TO_KNOTS = 1.94384
+    return mps * MPS_TO_KNOTS
+
+def celsius_to_fahrenheit(celsius):
+    """
+    Convert temperature from Celsius to Fahrenheit.
+    
+    Args:
+        celsius (float): Temperature in Celsius
+        
+    Returns:
+        float: Temperature in Fahrenheit
+    """
+    return (celsius * 9/5) + 32
+
+def convert_met_data_to_imperial(met_data):
+    """
+    Convert meteorological data from metric to imperial units.
+    
+    This function converts wind speeds from m/s to knots and temperatures
+    from Celsius to Fahrenheit to match NDBC website display units.
+    
+    Args:
+        met_data (list): List of meteorological data dictionaries
+        
+    Returns:
+        list: Data with imperial units (wind in knots, temperature in °F)
+    """
+    converted_data = []
+    
+    for data_point in met_data:
+        # Create a copy to avoid modifying the original data
+        converted_point = data_point.copy()
+        
+        # Convert wind speeds from m/s to knots
+        wind_fields = ['wind_speed', 'wind_gust']
+        for field in wind_fields:
+            if field in converted_point and is_valid_data(converted_point[field]):
+                converted_point[field] = round(mps_to_knots(converted_point[field]), 1)
+        
+        # Convert temperatures from Celsius to Fahrenheit
+        temp_fields = ['air_temperature', 'water_temperature', 'dewpoint_temperature']
+        for field in temp_fields:
+            if field in converted_point and is_valid_data(converted_point[field]):
+                converted_point[field] = round(celsius_to_fahrenheit(converted_point[field]), 1)
+        
+        # Pressure remains in hPa (which equals mb - millibars)
+        # Wind direction remains in degrees
+        
+        converted_data.append(converted_point)
+    
+    return converted_data
 
 def is_valid_data(value):
     """
