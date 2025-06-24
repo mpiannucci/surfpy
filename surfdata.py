@@ -10,8 +10,9 @@ import jwt
 from functools import wraps
 import pytz
 
-# Import ocean data module
+# Import ocean data modules
 from ocean_data.swell import fetch_swell_data
+from ocean_data.meteorology import fetch_meteorological_data
 from ocean_data.location import get_buoys_for_location, is_valid_location
 
 app = Flask(__name__)
@@ -222,45 +223,14 @@ def create_surf_session(user_id):
         swell_data = fetch_swell_data(swell_buoy_id, target_datetime, count=500)
         session_data['raw_swell'] = swell_data
         
-        # 2. Fetch meteorological buoy data (keeping original logic for now)
-        met_buoy = fetch_met_buoy(met_buoy_id)
-        met_data = fetch_meteorological_data(met_buoy, 500)
+        # 2. Fetch meteorological buoy data using the ocean_data module
+        met_data = fetch_meteorological_data(met_buoy_id, target_datetime, count=500, use_imperial_units=True)
+        session_data['raw_met'] = met_data
 
         # 3. Fetch tide station data (keeping original logic for now)
         tide_station = fetch_tide_station(tide_station_id)
         tide_data = fetch_water_level(tide_station, target_datetime)
 
-        # Process meteorological data (keeping original logic)
-        if not met_data:
-            print(f"Warning: No meteorological data found for station {met_buoy_id}. Using dummy data for testing.")
-            # Create dummy meteorological data
-            dummy_met_data = {
-                "date": target_datetime.isoformat(),
-                "wind_speed": 5.0,
-                "wind_direction": 180.0,
-                "air_temperature": 20.0,
-                "water_temperature": 15.0
-            }
-            session_data['raw_met'] = [dummy_met_data]
-        else:
-            # Find closest data point to the provided datetime
-            closest_met_data = find_closest_data(met_data, target_datetime)
-            if not closest_met_data:
-                print(f"Warning: No matching meteorological data found for the given time. Using dummy data for testing.")
-                # Create dummy meteorological data
-                dummy_met_data = {
-                    "date": target_datetime.isoformat(),
-                    "wind_speed": 5.0,
-                    "wind_direction": 180.0,
-                    "air_temperature": 20.0,
-                    "water_temperature": 15.0
-                }
-                session_data['raw_met'] = [dummy_met_data]
-            else:
-                # Convert meteorological data to JSON
-                met_data_json = met_data_to_json([closest_met_data])
-                session_data['raw_met'] = met_data_json
-        
         # Process tide data (keeping original logic)
         if not tide_data or not tide_station:
             print(f"Warning: No tide data found for station {tide_station_id}. Using dummy data for testing.")
@@ -376,7 +346,12 @@ def update_surf_session(user_id, session_id):
             # Create a datetime object from the date and time
             try:
                 datetime_str = f"{session_date}T{session_time}"
-                target_datetime = datetime.fromisoformat(datetime_str).replace(tzinfo=timezone.utc)
+                naive_datetime = datetime.fromisoformat(datetime_str)
+                
+                # Convert to Eastern Time, then UTC
+                eastern = pytz.timezone('America/New_York')
+                localized_datetime = eastern.localize(naive_datetime)
+                target_datetime = localized_datetime.astimezone(timezone.utc)
             except ValueError:
                 return jsonify({
                     "status": "fail", 
@@ -389,16 +364,11 @@ def update_surf_session(user_id, session_id):
                 swell_data = fetch_swell_data(swell_buoy_id, target_datetime, count=500)
                 session_data['raw_swell'] = swell_data
             
-            # 2. Fetch updated meteorological data (keeping original logic)
+            # 2. Fetch updated meteorological data using the ocean_data module
             met_buoy_id = session_data.get('met_buoy_id', existing_session.get('met_buoy_id'))
             if met_buoy_id:
-                met_buoy = fetch_met_buoy(met_buoy_id)
-                met_data = fetch_meteorological_data(met_buoy, 500)
-                if met_data:
-                    closest_met_data = find_closest_data(met_data, target_datetime)
-                    if closest_met_data:
-                        met_data_json = met_data_to_json([closest_met_data])
-                        session_data['raw_met'] = met_data_json
+                met_data = fetch_meteorological_data(met_buoy_id, target_datetime, count=500, use_imperial_units=True)
+                session_data['raw_met'] = met_data
                         
             # 3. Fetch updated tide data (keeping original logic)
             tide_station_id = session_data.get('tide_station_id', existing_session.get('tide_station_id'))
@@ -457,19 +427,7 @@ def delete_surf_session(user_id, session_id):
 def test_route():
     return jsonify({"status": "success", "message": "API is working"}), 200
 
-# METEOROLOGICAL AND TIDE FUNCTIONS (TO BE REFACTORED LATER)
-# Keeping the original functions for now since they haven't been modularized yet
-
-def fetch_met_buoy(buoy_id):
-    """Fetch a meteorological buoy object by ID."""
-    try:
-        stations = surfpy.BuoyStations()
-        stations.fetch_stations()
-        station = next((s for s in stations.stations if s.station_id == buoy_id), None)
-        return station
-    except Exception as e:
-        print(f"Error fetching met buoy: {str(e)}")
-        return None
+# TIDE FUNCTIONS (TO BE REFACTORED LATER)
 
 def fetch_tide_station(station_id):
     """Fetch a tide station object by ID."""
@@ -482,25 +440,6 @@ def fetch_tide_station(station_id):
         return tide_station
     except Exception as e:
         print(f"Error fetching tide station: {str(e)}")
-        return None
-
-def fetch_meteorological_data(buoy, count=500):
-    """Fetch meteorological data for a given buoy."""
-    if not buoy:
-        return None
-        
-    try:
-        met_data = buoy.fetch_meteorological_reading(count)
-        
-        if not met_data:
-            # Try fetch_latest_reading as an alternative
-            latest_data = buoy.fetch_latest_reading()
-            if latest_data:
-                return [latest_data]
-                
-        return met_data
-    except Exception as e:
-        print(f"Error fetching meteorological data: {str(e)}")
         return None
 
 def fetch_water_level(station, target_datetime=None):
@@ -566,36 +505,6 @@ def fetch_water_level(station, target_datetime=None):
         import traceback
         traceback.print_exc()
         return None
-
-def find_closest_data(data_list, target_datetime):
-    if not data_list:
-        return None
-    # Find the data entry closest to the given target datetime
-    # Make sure the entry.date is timezone-aware
-    return min(data_list, key=lambda entry: abs(entry.date.replace(tzinfo=timezone.utc) - target_datetime))
-
-def met_data_to_json(met_data):
-    """Convert meteorological data to JSON format."""
-    met_json = []
-    if met_data:
-        for entry in met_data:
-            data_point = {
-                "date": entry.date.isoformat() if hasattr(entry, 'date') else datetime.now().isoformat()
-            }
-            
-            # Add meteorological attributes
-            for attr in ['wind_speed', 'wind_direction', 'wind_gust', 'pressure', 
-                        'air_temperature', 'water_temperature', 'dewpoint_temperature',
-                        'visibility', 'pressure_tendency']:
-                if hasattr(entry, attr):
-                    value = getattr(entry, attr)
-                    # Don't include None or NaN values
-                    if value is not None and not (isinstance(value, float) and math.isnan(value)):
-                        data_point[attr] = value
-            
-            met_json.append(data_point)
-    
-    return met_json
 
 def water_level_to_json(water_level, station):
     """Convert water level data to a JSON-serializable structure."""
