@@ -601,3 +601,94 @@ def get_dashboard(user_id):
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+# User search
+@app.route('/api/users/search', methods=['GET'])
+@token_required
+def search_users(user_id):
+    try:
+        # Get the search query from URL parameters
+        query = request.args.get('q', '').strip()
+        
+        if not query:
+            return jsonify({"status": "fail", "message": "Search query 'q' parameter is required"}), 400
+        
+        if len(query) < 2:
+            return jsonify({"status": "fail", "message": "Search query must be at least 2 characters"}), 400
+        
+        # Search for users in the database
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"status": "error", "message": "Database connection failed"}), 500
+        
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # Search across display_name, first_name, last_name, and email
+                # Using ILIKE for case-insensitive partial matching
+                search_pattern = f"%{query}%"
+                
+                cur.execute("""
+                    SELECT 
+                        id as user_id,
+                        email,
+                        COALESCE(
+                            raw_user_meta_data->>'display_name',
+                            NULLIF(TRIM(COALESCE(raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(raw_user_meta_data->>'last_name', '')), ''),
+                            split_part(email, '@', 1)
+                        ) as display_name,
+                        raw_user_meta_data->>'first_name' as first_name,
+                        raw_user_meta_data->>'last_name' as last_name
+                    FROM auth.users 
+                    WHERE 
+                        -- Search in display_name
+                        (raw_user_meta_data->>'display_name' ILIKE %s) OR
+                        -- Search in first_name
+                        (raw_user_meta_data->>'first_name' ILIKE %s) OR  
+                        -- Search in last_name
+                        (raw_user_meta_data->>'last_name' ILIKE %s) OR
+                        -- Search in email
+                        (email ILIKE %s) OR
+                        -- Search in combined first + last name
+                        (TRIM(COALESCE(raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(raw_user_meta_data->>'last_name', '')) ILIKE %s)
+                    AND id != %s  -- Exclude the current user from results
+                    ORDER BY 
+                        -- Prioritize exact matches in display_name
+                        CASE WHEN raw_user_meta_data->>'display_name' ILIKE %s THEN 1 ELSE 2 END,
+                        display_name
+                    LIMIT 20  -- Limit results to prevent overwhelming the frontend
+                """, (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, user_id, query))
+                
+                users = cur.fetchall()
+                
+                # Format the results for the frontend
+                results = []
+                for user in users:
+                    results.append({
+                        "user_id": user['user_id'],
+                        "display_name": user['display_name'],
+                        "email": user['email'],
+                        # Optional: include first/last name for additional context
+                        "first_name": user.get('first_name'),
+                        "last_name": user.get('last_name')
+                    })
+                
+                return jsonify({
+                    "status": "success",
+                    "data": results,
+                    "query": query,
+                    "count": len(results)
+                }), 200
+                
+        except Exception as e:
+            print(f"Database error in user search: {str(e)}")
+            return jsonify({"status": "error", "message": f"Database error: {str(e)}"}), 500
+        finally:
+            conn.close()
+            
+    except Exception as e:
+        print(f"Error in user search: {str(e)}")
+        return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
+
+
+# You'll also need to add this import at the top of your file if it's not already there:
+from psycopg2.extras import RealDictCursor
