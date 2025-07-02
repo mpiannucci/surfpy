@@ -163,6 +163,7 @@ def login():
         return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
 
 # Surf Session endpoints (protected)
+# 1. UPDATED CREATE SESSION ENDPOINT
 @app.route('/api/surf-sessions', methods=['POST'])
 @token_required
 def create_surf_session(user_id):
@@ -175,14 +176,36 @@ def create_surf_session(user_id):
         # Extract required fields for buoy data
         session_date = session_data.get('date')
         session_time = session_data.get('time')
+        end_time = session_data.get('end_time')  # NEW: Required end_time
         location = session_data.get('location')
         
+        # Validate required fields
         if not session_date:
             return jsonify({"status": "fail", "message": "date is required"}), 400
         if not session_time:
             return jsonify({"status": "fail", "message": "time is required"}), 400
+        if not end_time:  # NEW: Validate end_time is provided
+            return jsonify({"status": "fail", "message": "end_time is required"}), 400
         if not location:
             return jsonify({"status": "fail", "message": "location is required"}), 400
+
+        # NEW: Validate that end_time > time
+        try:
+            from datetime import time as time_obj
+            start_time_obj = time_obj.fromisoformat(session_time)
+            end_time_obj = time_obj.fromisoformat(end_time)
+            
+            if end_time_obj <= start_time_obj:
+                return jsonify({
+                    "status": "fail", 
+                    "message": "end_time must be after start time"
+                }), 400
+                
+        except ValueError:
+            return jsonify({
+                "status": "fail", 
+                "message": "Invalid time format. Use HH:MM:SS format for both time and end_time"
+            }), 400
 
         # Validate location using the ocean_data module
         if not is_valid_location(location):
@@ -197,7 +220,7 @@ def create_surf_session(user_id):
         met_buoy_id = buoy_mapping["met"]
         tide_station_id = buoy_mapping["tide"]
 
-        # Combine date and time to create a datetime object
+        # Combine date and time to create a datetime object (using start time for oceanographic data)
         try:
             # Combining date and time strings
             datetime_str = f"{session_date}T{session_time}"
@@ -219,22 +242,20 @@ def create_surf_session(user_id):
                 "message": "Invalid date/time format. Use ISO format for date (YYYY-MM-DD) and time (HH:MM:SS)"
             }), 400
 
-        # 1. Fetch swell buoy data using the ocean_data module
+        # Fetch oceanographic data (using start time as before)
         swell_data = fetch_swell_data(swell_buoy_id, target_datetime, count=500)
         session_data['raw_swell'] = swell_data
         
-        # 2. Fetch meteorological buoy data using the ocean_data module
         met_data = fetch_meteorological_data(met_buoy_id, target_datetime, count=500, use_imperial_units=True)
         session_data['raw_met'] = met_data
 
-        # 3. Fetch tide station data (keeping original logic for now)
+        # Fetch tide station data (keeping original logic for now)
         tide_station = fetch_tide_station(tide_station_id)
         tide_data = fetch_water_level(tide_station, target_datetime)
 
         # Process tide data (keeping original logic)
         if not tide_data or not tide_station:
             print(f"Warning: No tide data found for station {tide_station_id}. Using dummy data for testing.")
-            # Create dummy tide data
             dummy_tide_data = {
                 "station_id": tide_station_id,
                 "date": target_datetime.isoformat(),
@@ -243,7 +264,6 @@ def create_surf_session(user_id):
             }
             session_data['raw_tide'] = dummy_tide_data
         else:
-            # Convert tide data to JSON
             tide_data_json = water_level_to_json(tide_data, tide_station)
             session_data['raw_tide'] = tide_data_json
 
@@ -255,7 +275,7 @@ def create_surf_session(user_id):
         # Create the session in the database with user_id
         created_session = create_session(session_data, user_id)
         
-        # Return a simple confirmation with just the basic data
+        # Return confirmation with basic data including end_time
         return jsonify({
             "status": "success",
             "message": "Surf session created successfully",
@@ -264,6 +284,7 @@ def create_surf_session(user_id):
                 "location": location,
                 "date": session_date,
                 "time": session_time,
+                "end_time": end_time,  # NEW: Include end_time in response
                 "swell_buoy_id": session_data.get('swell_buoy_id'),
                 "met_buoy_id": session_data.get('met_buoy_id'),
                 "tide_station_id": session_data.get('tide_station_id')
@@ -306,6 +327,7 @@ def get_surf_session(user_id, session_id):
         return jsonify({"status": "fail", "message": f"Error retrieving surf session: {str(e)}"}), 500
 
 # Update a surf session
+# 2. UPDATED UPDATE SESSION ENDPOINT
 @app.route('/api/surf-sessions/<int:session_id>', methods=['PUT'])
 @token_required
 def update_surf_session(user_id, session_id):
@@ -316,14 +338,43 @@ def update_surf_session(user_id, session_id):
             return jsonify({"status": "fail", "message": "No data provided"}), 400
         
         # Get existing session
-        existing_session = get_session(session_id, user_id)
+        existing_session = get_session(session_id)
         if not existing_session:
+            return jsonify({"status": "fail", "message": f"Session with id {session_id} not found"}), 404
+        
+        # Check if user owns this session
+        if existing_session.get('user_id') != user_id:
             return jsonify({"status": "fail", "message": f"Session with id {session_id} not found"}), 404
         
         # Extract fields that might need to be updated
         session_date = session_data.get('date', existing_session.get('date'))
         session_time = session_data.get('time', existing_session.get('time'))
+        end_time = session_data.get('end_time', existing_session.get('end_time'))
         location = session_data.get('location', existing_session.get('location'))
+        
+        # NEW: Validate end_time if provided in update
+        if 'time' in session_data or 'end_time' in session_data:
+            # Use updated values or fall back to existing values
+            start_time_to_check = session_data.get('time', existing_session.get('time'))
+            end_time_to_check = session_data.get('end_time', existing_session.get('end_time'))
+            
+            if start_time_to_check and end_time_to_check:
+                try:
+                    from datetime import time as time_obj
+                    start_time_obj = time_obj.fromisoformat(start_time_to_check)
+                    end_time_obj = time_obj.fromisoformat(end_time_to_check)
+                    
+                    if end_time_obj <= start_time_obj:
+                        return jsonify({
+                            "status": "fail", 
+                            "message": "end_time must be after start time"
+                        }), 400
+                        
+                except ValueError:
+                    return jsonify({
+                        "status": "fail", 
+                        "message": "Invalid time format. Use HH:MM:SS format for both time and end_time"
+                    }), 400
         
         if location:
             # Validate location using the ocean_data module
@@ -358,19 +409,17 @@ def update_surf_session(user_id, session_id):
                     "message": "Invalid date/time format. Use ISO format for date (YYYY-MM-DD) and time (HH:MM:SS)"
                 }), 400
                 
-            # 1. Fetch updated swell data using the ocean_data module
+            # Fetch updated oceanographic data
             swell_buoy_id = session_data.get('swell_buoy_id', existing_session.get('swell_buoy_id'))
             if swell_buoy_id:
                 swell_data = fetch_swell_data(swell_buoy_id, target_datetime, count=500)
                 session_data['raw_swell'] = swell_data
             
-            # 2. Fetch updated meteorological data using the ocean_data module
             met_buoy_id = session_data.get('met_buoy_id', existing_session.get('met_buoy_id'))
             if met_buoy_id:
                 met_data = fetch_meteorological_data(met_buoy_id, target_datetime, count=500, use_imperial_units=True)
                 session_data['raw_met'] = met_data
                         
-            # 3. Fetch updated tide data (keeping original logic)
             tide_station_id = session_data.get('tide_station_id', existing_session.get('tide_station_id'))
             if tide_station_id:
                 tide_station = fetch_tide_station(tide_station_id)
@@ -391,6 +440,7 @@ def update_surf_session(user_id, session_id):
                     "location": updated_session.get('location'),
                     "date": updated_session.get('date'),
                     "time": updated_session.get('time'),
+                    "end_time": updated_session.get('end_time'),  # NEW: Include end_time in response
                     "swell_buoy_id": updated_session.get('swell_buoy_id'),
                     "met_buoy_id": updated_session.get('met_buoy_id'),
                     "tide_station_id": updated_session.get('tide_station_id')
