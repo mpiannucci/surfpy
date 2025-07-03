@@ -323,8 +323,6 @@ def verify_user_session(access_token):
     finally:
         conn.close()
 
-# Replace the get_dashboard_stats function in database_utils.py with this enhanced version:
-
 def get_dashboard_stats(current_user_id):
     """Get comprehensive dashboard statistics for current user, other users, and community"""
     conn = get_db_connection()
@@ -356,7 +354,7 @@ def get_dashboard_stats(current_user_id):
                         AVG(CASE WHEN EXTRACT(YEAR FROM date) = %s THEN CAST(fun_rating AS FLOAT) END)::numeric, 2
                     ) as avg_fun_rating_this_year,
                     
-                    -- NEW: Average session duration in minutes (this year, sessions with end_time)
+                    -- Average session duration in minutes (this year, sessions with end_time)
                     ROUND(
                         AVG(CASE 
                             WHEN EXTRACT(YEAR FROM date) = %s AND end_time IS NOT NULL 
@@ -377,6 +375,18 @@ def get_dashboard_stats(current_user_id):
             """, (current_year, current_year, current_year, current_year, current_year, current_user_id))
             
             current_user_stats = cur.fetchone()
+            
+            # 1b. CURRENT USER TOP LOCATIONS (NEW)
+            cur.execute("""
+                SELECT location, COUNT(*) as session_count 
+                FROM surf_sessions_duplicate 
+                WHERE user_id = %s AND EXTRACT(YEAR FROM date) = %s
+                GROUP BY location 
+                ORDER BY session_count DESC 
+                LIMIT 3
+            """, (current_user_id, current_year))
+            
+            user_top_locations = cur.fetchall()
             
             # 2. OTHER USERS STATS (Enhanced with time calculations)
             cur.execute("""
@@ -405,7 +415,7 @@ def get_dashboard_stats(current_user_id):
                         AVG(CASE WHEN EXTRACT(YEAR FROM s.date) = %s THEN CAST(s.fun_rating AS FLOAT) END)::numeric, 2
                     ) as avg_fun_rating_this_year,
                     
-                    -- NEW: Average session duration in minutes (this year, sessions with end_time)
+                    -- Average session duration in minutes (this year, sessions with end_time)
                     ROUND(
                         AVG(CASE 
                             WHEN EXTRACT(YEAR FROM s.date) = %s AND s.end_time IS NOT NULL 
@@ -436,7 +446,7 @@ def get_dashboard_stats(current_user_id):
                     COUNT(*) as total_sessions,
                     ROUND(SUM(CAST(fun_rating AS FLOAT))::numeric, 1) as total_stoke,
                     
-                    -- NEW: Community average session duration (sessions with end_time)
+                    -- Community average session duration (sessions with end_time)
                     ROUND(
                         AVG(CASE 
                             WHEN end_time IS NOT NULL 
@@ -453,9 +463,22 @@ def get_dashboard_stats(current_user_id):
                     ) as total_surf_time_minutes
                     
                 FROM surf_sessions_duplicate
-            """)
+                WHERE EXTRACT(YEAR FROM date) = %s
+            """, (current_year,))
             
             community_stats = cur.fetchone()
+            
+            # 3b. COMMUNITY TOP LOCATION (NEW)
+            cur.execute("""
+                SELECT location, COUNT(*) as session_count
+                FROM surf_sessions_duplicate 
+                WHERE EXTRACT(YEAR FROM date) = %s
+                GROUP BY location 
+                ORDER BY session_count DESC 
+                LIMIT 1
+            """, (current_year,))
+            
+            community_top_location = cur.fetchone()
             
             # Convert results to dictionaries and handle None values
             current_user_data = dict(current_user_stats) if current_user_stats else {
@@ -467,6 +490,9 @@ def get_dashboard_stats(current_user_id):
                 'total_surf_time_minutes_this_year': 0
             }
             
+            # Add top locations to current user data
+            current_user_data['top_locations'] = [dict(loc) for loc in user_top_locations] if user_top_locations else []
+            
             other_users_data = [dict(user) for user in other_users_stats] if other_users_stats else []
             
             community_data = dict(community_stats) if community_stats else {
@@ -475,6 +501,9 @@ def get_dashboard_stats(current_user_id):
                 'avg_session_duration_minutes': None,
                 'total_surf_time_minutes': 0
             }
+            
+            # Add top location to community data
+            community_data['top_location'] = dict(community_top_location) if community_top_location else None
             
             return {
                 'current_user': current_user_data,
