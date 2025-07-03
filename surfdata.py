@@ -163,7 +163,7 @@ def login():
         return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
 
 # Surf Session endpoints (protected)
-# 1. UPDATED CREATE SESSION ENDPOINT
+
 @app.route('/api/surf-sessions', methods=['POST'])
 @token_required
 def create_surf_session(user_id):
@@ -176,20 +176,45 @@ def create_surf_session(user_id):
         # Extract required fields for buoy data
         session_date = session_data.get('date')
         session_time = session_data.get('time')
-        end_time = session_data.get('end_time')  # NEW: Required end_time
+        end_time = session_data.get('end_time')
         location = session_data.get('location')
+        tagged_users = session_data.get('tagged_users', [])  # NEW: Optional tagged users array
         
         # Validate required fields
         if not session_date:
             return jsonify({"status": "fail", "message": "date is required"}), 400
         if not session_time:
             return jsonify({"status": "fail", "message": "time is required"}), 400
-        if not end_time:  # NEW: Validate end_time is provided
+        if not end_time:
             return jsonify({"status": "fail", "message": "end_time is required"}), 400
         if not location:
             return jsonify({"status": "fail", "message": "location is required"}), 400
 
-        # NEW: Validate that end_time > time
+        # NEW: Validate tagged_users if provided
+        if tagged_users:
+            if not isinstance(tagged_users, list):
+                return jsonify({"status": "fail", "message": "tagged_users must be an array"}), 400
+            
+            # Validate that all tagged user IDs are valid UUIDs and exist
+            for tagged_user_id in tagged_users:
+                if not tagged_user_id or not isinstance(tagged_user_id, str):
+                    return jsonify({"status": "fail", "message": "Invalid user ID in tagged_users"}), 400
+                
+                # Check if tagged user exists (optional validation)
+                try:
+                    from database_utils import get_db_connection
+                    conn = get_db_connection()
+                    if conn:
+                        with conn.cursor() as cur:
+                            cur.execute("SELECT id FROM auth.users WHERE id = %s", (tagged_user_id,))
+                            if not cur.fetchone():
+                                return jsonify({"status": "fail", "message": f"User {tagged_user_id} not found"}), 400
+                        conn.close()
+                except Exception as e:
+                    print(f"Error validating tagged user: {e}")
+                    return jsonify({"status": "fail", "message": "Error validating tagged users"}), 400
+
+        # Validate that end_time > time
         try:
             from datetime import time as time_obj
             start_time_obj = time_obj.fromisoformat(session_time)
@@ -266,31 +291,79 @@ def create_surf_session(user_id):
         else:
             tide_data_json = water_level_to_json(tide_data, tide_station)
             session_data['raw_tide'] = tide_data_json
+# In your surfdata.py file, replace the session creation logic section with this fix:
 
         # Add buoy IDs to session data
         session_data['swell_buoy_id'] = swell_buoy_id
         session_data['met_buoy_id'] = met_buoy_id
         session_data['tide_station_id'] = tide_station_id
         
-        # Create the session in the database with user_id
-        created_session = create_session(session_data, user_id)
+        # NEW: Remove tagged_users from session_data before database operations
+        # (tagged_users is only for API logic, not database storage)
+        if 'tagged_users' in session_data:
+            del session_data['tagged_users']
         
-        # Return confirmation with basic data including end_time
-        return jsonify({
-            "status": "success",
-            "message": "Surf session created successfully",
-            "data": {
-                "session_id": created_session["id"],
-                "location": location,
-                "date": session_date,
-                "time": session_time,
-                "end_time": end_time,  # NEW: Include end_time in response
-                "swell_buoy_id": session_data.get('swell_buoy_id'),
-                "met_buoy_id": session_data.get('met_buoy_id'),
-                "tide_station_id": session_data.get('tide_station_id')
-            }
-        }), 200
-        
+        # NEW: Create session with or without participants based on tagged_users
+        if tagged_users:
+            # Import the new function
+            from database_utils import create_session_with_participants
+            
+            # Create session with tagged participants
+            result = create_session_with_participants(session_data, user_id, tagged_users)
+            
+            if result:
+                created_sessions = result['sessions']
+                participants = result['participants']
+                session_group_id = result['session_group_id']
+                
+                # Return enhanced response with tagging information
+                return jsonify({
+                    "status": "success",
+                    "message": f"Surf session created successfully with {len(tagged_users)} tagged participants",
+                    "data": {
+                        "session_group_id": session_group_id,
+                        "sessions_created": len(created_sessions),
+                        "original_session_id": created_sessions[0]["id"],
+                        "tagged_sessions": [
+                            {"session_id": s["id"], "user_id": s["user_id"]} 
+                            for s in created_sessions[1:]
+                        ],
+                        "participants": len(participants),
+                        "location": location,
+                        "date": session_date,
+                        "time": session_time,
+                        "end_time": end_time,
+                        "swell_buoy_id": session_data.get('swell_buoy_id'),
+                        "met_buoy_id": session_data.get('met_buoy_id'),
+                        "tide_station_id": session_data.get('tide_station_id')
+                    }
+                }), 200
+            else:
+                return jsonify({
+                    "status": "error",
+                    "message": "Failed to create session with participants"
+                }), 500
+        else:
+            # Original behavior - create single session without tagging
+            created_session = create_session(session_data, user_id)
+            
+            # Return original response format for backward compatibility
+            return jsonify({
+                "status": "success",
+                "message": "Surf session created successfully",
+                "data": {
+                    "session_id": created_session["id"],
+                    "location": location,
+                    "date": session_date,
+                    "time": session_time,
+                    "end_time": end_time,
+                    "swell_buoy_id": session_data.get('swell_buoy_id'),
+                    "met_buoy_id": session_data.get('met_buoy_id'),
+                    "tide_station_id": session_data.get('tide_station_id')
+                }
+            }), 200
+
+
     except Exception as e:
         print(f"Error creating surf session: {str(e)}")
         return jsonify({
