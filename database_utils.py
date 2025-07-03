@@ -2,6 +2,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 import json
 from datetime import datetime, time, date
+import uuid
+from psycopg2.extras import Json
 
 # Database connection string
 # db_url = "postgresql://postgres:kooksinthekitchen@db.ehrfwjekssrnbgmgxctg.supabase.co:5432/postgres"
@@ -430,5 +432,266 @@ def get_dashboard_stats(current_user_id):
         import traceback
         traceback.print_exc()
         return None
+    finally:
+        conn.close()
+
+def generate_session_group_id():
+    """Generate a unique UUID for linking related sessions"""
+    return str(uuid.uuid4())
+
+def create_session_with_participants(session_data, creator_user_id, tagged_user_ids=None):
+    """
+    Create a session with optional tagged participants
+    Returns the created sessions and participant records
+    """
+    conn = get_db_connection()
+    if not conn:
+        return None
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Generate a session group ID if we have tagged users
+            session_group_id = generate_session_group_id() if tagged_user_ids else None
+            
+            # Add session_group_id to the original session data
+            if session_group_id:
+                session_data['session_group_id'] = session_group_id
+            
+            # 1. Create the original session for the creator
+            original_session = create_session(session_data, creator_user_id)
+            if not original_session:
+                return None
+            
+            created_sessions = [original_session]
+            participant_records = []
+            
+            # 2. Create participant record for the creator (using the same connection)
+            if session_group_id:
+                cur.execute("""
+                    INSERT INTO session_participants (session_id, user_id, tagged_by_user_id, role)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING *
+                """, (original_session['id'], creator_user_id, creator_user_id, 'creator'))
+                
+                creator_participant = cur.fetchone()
+                if creator_participant:
+                    participant_records.append(dict(creator_participant))
+            
+            # 3. Create duplicate sessions for tagged users (all in the same transaction)
+            if tagged_user_ids:
+                for tagged_user_id in tagged_user_ids:
+                    # Create duplicate session data
+                    duplicate_data = session_data.copy()
+                    duplicate_data['user_id'] = tagged_user_id
+                    duplicate_data['session_group_id'] = session_group_id
+                    
+                    # Find the next available ID
+                    cur.execute("SELECT MAX(id) FROM surf_sessions_duplicate")
+                    max_id_result = cur.fetchone()
+                    max_id = max_id_result['max'] if max_id_result and 'max' in max_id_result else None
+                    next_id = 1 if max_id is None else max_id + 1
+                    
+                    duplicate_data['id'] = next_id
+                    
+                    # Handle JSONB fields
+                    if 'raw_swell' in duplicate_data:
+                        if not isinstance(duplicate_data['raw_swell'], Json):
+                            duplicate_data['raw_swell'] = Json(duplicate_data['raw_swell'])
+                            
+                    if 'raw_met' in duplicate_data:
+                        if not isinstance(duplicate_data['raw_met'], Json):
+                            duplicate_data['raw_met'] = Json(duplicate_data['raw_met'])
+                            
+                    if 'raw_tide' in duplicate_data:
+                        if not isinstance(duplicate_data['raw_tide'], Json):
+                            duplicate_data['raw_tide'] = Json(duplicate_data['raw_tide'])
+                    
+                    # Remove created_at if present
+                    if 'created_at' in duplicate_data:
+                        del duplicate_data['created_at']
+                    
+                    # Insert the duplicate session
+                    columns = ', '.join(duplicate_data.keys())
+                    placeholders = ', '.join(['%s'] * len(duplicate_data))
+                    
+                    query = f"""
+                    INSERT INTO surf_sessions_duplicate ({columns}) 
+                    VALUES ({placeholders})
+                    RETURNING *
+                    """
+                    
+                    cur.execute(query, list(duplicate_data.values()))
+                    duplicate_session = cur.fetchone()
+                    
+                    if duplicate_session:
+                        # Convert time objects to strings for JSON serialization
+                        duplicate_session_dict = dict(duplicate_session)
+                        if 'time' in duplicate_session_dict and isinstance(duplicate_session_dict['time'], time):
+                            duplicate_session_dict['time'] = duplicate_session_dict['time'].isoformat()
+                        if 'end_time' in duplicate_session_dict and isinstance(duplicate_session_dict['end_time'], time):
+                            duplicate_session_dict['end_time'] = duplicate_session_dict['end_time'].isoformat()
+                        if 'date' in duplicate_session_dict and isinstance(duplicate_session_dict['date'], date):
+                            duplicate_session_dict['date'] = duplicate_session_dict['date'].isoformat()
+                        
+                        created_sessions.append(duplicate_session_dict)
+                        
+                        # Create participant record for tagged user (in the same transaction)
+                        cur.execute("""
+                            INSERT INTO session_participants (session_id, user_id, tagged_by_user_id, role)
+                            VALUES (%s, %s, %s, %s)
+                            RETURNING *
+                        """, (duplicate_session['id'], tagged_user_id, creator_user_id, 'tagged_participant'))
+                        
+                        tagged_participant = cur.fetchone()
+                        if tagged_participant:
+                            participant_records.append(dict(tagged_participant))
+            
+            # Commit the entire transaction
+            conn.commit()
+            
+            return {
+                'sessions': created_sessions,
+                'participants': participant_records,
+                'session_group_id': session_group_id
+            }
+            
+    except Exception as e:
+        print(f"Error creating session with participants: {e}")
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+def create_duplicate_session(original_session_data, new_user_id, session_group_id):
+    """Create a duplicate session for a tagged user"""
+    conn = get_db_connection()
+    if not conn:
+        return None
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Create a copy of the session data for the new user
+            duplicate_data = original_session_data.copy()
+            duplicate_data['user_id'] = new_user_id
+            duplicate_data['session_group_id'] = session_group_id
+            
+            # Find the next available ID
+            cur.execute("SELECT MAX(id) FROM surf_sessions_duplicate")
+            max_id_result = cur.fetchone()
+            max_id = max_id_result['max'] if max_id_result and 'max' in max_id_result else None
+            next_id = 1 if max_id is None else max_id + 1
+            
+            duplicate_data['id'] = next_id
+            
+            # Handle JSONB fields - check if they're already Json objects or raw data
+            if 'raw_swell' in duplicate_data:
+                if isinstance(duplicate_data['raw_swell'], Json):
+                    # Already a Json object, keep as is
+                    pass
+                else:
+                    # Raw data, wrap in Json
+                    duplicate_data['raw_swell'] = Json(duplicate_data['raw_swell'])
+                    
+            if 'raw_met' in duplicate_data:
+                if isinstance(duplicate_data['raw_met'], Json):
+                    # Already a Json object, keep as is
+                    pass
+                else:
+                    # Raw data, wrap in Json
+                    duplicate_data['raw_met'] = Json(duplicate_data['raw_met'])
+                    
+            if 'raw_tide' in duplicate_data:
+                if isinstance(duplicate_data['raw_tide'], Json):
+                    # Already a Json object, keep as is
+                    pass
+                else:
+                    # Raw data, wrap in Json
+                    duplicate_data['raw_tide'] = Json(duplicate_data['raw_tide'])
+            
+            # Remove created_at if present
+            if 'created_at' in duplicate_data:
+                del duplicate_data['created_at']
+            
+            columns = ', '.join(duplicate_data.keys())
+            placeholders = ', '.join(['%s'] * len(duplicate_data))
+            
+            query = f"""
+            INSERT INTO surf_sessions_duplicate ({columns}) 
+            VALUES ({placeholders})
+            RETURNING *
+            """
+            
+            cur.execute(query, list(duplicate_data.values()))
+            
+            duplicate_session = cur.fetchone()
+            if duplicate_session:
+                # Convert time objects to strings for JSON serialization
+                if 'time' in duplicate_session and isinstance(duplicate_session['time'], time):
+                    duplicate_session['time'] = duplicate_session['time'].isoformat()
+                if 'end_time' in duplicate_session and isinstance(duplicate_session['end_time'], time):
+                    duplicate_session['end_time'] = duplicate_session['end_time'].isoformat()
+                if 'date' in duplicate_session and isinstance(duplicate_session['date'], date):
+                    duplicate_session['date'] = duplicate_session['date'].isoformat()
+            
+            return duplicate_session
+            
+    except Exception as e:
+        print(f"Error creating duplicate session: {e}")
+        raise
+    finally:
+        conn.close()
+
+def create_participant_record(session_id, user_id, tagged_by_user_id, role):
+    """Create a record in session_participants table"""
+    conn = get_db_connection()
+    if not conn:
+        return None
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                INSERT INTO session_participants (session_id, user_id, tagged_by_user_id, role)
+                VALUES (%s, %s, %s, %s)
+                RETURNING *
+            """, (session_id, user_id, tagged_by_user_id, role))
+            
+            participant = cur.fetchone()
+            return participant
+            
+    except Exception as e:
+        print(f"Error creating participant record: {e}")
+        raise
+    finally:
+        conn.close()
+
+def get_session_participants(session_id):
+    """Get all participants for a session"""
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT 
+                    sp.*,
+                    u.email as user_email,
+                    COALESCE(
+                        u.raw_user_meta_data->>'display_name',
+                        NULLIF(TRIM(COALESCE(u.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u.raw_user_meta_data->>'last_name', '')), ''),
+                        split_part(u.email, '@', 1)
+                    ) as display_name
+                FROM session_participants sp
+                LEFT JOIN auth.users u ON sp.user_id = u.id
+                WHERE sp.session_id = %s
+                ORDER BY sp.role DESC, sp.created_at ASC
+            """, (session_id,))
+            
+            participants = cur.fetchall()
+            return list(participants) if participants else []
+            
+    except Exception as e:
+        print(f"Error getting session participants: {e}")
+        return []
     finally:
         conn.close()
