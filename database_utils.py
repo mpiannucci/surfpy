@@ -323,6 +323,8 @@ def verify_user_session(access_token):
     finally:
         conn.close()
 
+# Replace the get_dashboard_stats function in database_utils.py with this enhanced version:
+
 def get_dashboard_stats(current_user_id):
     """Get comprehensive dashboard statistics for current user, other users, and community"""
     conn = get_db_connection()
@@ -334,7 +336,7 @@ def get_dashboard_stats(current_user_id):
             # Get current year for filtering
             current_year = datetime.now().year
             
-            # 1. CURRENT USER STATS
+            # 1. CURRENT USER STATS (Enhanced with time calculations)
             cur.execute("""
                 SELECT 
                     -- All-time stats
@@ -352,15 +354,31 @@ def get_dashboard_stats(current_user_id):
                     -- Average fun rating this year
                     ROUND(
                         AVG(CASE WHEN EXTRACT(YEAR FROM date) = %s THEN CAST(fun_rating AS FLOAT) END)::numeric, 2
-                    ) as avg_fun_rating_this_year
+                    ) as avg_fun_rating_this_year,
+                    
+                    -- NEW: Average session duration in minutes (this year, sessions with end_time)
+                    ROUND(
+                        AVG(CASE 
+                            WHEN EXTRACT(YEAR FROM date) = %s AND end_time IS NOT NULL 
+                            THEN EXTRACT(EPOCH FROM (end_time - time)) / 60 
+                        END)::numeric, 1
+                    ) as avg_session_duration_minutes_this_year,
+                    
+                    -- Total surf time in minutes (this year, sessions with end_time)
+                    ROUND(
+                        COALESCE(SUM(CASE 
+                            WHEN EXTRACT(YEAR FROM date) = %s AND end_time IS NOT NULL 
+                            THEN EXTRACT(EPOCH FROM (end_time - time)) / 60 
+                        END), 0)::numeric, 1
+                    ) as total_surf_time_minutes_this_year
                     
                 FROM surf_sessions_duplicate 
                 WHERE user_id = %s
-            """, (current_year, current_year, current_year, current_user_id))
+            """, (current_year, current_year, current_year, current_year, current_year, current_user_id))
             
             current_user_stats = cur.fetchone()
             
-            # 2. OTHER USERS STATS
+            # 2. OTHER USERS STATS (Enhanced with time calculations)
             cur.execute("""
                 SELECT 
                     s.user_id,
@@ -385,22 +403,55 @@ def get_dashboard_stats(current_user_id):
                     -- Average fun rating this year
                     ROUND(
                         AVG(CASE WHEN EXTRACT(YEAR FROM s.date) = %s THEN CAST(s.fun_rating AS FLOAT) END)::numeric, 2
-                    ) as avg_fun_rating_this_year
+                    ) as avg_fun_rating_this_year,
+                    
+                    -- NEW: Average session duration in minutes (this year, sessions with end_time)
+                    ROUND(
+                        AVG(CASE 
+                            WHEN EXTRACT(YEAR FROM s.date) = %s AND s.end_time IS NOT NULL 
+                            THEN EXTRACT(EPOCH FROM (s.end_time - s.time)) / 60 
+                        END)::numeric, 1
+                    ) as avg_session_duration_minutes_this_year,
+                    
+                    -- Total surf time in minutes (this year, sessions with end_time)
+                    ROUND(
+                        COALESCE(SUM(CASE 
+                            WHEN EXTRACT(YEAR FROM s.date) = %s AND s.end_time IS NOT NULL 
+                            THEN EXTRACT(EPOCH FROM (s.end_time - s.time)) / 60 
+                        END), 0)::numeric, 1
+                    ) as total_surf_time_minutes_this_year
                     
                 FROM surf_sessions_duplicate s
                 LEFT JOIN auth.users u ON s.user_id = u.id
                 WHERE s.user_id != %s  -- Exclude current user
                 GROUP BY s.user_id, u.raw_user_meta_data, u.email
                 ORDER BY total_sessions_all_time DESC
-            """, (current_year, current_year, current_year, current_user_id))
+            """, (current_year, current_year, current_year, current_year, current_year, current_user_id))
             
             other_users_stats = cur.fetchall()
             
-            # 3. COMMUNITY STATS (ALL USERS COMBINED)
+            # 3. COMMUNITY STATS (Enhanced with time calculations)
             cur.execute("""
                 SELECT 
                     COUNT(*) as total_sessions,
-                    ROUND(SUM(CAST(fun_rating AS FLOAT))::numeric, 1) as total_stoke
+                    ROUND(SUM(CAST(fun_rating AS FLOAT))::numeric, 1) as total_stoke,
+                    
+                    -- NEW: Community average session duration (sessions with end_time)
+                    ROUND(
+                        AVG(CASE 
+                            WHEN end_time IS NOT NULL 
+                            THEN EXTRACT(EPOCH FROM (end_time - time)) / 60 
+                        END)::numeric, 1
+                    ) as avg_session_duration_minutes,
+                    
+                    -- Total community surf time in minutes (sessions with end_time)
+                    ROUND(
+                        COALESCE(SUM(CASE 
+                            WHEN end_time IS NOT NULL 
+                            THEN EXTRACT(EPOCH FROM (end_time - time)) / 60 
+                        END), 0)::numeric, 1
+                    ) as total_surf_time_minutes
+                    
                 FROM surf_sessions_duplicate
             """)
             
@@ -411,14 +462,18 @@ def get_dashboard_stats(current_user_id):
                 'total_sessions_all_time': 0,
                 'total_sessions_this_year': 0,
                 'sessions_per_week_this_year': 0,
-                'avg_fun_rating_this_year': None
+                'avg_fun_rating_this_year': None,
+                'avg_session_duration_minutes_this_year': None,
+                'total_surf_time_minutes_this_year': 0
             }
             
             other_users_data = [dict(user) for user in other_users_stats] if other_users_stats else []
             
             community_data = dict(community_stats) if community_stats else {
                 'total_sessions': 0,
-                'total_stoke': 0
+                'total_stoke': 0,
+                'avg_session_duration_minutes': None,
+                'total_surf_time_minutes': 0
             }
             
             return {
