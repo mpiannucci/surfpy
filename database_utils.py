@@ -19,31 +19,53 @@ def get_db_connection():
         return None
 
 def get_all_sessions():
-    """Retrieve all surf sessions with user display name information"""
+    """Retrieve all surf sessions with user display name information and participants"""
     conn = get_db_connection()
     if not conn:
         return []
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            # Get all session data plus the user display name from metadata, including end_time
+            # Get all session data plus participants from the same session group
             cur.execute("""
-                SELECT s.*, 
-                       u.email as user_email,
-                       COALESCE(
-                           u.raw_user_meta_data->>'display_name',
-                           NULLIF(TRIM(COALESCE(u.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u.raw_user_meta_data->>'last_name', '')), ''),
-                           split_part(u.email, '@', 1)
-                       ) as display_name
-                FROM surf_sessions_duplicate s
-                LEFT JOIN auth.users u ON s.user_id = u.id
-                ORDER BY s.created_at DESC
+                SELECT 
+                    s1.*, 
+                    u1.email as user_email,
+                    COALESCE(
+                        u1.raw_user_meta_data->>'display_name',
+                        NULLIF(TRIM(COALESCE(u1.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u1.raw_user_meta_data->>'last_name', '')), ''),
+                        split_part(u1.email, '@', 1)
+                    ) as display_name,
+                    
+                    -- Get other participants in the same session group (excluding current session owner)
+                    COALESCE(
+                        ARRAY_AGG(
+                            DISTINCT jsonb_build_object(
+                                'user_id', s2.user_id,
+                                'display_name', COALESCE(
+                                    u2.raw_user_meta_data->>'display_name',
+                                    NULLIF(TRIM(COALESCE(u2.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u2.raw_user_meta_data->>'last_name', '')), ''),
+                                    split_part(u2.email, '@', 1)
+                                )
+                            )
+                        ) FILTER (WHERE s2.user_id != s1.user_id AND s2.user_id IS NOT NULL),
+                        ARRAY[]::jsonb[]
+                    ) as participants
+                    
+                FROM surf_sessions_duplicate s1
+                LEFT JOIN auth.users u1 ON s1.user_id = u1.id
+                LEFT JOIN surf_sessions_duplicate s2 ON s1.session_group_id = s2.session_group_id AND s1.session_group_id IS NOT NULL
+                LEFT JOIN auth.users u2 ON s2.user_id = u2.id
+                GROUP BY s1.id, s1.created_at, s1.session_name, s1.location, s1.fun_rating, s1.time, s1.session_notes, 
+                         s1.raw_swell, s1.date, s1.swell_buoy_id, s1.raw_met, s1.met_buoy_id, s1.raw_tide, 
+                         s1.tide_station_id, s1.user_id, s1.end_time, s1.session_group_id, u1.email, u1.raw_user_meta_data
+                ORDER BY s1.created_at DESC
             """)
             sessions = cur.fetchall()
             # Convert to a list so we can modify it
             sessions_list = list(sessions)
             
-            # Process each session to handle non-serializable types (like time objects)
+            # Process each session to handle non-serializable types
             for i, session in enumerate(sessions_list):
                 # Process time objects (start_time)
                 if 'time' in session and isinstance(session['time'], time):
@@ -56,6 +78,13 @@ def get_all_sessions():
                 # Process date objects
                 if 'date' in session and isinstance(session['date'], date):
                     sessions_list[i]['date'] = session['date'].isoformat()
+                
+                # Convert participants from JSONB array to Python list
+                if 'participants' in session and session['participants']:
+                    # participants is already a list of dictionaries from the JSONB array
+                    sessions_list[i]['participants'] = session['participants']
+                else:
+                    sessions_list[i]['participants'] = []
             
             return sessions_list
     except Exception as e:
@@ -66,27 +95,50 @@ def get_all_sessions():
 
 
 def get_session(session_id):
-    """Retrieve a single surf session including user display name"""
+    """Retrieve a single surf session including user display name and participants"""
     conn = get_db_connection()
     if not conn:
         return None
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            # Select session details including end_time
+            # Get session details plus participants from the same session group
             cur.execute("""
-                SELECT s.*, 
-                       u.email as user_email,
-                       COALESCE(
-                           u.raw_user_meta_data->>'display_name',
-                           NULLIF(TRIM(COALESCE(u.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u.raw_user_meta_data->>'last_name', '')), ''),
-                           split_part(u.email, '@', 1)
-                       ) as display_name
-                FROM surf_sessions_duplicate s
-                LEFT JOIN auth.users u ON s.user_id = u.id
-                WHERE s.id = %s
+                SELECT 
+                    s1.*, 
+                    u1.email as user_email,
+                    COALESCE(
+                        u1.raw_user_meta_data->>'display_name',
+                        NULLIF(TRIM(COALESCE(u1.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u1.raw_user_meta_data->>'last_name', '')), ''),
+                        split_part(u1.email, '@', 1)
+                    ) as display_name,
+                    
+                    -- Get other participants in the same session group (excluding current session owner)
+                    COALESCE(
+                        ARRAY_AGG(
+                            DISTINCT jsonb_build_object(
+                                'user_id', s2.user_id,
+                                'display_name', COALESCE(
+                                    u2.raw_user_meta_data->>'display_name',
+                                    NULLIF(TRIM(COALESCE(u2.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u2.raw_user_meta_data->>'last_name', '')), ''),
+                                    split_part(u2.email, '@', 1)
+                                )
+                            )
+                        ) FILTER (WHERE s2.user_id != s1.user_id AND s2.user_id IS NOT NULL),
+                        ARRAY[]::jsonb[]
+                    ) as participants
+                    
+                FROM surf_sessions_duplicate s1
+                LEFT JOIN auth.users u1 ON s1.user_id = u1.id
+                LEFT JOIN surf_sessions_duplicate s2 ON s1.session_group_id = s2.session_group_id AND s1.session_group_id IS NOT NULL
+                LEFT JOIN auth.users u2 ON s2.user_id = u2.id
+                WHERE s1.id = %s
+                GROUP BY s1.id, s1.created_at, s1.session_name, s1.location, s1.fun_rating, s1.time, s1.session_notes, 
+                         s1.raw_swell, s1.date, s1.swell_buoy_id, s1.raw_met, s1.met_buoy_id, s1.raw_tide, 
+                         s1.tide_station_id, s1.user_id, s1.end_time, s1.session_group_id, u1.email, u1.raw_user_meta_data
             """, (session_id,))
             session = cur.fetchone()
+            
             if session:
                 # Convert time objects to strings
                 if 'time' in session and isinstance(session['time'], time):
@@ -99,6 +151,13 @@ def get_session(session_id):
                 # Convert date objects to strings
                 if 'date' in session and isinstance(session['date'], date):
                     session['date'] = session['date'].isoformat()
+                
+                # Convert participants from JSONB array to Python list
+                if 'participants' in session and session['participants']:
+                    # participants is already a list of dictionaries from the JSONB array
+                    session['participants'] = session['participants']
+                else:
+                    session['participants'] = []
                     
             return session
     except Exception as e:
@@ -338,7 +397,7 @@ def get_dashboard_stats(current_user_id):
             cur.execute("""
                 SELECT 
                     -- All-time stats
-                    COUNT(*) as total_sessions_all_time,
+                    COUNT(*) as total_sessions_time,
                     
                     -- This year stats
                     COUNT(CASE WHEN EXTRACT(YEAR FROM date) = %s THEN 1 END) as total_sessions_this_year,
