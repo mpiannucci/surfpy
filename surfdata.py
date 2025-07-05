@@ -376,8 +376,17 @@ def create_surf_session(user_id):
 @token_required
 def get_surf_sessions(user_id):
     try:
-        # Get all sessions regardless of user
-        sessions = get_all_sessions()
+        # NEW: Check for user_only query parameter
+        user_only = request.args.get('user_only', 'false').lower() == 'true'
+        
+        if user_only:
+            # Import and use the new user-specific function
+            from database_utils import get_user_sessions
+            sessions = get_user_sessions(user_id)
+        else:
+            # Existing behavior - get all sessions from all users
+            sessions = get_all_sessions()
+            
         return jsonify({"status": "success", "data": sessions}), 200
     except Exception as e:
         import traceback

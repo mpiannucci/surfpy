@@ -93,6 +93,84 @@ def get_all_sessions():
     finally:
         conn.close()
 
+# Add this new function to your database_utils.py file (place it near the other session functions)
+
+def get_user_sessions(user_id):
+    """Retrieve surf sessions for a specific user with participants"""
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Same query structure as get_all_sessions but filtered by user_id
+            cur.execute("""
+                SELECT 
+                    s1.*, 
+                    u1.email as user_email,
+                    COALESCE(
+                        u1.raw_user_meta_data->>'display_name',
+                        NULLIF(TRIM(COALESCE(u1.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u1.raw_user_meta_data->>'last_name', '')), ''),
+                        split_part(u1.email, '@', 1)
+                    ) as display_name,
+                    
+                    -- Get other participants in the same session group (excluding current session owner)
+                    COALESCE(
+                        ARRAY_AGG(
+                            DISTINCT jsonb_build_object(
+                                'user_id', s2.user_id,
+                                'display_name', COALESCE(
+                                    u2.raw_user_meta_data->>'display_name',
+                                    NULLIF(TRIM(COALESCE(u2.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u2.raw_user_meta_data->>'last_name', '')), ''),
+                                    split_part(u2.email, '@', 1)
+                                )
+                            )
+                        ) FILTER (WHERE s2.user_id != s1.user_id AND s2.user_id IS NOT NULL),
+                        ARRAY[]::jsonb[]
+                    ) as participants
+                    
+                FROM surf_sessions_duplicate s1
+                LEFT JOIN auth.users u1 ON s1.user_id = u1.id
+                LEFT JOIN surf_sessions_duplicate s2 ON s1.session_group_id = s2.session_group_id AND s1.session_group_id IS NOT NULL
+                LEFT JOIN auth.users u2 ON s2.user_id = u2.id
+                WHERE s1.user_id = %s  -- KEY DIFFERENCE: Filter by specific user
+                GROUP BY s1.id, s1.created_at, s1.session_name, s1.location, s1.fun_rating, s1.time, s1.session_notes, 
+                         s1.raw_swell, s1.date, s1.swell_buoy_id, s1.raw_met, s1.met_buoy_id, s1.raw_tide, 
+                         s1.tide_station_id, s1.user_id, s1.end_time, s1.session_group_id, u1.email, u1.raw_user_meta_data
+                ORDER BY s1.created_at DESC
+            """, (user_id,))
+            
+            sessions = cur.fetchall()
+            # Convert to a list so we can modify it
+            sessions_list = list(sessions)
+            
+            # Process each session to handle non-serializable types (same as get_all_sessions)
+            for i, session in enumerate(sessions_list):
+                # Process time objects (start_time)
+                if 'time' in session and isinstance(session['time'], time):
+                    sessions_list[i]['time'] = session['time'].isoformat()
+                
+                # Process end_time objects
+                if 'end_time' in session and isinstance(session['end_time'], time):
+                    sessions_list[i]['end_time'] = session['end_time'].isoformat()
+                
+                # Process date objects
+                if 'date' in session and isinstance(session['date'], date):
+                    sessions_list[i]['date'] = session['date'].isoformat()
+                
+                # Convert participants from JSONB array to Python list
+                if 'participants' in session and session['participants']:
+                    # participants is already a list of dictionaries from the JSONB array
+                    sessions_list[i]['participants'] = session['participants']
+                else:
+                    sessions_list[i]['participants'] = []
+            
+            return sessions_list
+    except Exception as e:
+        print(f"Error retrieving user sessions: {e}")
+        raise  # Re-raise to see the actual error
+    finally:
+        conn.close()
 
 def get_session(session_id):
     """Retrieve a single surf session including user display name and participants"""
