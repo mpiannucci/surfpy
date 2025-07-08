@@ -9,10 +9,12 @@ import requests
 import jwt
 from functools import wraps
 import pytz
+from psycopg2.extras import RealDictCursor
 
 # Import ocean data modules
 from ocean_data.swell import fetch_swell_data
 from ocean_data.meteorology import fetch_meteorological_data
+from ocean_data.tide import fetch_tide_data
 from ocean_data.location import get_buoys_for_location, is_valid_location
 
 app = Flask(__name__)
@@ -163,7 +165,6 @@ def login():
         return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
 
 # Surf Session endpoints (protected)
-
 @app.route('/api/surf-sessions', methods=['POST'])
 @token_required
 def create_surf_session(user_id):
@@ -178,7 +179,7 @@ def create_surf_session(user_id):
         session_time = session_data.get('time')
         end_time = session_data.get('end_time')
         location = session_data.get('location')
-        tagged_users = session_data.get('tagged_users', [])  # NEW: Optional tagged users array
+        tagged_users = session_data.get('tagged_users', [])  # Optional tagged users array
         
         # Validate required fields
         if not session_date:
@@ -190,7 +191,7 @@ def create_surf_session(user_id):
         if not location:
             return jsonify({"status": "fail", "message": "location is required"}), 400
 
-        # NEW: Validate tagged_users if provided
+        # Validate tagged_users if provided
         if tagged_users:
             if not isinstance(tagged_users, list):
                 return jsonify({"status": "fail", "message": "tagged_users must be an array"}), 400
@@ -202,7 +203,6 @@ def create_surf_session(user_id):
                 
                 # Check if tagged user exists (optional validation)
                 try:
-                    from database_utils import get_db_connection
                     conn = get_db_connection()
                     if conn:
                         with conn.cursor() as cur:
@@ -267,43 +267,29 @@ def create_surf_session(user_id):
                 "message": "Invalid date/time format. Use ISO format for date (YYYY-MM-DD) and time (HH:MM:SS)"
             }), 400
 
-        # Fetch oceanographic data (using start time as before)
+        # 1. Fetch swell buoy data using the ocean_data module
         swell_data = fetch_swell_data(swell_buoy_id, target_datetime, count=500)
         session_data['raw_swell'] = swell_data
         
+        # 2. Fetch meteorological buoy data using the ocean_data module
         met_data = fetch_meteorological_data(met_buoy_id, target_datetime, count=500, use_imperial_units=True)
         session_data['raw_met'] = met_data
 
-        # Fetch tide station data (keeping original logic for now)
-        tide_station = fetch_tide_station(tide_station_id)
-        tide_data = fetch_water_level(tide_station, target_datetime)
-
-        # Process tide data (keeping original logic)
-        if not tide_data or not tide_station:
-            print(f"Warning: No tide data found for station {tide_station_id}. Using dummy data for testing.")
-            dummy_tide_data = {
-                "station_id": tide_station_id,
-                "date": target_datetime.isoformat(),
-                "water_level": 1.2,
-                "units": "meters"
-            }
-            session_data['raw_tide'] = dummy_tide_data
-        else:
-            tide_data_json = water_level_to_json(tide_data, tide_station)
-            session_data['raw_tide'] = tide_data_json
-# In your surfdata.py file, replace the session creation logic section with this fix:
+        # 3. Fetch tide station data using the ocean_data module
+        tide_data = fetch_tide_data(tide_station_id, target_datetime, use_imperial_units=True)
+        session_data['raw_tide'] = tide_data
 
         # Add buoy IDs to session data
         session_data['swell_buoy_id'] = swell_buoy_id
         session_data['met_buoy_id'] = met_buoy_id
         session_data['tide_station_id'] = tide_station_id
         
-        # NEW: Remove tagged_users from session_data before database operations
+        # Remove tagged_users from session_data before database operations
         # (tagged_users is only for API logic, not database storage)
         if 'tagged_users' in session_data:
             del session_data['tagged_users']
         
-        # NEW: Create session with or without participants based on tagged_users
+        # Create session with or without participants based on tagged_users
         if tagged_users:
             # Import the new function
             from database_utils import create_session_with_participants
@@ -363,7 +349,6 @@ def create_surf_session(user_id):
                 }
             }), 200
 
-
     except Exception as e:
         print(f"Error creating surf session: {str(e)}")
         return jsonify({
@@ -376,7 +361,7 @@ def create_surf_session(user_id):
 @token_required
 def get_surf_sessions(user_id):
     try:
-        # NEW: Check for user_only query parameter
+        # Check for user_only query parameter
         user_only = request.args.get('user_only', 'false').lower() == 'true'
         
         if user_only:
@@ -409,7 +394,6 @@ def get_surf_session(user_id, session_id):
         return jsonify({"status": "fail", "message": f"Error retrieving surf session: {str(e)}"}), 500
 
 # Update a surf session
-# 2. UPDATED UPDATE SESSION ENDPOINT
 @app.route('/api/surf-sessions/<int:session_id>', methods=['PUT'])
 @token_required
 def update_surf_session(user_id, session_id):
@@ -434,7 +418,7 @@ def update_surf_session(user_id, session_id):
         end_time = session_data.get('end_time', existing_session.get('end_time'))
         location = session_data.get('location', existing_session.get('location'))
         
-        # NEW: Validate end_time if provided in update
+        # Validate end_time if provided in update
         if 'time' in session_data or 'end_time' in session_data:
             # Use updated values or fall back to existing values
             start_time_to_check = session_data.get('time', existing_session.get('time'))
@@ -472,7 +456,7 @@ def update_surf_session(user_id, session_id):
             session_data['met_buoy_id'] = buoy_mapping["met"]
             session_data['tide_station_id'] = buoy_mapping["tide"]
         
-        # If date or time changed, update buoy data
+        # If date or time changed, update oceanographic data
         if (session_date != existing_session.get('date') or 
             session_time != existing_session.get('time')):
             
@@ -491,24 +475,23 @@ def update_surf_session(user_id, session_id):
                     "message": "Invalid date/time format. Use ISO format for date (YYYY-MM-DD) and time (HH:MM:SS)"
                 }), 400
                 
-            # Fetch updated oceanographic data
+            # 1. Fetch updated swell data using the ocean_data module
             swell_buoy_id = session_data.get('swell_buoy_id', existing_session.get('swell_buoy_id'))
             if swell_buoy_id:
                 swell_data = fetch_swell_data(swell_buoy_id, target_datetime, count=500)
                 session_data['raw_swell'] = swell_data
             
+            # 2. Fetch updated meteorological data using the ocean_data module
             met_buoy_id = session_data.get('met_buoy_id', existing_session.get('met_buoy_id'))
             if met_buoy_id:
                 met_data = fetch_meteorological_data(met_buoy_id, target_datetime, count=500, use_imperial_units=True)
                 session_data['raw_met'] = met_data
                         
+            # 3. Fetch updated tide data using the ocean_data module
             tide_station_id = session_data.get('tide_station_id', existing_session.get('tide_station_id'))
             if tide_station_id:
-                tide_station = fetch_tide_station(tide_station_id)
-                tide_data = fetch_water_level(tide_station, target_datetime)
-                if tide_data and tide_station:
-                    tide_data_json = water_level_to_json(tide_data, tide_station)
-                    session_data['raw_tide'] = tide_data_json
+                tide_data = fetch_tide_data(tide_station_id, target_datetime, use_imperial_units=True)
+                session_data['raw_tide'] = tide_data
         
         # Update the session in the database
         updated_session = update_session(session_id, session_data, user_id)
@@ -522,7 +505,7 @@ def update_surf_session(user_id, session_id):
                     "location": updated_session.get('location'),
                     "date": updated_session.get('date'),
                     "time": updated_session.get('time'),
-                    "end_time": updated_session.get('end_time'),  # NEW: Include end_time in response
+                    "end_time": updated_session.get('end_time'),
                     "swell_buoy_id": updated_session.get('swell_buoy_id'),
                     "met_buoy_id": updated_session.get('met_buoy_id'),
                     "tide_station_id": updated_session.get('tide_station_id')
@@ -559,105 +542,6 @@ def delete_surf_session(user_id, session_id):
 def test_route():
     return jsonify({"status": "success", "message": "API is working"}), 200
 
-# TIDE FUNCTIONS (TO BE REFACTORED LATER)
-
-def fetch_tide_station(station_id):
-    """Fetch a tide station object by ID."""
-    try:
-        # Create a dummy location (since we already have the station ID)
-        dummy_location = surfpy.Location(0, 0)
-        
-        # Create a TideStation object directly
-        tide_station = surfpy.TideStation(station_id, dummy_location)
-        return tide_station
-    except Exception as e:
-        print(f"Error fetching tide station: {str(e)}")
-        return None
-
-def fetch_water_level(station, target_datetime=None):
-    """Fetch water level for a given tide station at a specific time."""
-    if target_datetime is None:
-        target_datetime = datetime.now(timezone.utc)
-    
-    # Calculate start and end time - smaller window around target time
-    start_time = target_datetime - timedelta(hours=1)
-    end_time = target_datetime + timedelta(hours=1)
-    
-    try:
-        # Generate URL for water level data with a smaller interval
-        tide_url = station.create_tide_data_url(
-            start_time,
-            end_time,
-            datum=surfpy.TideStation.TideDatum.mean_lower_low_water,
-            # Use 6-minute interval for more precise water level
-            interval=surfpy.TideStation.DataInterval.default,
-            unit=surfpy.units.Units.metric
-        )
-        
-        # Fetch the water level data
-        response = requests.get(tide_url)
-        
-        if response.status_code != 200:
-            print(f"Error fetching water level data: HTTP {response.status_code}")
-            return None
-        
-        data_json = response.json()
-        
-        if 'predictions' not in data_json or not data_json['predictions']:
-            print(f"No water level predictions found in response")
-            return None
-        
-        # Parse water level data
-        water_levels = []
-        for pred in data_json['predictions']:
-            date_str = pred.get('t', '')
-            height = float(pred.get('v', 0))
-            
-            try:
-                # Parse the date
-                date = datetime.strptime(date_str, "%Y-%m-%d %H:%M")
-                water_levels.append({
-                    "date": date,
-                    "height": height
-                })
-            except ValueError as e:
-                print(f"Could not parse date: {date_str}, error: {e}")
-        
-        # Find the closest water level reading to target time
-        if not water_levels:
-            return None
-        
-        closest_reading = min(water_levels, 
-                             key=lambda x: abs(x["date"].replace(tzinfo=timezone.utc) - target_datetime))
-        
-        return closest_reading
-    
-    except Exception as e:
-        print(f"Error retrieving water level data: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return None
-
-def water_level_to_json(water_level, station):
-    """Convert water level data to a JSON-serializable structure."""
-    if not water_level:
-        return {"error": "No water level data available"}
-    
-    # Convert feet to meters if needed (optional)
-    FEET_TO_METERS = 0.3048
-    
-    return {
-        "station_id": station.station_id,
-        "location": {
-            "latitude": station.location.latitude,
-            "longitude": station.location.longitude
-        },
-        "state": station.state if hasattr(station, 'state') else None,
-        "date": water_level["date"].isoformat(),
-        "water_level": water_level["height"],  # Height in meters
-        "units": "meters"  # Assumes the data is in meters
-    }
-
 @app.route('/api/dashboard', methods=['GET'])
 @token_required
 def get_dashboard(user_id):
@@ -680,9 +564,6 @@ def get_dashboard(user_id):
             "status": "error",
             "message": f"An error occurred: {str(e)}"
         }), 500
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
 
 # User search
 @app.route('/api/users/search', methods=['GET'])
@@ -771,6 +652,5 @@ def search_users(user_id):
         print(f"Error in user search: {str(e)}")
         return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
 
-
-# You'll also need to add this import at the top of your file if it's not already there:
-from psycopg2.extras import RealDictCursor
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
