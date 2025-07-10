@@ -12,10 +12,10 @@ Functions:
 
 # Location to buoy/station mapping
 LOCATION_TO_BUOYS = {
-    "lido": {"swell": "44065", "met": "44065", "tide": "8516402"},
-    "manasquan": {"swell": "44091", "met": "44065", "tide": "8533051"},
-    "rockaways": {"swell": "44065", "met": "44065", "tide": "8516881"},
-    "belmar": {"swell": "44091", "met": "44065", "tide": "8533051"},
+    "lido": {"swell": "44065", "met": "44065", "tide": "8516663"},
+    "manasquan": {"swell": "44091", "met": "44065", "tide": "8532337"},
+    "rockaways": {"swell": "44065", "met": "44065", "tide": "8516663"},
+    "belmar": {"swell": "44091", "met": "44065", "tide": "8532337"},
     "steamer_lane": {"swell": "46236", "met": "46236", "tide": "9413450"},
     "trestles": {"swell": "46277", "met": "46277", "tide": "9410230"}
 }
