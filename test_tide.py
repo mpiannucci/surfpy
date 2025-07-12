@@ -74,14 +74,13 @@ def test_tide_spot(spot_name, target_datetime_utc, target_datetime_eastern):
     buoys = get_buoys_for_location(spot_name)
     station_id = buoys['tide']
     
-    print(f"📍 Surf spot: {spot_name.upper()}")
-    print(f"🌊 Tide station: {station_id}")
-    print(f"⏰ Target time (Eastern): {target_datetime_eastern.strftime('%Y-%m-%d %H:%M:%S %Z')}")
-    print(f"🌍 Target time (UTC): {target_datetime_utc.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+    print(f"Tide station: {station_id}")
+    print(f"Target time (Eastern): {target_datetime_eastern.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+    print(f"Target time (UTC): {target_datetime_utc.strftime('%Y-%m-%d %H:%M:%S %Z')}")
     print()
     
     # Fetch tide data
-    print("🔄 Fetching tide data...")
+    print("Fetching tide data...")
     tide_data = fetch_tide_data(station_id, target_datetime_utc, use_imperial_units=True)
     
     if tide_data:
