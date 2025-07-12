@@ -3,86 +3,147 @@ Ocean Data Module - Location
 
 This module provides functions for mapping surf locations to 
 oceanographic data sources and handling location-based operations.
-
-Functions:
-    - get_buoys_for_location: Get buoy IDs for a specific surf spot
-    - get_all_locations: Get a list of all supported locations
-    - is_valid_location: Check if a location is supported
 """
 
-# Location to buoy/station mapping
-LOCATION_TO_BUOYS = {
-    "lido": {"swell": "44065", "met": "44065", "tide": "8516402"},
-    "manasquan": {"swell": "44091", "met": "44065", "tide": "8533051"},
-    "rockaways": {"swell": "44065", "met": "44065", "tide": "8516881"},
-    "belmar": {"swell": "44091", "met": "44065", "tide": "8533051"},
-    "steamer_lane": {"swell": "46236", "met": "46236", "tide": "9413450"},
-    "trestles": {"swell": "46277", "met": "46277", "tide": "9410230"}
+# Comprehensive configuration for each surf spot
+SURF_SPOTS_CONFIG = {
+    "lido-beach": {
+        "name": "Lido Beach, NY",
+        "swell_buoy_id": "44065",
+        "tide_station_id": "8516663",
+        "wind_location": {"lat": 40.58, "lon": -73.66},
+        "breaking_wave_params": {
+            "depth": 5.0,
+            "angle": 160.0,
+            "slope": 0.02
+        }
+    },
+    "manasquan-beach": {
+        "name": "Manasquan Beach, NJ",
+        "swell_buoy_id": "44091",
+        "tide_station_id": "8532337",
+        "wind_location": {"lat": 40.11, "lon": -74.03},
+        "breaking_wave_params": {
+            "depth": 5.0,
+            "angle": 160.0,
+            "slope": 0.02
+        }
+    },
+    "rockaways-beach": {
+        "name": "Rockaways Beach, NY",
+        "swell_buoy_id": "44065",
+        "tide_station_id": "8516881",
+        "wind_location": {"lat": 40.58, "lon": -73.82},
+        "breaking_wave_params": {
+            "depth": 5.0,
+            "angle": 160.0,
+            "slope": 0.02
+        }
+    },
+    "belmar-beach": {
+        "name": "Belmar Beach, NJ",
+        "swell_buoy_id": "44091",
+        "tide_station_id": "8532337",
+        "wind_location": {"lat": 40.17, "lon": -74.01},
+        "breaking_wave_params": {
+            "depth": 5.0,
+            "angle": 160.0,
+            "slope": 0.02
+        }
+    },
+    "steamer-lane": {
+        "name": "Steamer Lane, CA",
+        "swell_buoy_id": "46236",
+        "tide_station_id": "9413450",
+        "wind_location": {"lat": 36.95, "lon": -122.02},
+        "breaking_wave_params": {
+            "depth": 5.0,
+            "angle": 160.0,
+            "slope": 0.02
+        }
+    },
+    "trestles-beach": {
+        "name": "Trestles Beach, CA",
+        "swell_buoy_id": "46277",
+        "tide_station_id": "9410230",
+        "wind_location": {"lat": 33.39, "lon": -117.58},
+        "breaking_wave_params": {
+            "depth": 5.0,
+            "angle": 160.0,
+            "slope": 0.02
+        }
+    }
 }
 
-def get_buoys_for_location(location):
+# Mapping from old location names to new slugs for backward compatibility
+LEGACY_LOCATION_MAP = {
+    "lido": "lido-beach",
+    "manasquan": "manasquan-beach",
+    "rockaways": "rockaways-beach",
+    "belmar": "belmar-beach",
+    "steamer_lane": "steamer-lane",
+    "trestles": "trestles-beach"
+}
+
+def get_spot_config(spot_name):
     """
-    Get buoy IDs for a specific surf spot.
+    Get the full configuration for a specific surf spot.
     
     Args:
-        location (str): Location name (case insensitive)
+        spot_name (str): The slug/name of the surf spot.
         
     Returns:
-        dict: Mapping of data types to buoy/station IDs or None if location not found
+        dict: The configuration dictionary for the spot, or None if not found.
     """
-    location_lower = location.lower() if location else ""
-    return LOCATION_TO_BUOYS.get(location_lower)
+    return SURF_SPOTS_CONFIG.get(spot_name)
 
 def get_all_locations():
     """
-    Get a list of all supported locations.
+    Get a list of all supported location slugs.
     
     Returns:
-        list: List of supported location names
+        list: List of supported location slugs.
     """
-    return list(LOCATION_TO_BUOYS.keys())
+    return list(SURF_SPOTS_CONFIG.keys())
 
 def is_valid_location(location):
     """
-    Check if a location is supported.
+    Check if a location is supported, handling both new slugs and legacy names.
     
     Args:
-        location (str): Location name to check
+        location (str): Location name or slug to check.
         
     Returns:
-        bool: True if location is supported, False otherwise
+        bool: True if location is supported, False otherwise.
     """
     location_lower = location.lower() if location else ""
-    return location_lower in LOCATION_TO_BUOYS
+    if location_lower in SURF_SPOTS_CONFIG:
+        return True
+    # Check if it's a legacy name that can be mapped
+    return location_lower in LEGACY_LOCATION_MAP
 
-def get_location_info(location):
+def get_buoys_for_location(location):
     """
-    Get detailed information about a location.
+    Get buoy IDs for a specific surf spot for backward compatibility with older endpoints.
     
     Args:
-        location (str): Location name
+        location (str): Location name (case insensitive).
         
     Returns:
-        dict: Location information including name, buoys, and coordinates (if available)
+        dict: Mapping of data types to buoy/station IDs or None if location not found.
     """
     location_lower = location.lower() if location else ""
     
-    # Location coordinates (latitude, longitude)
-    # You could expand this with more detailed information
-    location_coords = {
-        "lido": {"lat": 40.5898, "lon": -73.5768},
-        "manasquan": {"lat": 40.1023, "lon": -74.0334},
-        "rockaways": {"lat": 40.5832, "lon": -73.8157},
-        "belmar": {"lat": 40.1762, "lon": -74.0121}
-    }
+    # Map legacy name to new slug if necessary
+    spot_slug = LEGACY_LOCATION_MAP.get(location_lower, location_lower)
     
-    buoys = LOCATION_TO_BUOYS.get(location_lower)
-    
-    if not buoys:
+    config = get_spot_config(spot_slug)
+    if not config:
         return None
         
+    # Return the structure expected by the old surf session endpoints
     return {
-        "name": location,
-        "buoys": buoys,
-        "coordinates": location_coords.get(location_lower)
+        "swell": config["swell_buoy_id"],
+        "met": config["swell_buoy_id"],  # Assuming met and swell are from the same buoy for now
+        "tide": config["tide_station_id"]
     }

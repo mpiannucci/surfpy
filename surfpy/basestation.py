@@ -7,7 +7,7 @@ class BaseStation(object):
         self._parse_name()
     
     def _parse_name(self):
-        if self.location.name == '':
+        if self.location is None or self.location.name == '':
             return
 
         self.name = ''
