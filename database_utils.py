@@ -4,6 +4,7 @@ import json
 from datetime import datetime, time, date
 import uuid
 from psycopg2.extras import Json
+from ocean_data.location import SURF_SPOTS_CONFIG, LEGACY_LOCATION_MAP
 
 # Database connection string
 # db_url = "postgresql://postgres:kooksinthekitchen@db.ehrfwjekssrnbgmgxctg.supabase.co:5432/postgres"
@@ -914,5 +915,88 @@ def get_session_participants(session_id):
     except Exception as e:
         print(f"Error getting session participants: {e}")
         return []
+    finally:
+        conn.close()
+
+def get_sessions_by_location(location_slug):
+    """Retrieve all surf sessions for a specific location, including participants."""
+    # Get the configuration for the given location slug
+    spot_config = SURF_SPOTS_CONFIG.get(location_slug)
+    if not spot_config:
+        return []
+
+    # Collect all possible names for the location
+    possible_names = {location_slug, spot_config['name']}
+    for legacy_name, slug in LEGACY_LOCATION_MAP.items():
+        if slug == location_slug:
+            possible_names.add(legacy_name)
+
+    # Handle special case for Lido Beach
+    if location_slug == 'lido-beach':
+        possible_names.add('lido')
+        possible_names.add('Lido')
+        possible_names.add('Lido, Long Beach')
+
+    conn = get_db_connection()
+    if not conn:
+        return []
+
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # The query is similar to get_all_sessions, but with a WHERE clause for the location
+            query = """
+                SELECT
+                    s1.*,
+                    u1.email as user_email,
+                    COALESCE(
+                        u1.raw_user_meta_data->>'display_name',
+                        NULLIF(TRIM(COALESCE(u1.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u1.raw_user_meta_data->>'last_name', '')), ''),
+                        split_part(u1.email, '@', 1)
+                    ) as display_name,
+                    COALESCE(
+                        ARRAY_AGG(
+                            DISTINCT jsonb_build_object(
+                                'user_id', s2.user_id,
+                                'display_name', COALESCE(
+                                    u2.raw_user_meta_data->>'display_name',
+                                    NULLIF(TRIM(COALESCE(u2.raw_user_meta_data->>'first_name', '') || ' ' || COALESCE(u2.raw_user_meta_data->>'last_name', '')), ''),
+                                    split_part(u2.email, '@', 1)
+                                )
+                            )
+                        ) FILTER (WHERE s2.user_id != s1.user_id AND s2.user_id IS NOT NULL),
+                        ARRAY[]::jsonb[]
+                    ) as participants
+                FROM surf_sessions_duplicate s1
+                LEFT JOIN auth.users u1 ON s1.user_id = u1.id
+                LEFT JOIN surf_sessions_duplicate s2 ON s1.session_group_id = s2.session_group_id AND s1.session_group_id IS NOT NULL
+                LEFT JOIN auth.users u2 ON s2.user_id = u2.id
+                WHERE s1.location IN %s
+                GROUP BY s1.id, s1.created_at, s1.session_name, s1.location, s1.fun_rating, s1.time, s1.session_notes,
+                         s1.raw_swell, s1.date, s1.swell_buoy_id, s1.raw_met, s1.met_buoy_id, s1.raw_tide,
+                         s1.tide_station_id, s1.user_id, s1.end_time, s1.session_group_id, u1.email, u1.raw_user_meta_data
+                ORDER BY s1.created_at DESC
+            """
+
+            cur.execute(query, (tuple(possible_names),))
+            sessions = cur.fetchall()
+            sessions_list = list(sessions)
+
+            # Process each session to handle non-serializable types
+            for i, session in enumerate(sessions_list):
+                if 'time' in session and isinstance(session['time'], time):
+                    sessions_list[i]['time'] = session['time'].isoformat()
+                if 'end_time' in session and isinstance(session['end_time'], time):
+                    sessions_list[i]['end_time'] = session['end_time'].isoformat()
+                if 'date' in session and isinstance(session['date'], date):
+                    sessions_list[i]['date'] = session['date'].isoformat()
+                if 'participants' in session and session['participants']:
+                    sessions_list[i]['participants'] = session['participants']
+                else:
+                    sessions_list[i]['participants'] = []
+            
+            return sessions_list
+    except Exception as e:
+        print(f"Error retrieving sessions by location: {e}")
+        raise
     finally:
         conn.close()

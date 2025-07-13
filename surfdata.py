@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from flask_caching import Cache
 from datetime import datetime, timezone, timedelta
 import surfpy
-from database_utils import get_db_connection, create_session, update_session, get_session, get_all_sessions, delete_session, verify_user_session, get_dashboard_stats
+from database_utils import get_db_connection, create_session, update_session, get_session, get_all_sessions, delete_session, verify_user_session, get_dashboard_stats, get_sessions_by_location
 import json
 from json_utils import CustomJSONEncoder
 import math
@@ -399,6 +399,24 @@ def get_surf_session(user_id, session_id):
         import traceback
         print(traceback.format_exc())
         return jsonify({"status": "fail", "message": f"Error retrieving surf session: {str(e)}"}), 500
+
+# Get all surf sessions for a specific location
+@app.route('/api/surf-sessions/location/<string:location_slug>', methods=['GET'])
+@token_required
+def get_location_surf_sessions(user_id, location_slug):
+    try:
+        # Validate the location slug
+        if not is_valid_location(location_slug):
+            return jsonify({"status": "fail", "message": f"Invalid location slug: {location_slug}"}), 404
+
+        # Fetch sessions using the new database function
+        sessions = get_sessions_by_location(location_slug)
+        
+        return jsonify({"status": "success", "data": sessions}), 200
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({"status": "fail", "message": f"Error retrieving sessions for location {location_slug}: {str(e)}"}), 500
 
 # Update a surf session
 @app.route('/api/surf-sessions/<int:session_id>', methods=['PUT'])
