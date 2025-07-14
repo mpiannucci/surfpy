@@ -26,6 +26,7 @@ def get_surf_forecast(spot_name):
     # 2. Fetch all required data
     buoy_station = BuoyStation(station_id=spot_config['swell_buoy_id'], location=None)
     wave_model = atlantic_gfs_wave_model()
+    forecast_generated_at = wave_model.latest_model_time().strftime('%Y-%m-%d %H:%M UTC') # Capture and format timestamp
     wave_forecast = buoy_station.fetch_wave_forecast_bulletin(wave_model)
 
     tide_station = TideStation(station_id=spot_config['tide_station_id'], location=None)
@@ -46,7 +47,12 @@ def get_surf_forecast(spot_name):
     processed_forecast = _process_forecast(merged_forecast, spot_config['breaking_wave_params'])
 
     # 5. Format for API response
-    return _format_for_api(processed_forecast)
+    formatted_api_response = _format_for_api(processed_forecast)
+
+    return {
+        "forecast_generated_at": forecast_generated_at,
+        "forecast_data": formatted_api_response
+    }
 
 def _merge_forecast_data(wave_data, tide_data, wind_data):
     """
