@@ -5,75 +5,9 @@ This module provides functions for mapping surf locations to
 oceanographic data sources and handling location-based operations.
 """
 
-# Comprehensive configuration for each surf spot
-SURF_SPOTS_CONFIG = {
-    "lido-beach": {
-        "name": "Lido Beach, NY",
-        "swell_buoy_id": "44065",
-        "tide_station_id": "8516663",
-        "wind_location": {"lat": 40.58, "lon": -73.66},
-        "breaking_wave_params": {
-            "depth": 5.0,
-            "angle": 160.0,
-            "slope": 0.02
-        }
-    },
-    "manasquan-beach": {
-        "name": "Manasquan Beach, NJ",
-        "swell_buoy_id": "44091",
-        "tide_station_id": "8532337",
-        "wind_location": {"lat": 40.11, "lon": -74.03},
-        "breaking_wave_params": {
-            "depth": 5.0,
-            "angle": 160.0,
-            "slope": 0.02
-        }
-    },
-    "rockaways-beach": {
-        "name": "Rockaways Beach, NY",
-        "swell_buoy_id": "44065",
-        "tide_station_id": "8516881",
-        "wind_location": {"lat": 40.58, "lon": -73.82},
-        "breaking_wave_params": {
-            "depth": 5.0,
-            "angle": 160.0,
-            "slope": 0.02
-        }
-    },
-    "belmar-beach": {
-        "name": "Belmar Beach, NJ",
-        "swell_buoy_id": "44091",
-        "tide_station_id": "8532337",
-        "wind_location": {"lat": 40.17, "lon": -74.01},
-        "breaking_wave_params": {
-            "depth": 5.0,
-            "angle": 160.0,
-            "slope": 0.02
-        }
-    },
-    "steamer-lane": {
-        "name": "Steamer Lane, CA",
-        "swell_buoy_id": "46236",
-        "tide_station_id": "9413450",
-        "wind_location": {"lat": 36.95, "lon": -122.02},
-        "breaking_wave_params": {
-            "depth": 5.0,
-            "angle": 160.0,
-            "slope": 0.02
-        }
-    },
-    "trestles-beach": {
-        "name": "Trestles Beach, CA",
-        "swell_buoy_id": "46277",
-        "tide_station_id": "9410230",
-        "wind_location": {"lat": 33.39, "lon": -117.58},
-        "breaking_wave_params": {
-            "depth": 5.0,
-            "angle": 160.0,
-            "slope": 0.02
-        }
-    }
-}
+import surfpy
+from surfpy.location import Location
+import database_utils
 
 # Mapping from old location names to new slugs for backward compatibility
 LEGACY_LOCATION_MAP = {
@@ -87,7 +21,7 @@ LEGACY_LOCATION_MAP = {
 
 def get_spot_config(spot_name):
     """
-    Get the full configuration for a specific surf spot.
+    Get the full configuration for a specific surf spot from the database.
     
     Args:
         spot_name (str): The slug/name of the surf spot.
@@ -95,16 +29,32 @@ def get_spot_config(spot_name):
     Returns:
         dict: The configuration dictionary for the spot, or None if not found.
     """
-    return SURF_SPOTS_CONFIG.get(spot_name)
+    spot = database_utils.get_surf_spot_by_slug(spot_name)
+    if spot:
+        # Convert database record to the expected format
+        return {
+            "name": spot["name"],
+            "swell_buoy_id": spot["swell_buoy_id"],
+            "tide_station_id": spot["tide_station_id"],
+            "wind_location": {"lat": spot["wind_lat"], "lon": spot["wind_long"]},
+            "breaking_wave_params": {
+                "depth": spot["breaking_wave_depth"],
+                "angle": spot["breaking_wave_angle"],
+                "slope": spot["breaking_wave_slope"]
+            },
+            "timezone": spot["timezone"]
+        }
+    return None
 
 def get_all_locations():
     """
-    Get a list of all supported location slugs.
+    Get a list of all supported location slugs from the database.
     
     Returns:
         list: List of supported location slugs.
     """
-    return list(SURF_SPOTS_CONFIG.keys())
+    spots = database_utils.get_all_surf_spots()
+    return [spot['slug'] for spot in spots]
 
 def is_valid_location(location):
     """
@@ -117,10 +67,20 @@ def is_valid_location(location):
         bool: True if location is supported, False otherwise.
     """
     location_lower = location.lower() if location else ""
-    if location_lower in SURF_SPOTS_CONFIG:
+    
+    # First, check if it's a direct slug in the database
+    spot = database_utils.get_surf_spot_by_slug(location_lower)
+    if spot:
         return True
-    # Check if it's a legacy name that can be mapped
-    return location_lower in LEGACY_LOCATION_MAP
+        
+    # If not, check if it's a legacy name that can be mapped to a slug in the database
+    spot_slug = LEGACY_LOCATION_MAP.get(location_lower)
+    if spot_slug:
+        spot = database_utils.get_surf_spot_by_slug(spot_slug)
+        if spot:
+            return True
+            
+    return False
 
 def get_buoys_for_location(location):
     """

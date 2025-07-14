@@ -4,7 +4,7 @@ import json
 from datetime import datetime, time, date
 import uuid
 from psycopg2.extras import Json
-from ocean_data.location import SURF_SPOTS_CONFIG, LEGACY_LOCATION_MAP
+from ocean_data.location import LEGACY_LOCATION_MAP
 
 # Database connection string
 # db_url = "postgresql://postgres:kooksinthekitchen@db.ehrfwjekssrnbgmgxctg.supabase.co:5432/postgres"
@@ -920,8 +920,8 @@ def get_session_participants(session_id):
 
 def get_sessions_by_location(location_slug):
     """Retrieve all surf sessions for a specific location, including participants."""
-    # Get the configuration for the given location slug
-    spot_config = SURF_SPOTS_CONFIG.get(location_slug)
+    # Get the configuration for the given location slug from the database
+    spot_config = get_surf_spot_by_slug(location_slug)
     if not spot_config:
         return []
 
@@ -931,7 +931,7 @@ def get_sessions_by_location(location_slug):
         if slug == location_slug:
             possible_names.add(legacy_name)
 
-    # Handle special case for Lido Beach
+    # Handle special case for Lido Beach (if still needed, as it might be covered by legacy map or direct slug)
     if location_slug == 'lido-beach':
         possible_names.add('lido')
         possible_names.add('Lido')
