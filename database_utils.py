@@ -1000,3 +1000,77 @@ def get_sessions_by_location(location_slug):
         raise
     finally:
         conn.close()
+
+def get_surf_spot_by_slug(slug):
+    """Retrieve a single surf spot by its slug from the database."""
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT 
+                    id, created_at, slug, name, swell_buoy_id, tide_station_id, 
+                    wind_lat, wind_long, breaking_wave_depth, breaking_wave_angle, 
+                    breaking_wave_slope, timezone
+                FROM surf_spots
+                WHERE slug = %s
+            """, (slug,))
+            spot = cur.fetchone()
+            return spot
+    except Exception as e:
+        print(f"Error retrieving surf spot by slug: {e}")
+        return None
+    finally:
+        conn.close()
+
+def get_all_surf_spots():
+    """Retrieve all surf spots from the database."""
+    conn = get_db_connection()
+    if not conn:
+        return []
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT 
+                    id, created_at, slug, name, swell_buoy_id, tide_station_id, 
+                    wind_lat, wind_long, breaking_wave_depth, breaking_wave_angle, 
+                    breaking_wave_slope, timezone
+                FROM surf_spots
+                ORDER BY name
+            """)
+            spots = cur.fetchall()
+            return list(spots)
+    except Exception as e:
+        print(f"Error retrieving all surf spots: {e}")
+        return []
+    finally:
+        conn.close()
+
+def get_surf_spots_by_slugs(slugs):
+    """Retrieve multiple surf spots by their slugs from the database."""
+    if not slugs:
+        return []
+    conn = get_db_connection()
+    if not conn:
+        return []
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Using IN clause for multiple slugs
+            query = """
+                SELECT 
+                    id, created_at, slug, name, swell_buoy_id, tide_station_id, 
+                    wind_lat, wind_long, breaking_wave_depth, breaking_wave_angle, 
+                    breaking_wave_slope, timezone
+                FROM surf_spots
+                WHERE slug IN %s
+                ORDER BY name
+            """
+            cur.execute(query, (tuple(slugs),))
+            spots = cur.fetchall()
+            return list(spots)
+    except Exception as e:
+        print(f"Error retrieving surf spots by slugs: {e}")
+        return []
+    finally:
+        conn.close()
