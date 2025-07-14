@@ -50,6 +50,7 @@ class TideStation(BaseStation):
             return None
         
         raw_json = json.loads(raw_data)
+        print(raw_json)
         if not 'predictions' in raw_json:
             print('Failed to parse tidal data')
             return None
@@ -99,9 +100,26 @@ class TideStation(BaseStation):
 
         return tidal_events
 
-    def fetch_tide_data(self, start_date, end_date, datum=TideDatum.mean_tide_level, interval=DataInterval.high_low, unit=units.Units.metric):
-        url = self.create_tide_data_url(start_date, end_date, datum=datum, interval=interval, unit=unit)
-        response = requests.get(url)
-        if len(response.text) < 1:
-            return False
-        return self.parse_tide_data(response.text, datum, unit)
+    def fetch_tide_data(self, start_date, end_date, datum=None, interval=DataInterval.high_low, unit=units.Units.metric):
+        preferred_datums = [self.TideDatum.mean_lower_low_water, self.TideDatum.mean_sea_level, self.TideDatum.mean_high_water]
+
+        for datum_to_try in preferred_datums:
+            # First attempt to fetch data with the requested interval
+            url = self.create_tide_data_url(start_date, end_date, datum=datum_to_try, interval=interval, unit=unit)
+            response = requests.get(url)
+            if len(response.text) > 0:
+                parsed_data = self.parse_tide_data(response.text, datum_to_try, unit)
+                if parsed_data and parsed_data[1]:
+                    return parsed_data
+
+            # If the first attempt fails, try again with the default interval
+            print(f"Failed to fetch tide data with interval '{interval}' and datum '{datum_to_try}'. Trying default interval.")
+            url = self.create_tide_data_url(start_date, end_date, datum=datum_to_try, interval=self.DataInterval.default, unit=unit)
+            response = requests.get(url)
+            if len(response.text) > 0:
+                parsed_data = self.parse_tide_data(response.text, datum_to_try, unit)
+                if parsed_data and parsed_data[1]:
+                    return parsed_data
+
+        print("Failed to fetch tide data with any of the preferred datums.")
+        return None

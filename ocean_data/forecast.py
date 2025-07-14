@@ -31,7 +31,10 @@ def get_surf_forecast(spot_name):
     tide_station = TideStation(station_id=spot_config['tide_station_id'], location=None)
     start_date = datetime.datetime.now(datetime.timezone.utc)
     end_date = start_date + datetime.timedelta(days=7)
-    _, hourly_tide_data = tide_station.fetch_tide_data(start_date, end_date, interval='h', unit='english')
+    tide_data_result = tide_station.fetch_tide_data(start_date, end_date, interval='h', unit='english')
+    hourly_tide_data = []
+    if tide_data_result:
+        _, hourly_tide_data = tide_data_result
 
     wind_location = Location(latitude=spot_config['wind_location']['lat'], longitude=spot_config['wind_location']['lon'])
     wind_forecast = WeatherApi.fetch_hourly_forecast(wind_location)
@@ -46,27 +49,43 @@ def get_surf_forecast(spot_name):
     return _format_for_api(processed_forecast)
 
 def _merge_forecast_data(wave_data, tide_data, wind_data):
-    """Merges wave, tide, and wind data into a single list of hourly dictionaries."""
-    merged = {}
-    if wave_data:
-        for data in wave_data:
-            ts = data.date.strftime('%Y-%m-%dT%H:00:00Z')
-            merged[ts] = {'wave': data, 'tide': None, 'wind': None}
+    """
+    Merges wave, tide, and wind data into a single list of hourly dictionaries.
+    It uses the wave forecast as the primary timeline and finds the closest
+    tide and wind data point for each wave data point within a 1-hour tolerance.
+    """
+    merged = []
+    if not wave_data:
+        return merged
 
-    if tide_data:
-        for data in tide_data:
-            ts = data.date.replace(minute=0, second=0, microsecond=0).strftime('%Y-%m-%dT%H:00:00Z')
-            if ts in merged:
-                merged[ts]['tide'] = data
+    for wave_entry in wave_data:
+        # Find the closest tide data point
+        closest_tide = None
+        if tide_data:
+            # Find the tide data point with the minimum time difference
+            closest_tide = min(tide_data, key=lambda x: abs(x.date - wave_entry.date))
             
-    if wind_data:
-        for data in wind_data:
-            ts = data.date.strftime('%Y-%m-%dT%H:00:00Z')
-            if ts in merged:
-                merged[ts]['wind'] = data
+            # Ensure the closest data is within a reasonable time window (e.g., +/- 31 minutes)
+            if abs(closest_tide.date - wave_entry.date) > datetime.timedelta(minutes=31):
+                closest_tide = None
 
-    sorted_merged = sorted(merged.items())
-    return [value for key, value in sorted_merged]
+        # Find the closest wind data point
+        closest_wind = None
+        if wind_data:
+            # Find the wind data point with the minimum time difference
+            closest_wind = min(wind_data, key=lambda x: abs(x.date - wave_entry.date))
+
+            # Ensure the closest data is within a reasonable time window (e.g., +/- 31 minutes)
+            if abs(closest_wind.date - wave_entry.date) > datetime.timedelta(minutes=31):
+                closest_wind = None
+        
+        merged.append({
+            'wave': wave_entry,
+            'tide': closest_tide,
+            'wind': closest_wind
+        })
+        
+    return merged
 
 def _process_forecast(merged_data, breaking_wave_params):
     """Calculates breaking wave height and other derived data using the idiomatic library functions."""
