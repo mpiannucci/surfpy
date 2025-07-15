@@ -37,6 +37,7 @@ interface YearlyStats {
   sessions_per_week: string;
   total_sessions: number;
   total_surf_time_minutes: string;
+  top_locations?: TopLocation[];
 }
 
 interface TopLocation {
@@ -93,7 +94,7 @@ export function DashboardNew() {
           return
         }
 
-        const apiUrl = "https://surfdata-7irv148ok-martins-projects-383d438b.vercel.app/api/dashboard"
+        const apiUrl = "https://surfdata-ea901547g-martins-projects-383d438b.vercel.app/api/dashboard"
 
         let responseData: DashboardApiResponse | null = null
 
@@ -366,8 +367,8 @@ export function DashboardNew() {
               <MapPin className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="space-y-3">
-              {dashboardData.data.current_user.top_locations && dashboardData.data.current_user.top_locations.length > 0 ? (
-                dashboardData.data.current_user.top_locations.slice(0, 3).map((location, index) => (
+              {currentUserYearStats.top_locations && currentUserYearStats.top_locations.length > 0 ? (
+                currentUserYearStats.top_locations.slice(0, 3).map((location, index) => (
                   <div key={index}>
                     <div className={`${index === 0 ? "text-2xl font-bold" : "text-lg font-semibold"}`}>
                       {capitalizeLocation(location.location)}
