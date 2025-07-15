@@ -227,7 +227,7 @@ export function ClientDashboard() {
                 <p className="text-xs text-muted-foreground">Sessions per week</p>
               </div>
               <div>
-                <div className="text-lg font-semibold">{dashboardData.current_user.total_sessions_all_time}</div>
+                <div className="text-lg font-semibold">{dashboardData.current_user.total_sessions_time}</div>
                 <p className="text-xs text-muted-foreground">All-time sessions</p>
               </div>
             </CardContent>
