@@ -614,9 +614,19 @@ def get_dashboard_stats(current_user_id):
                     'avg_session_duration_minutes': current_user_stats[f'{prefix}_avg_session_duration_minutes'] if current_user_stats else None,
                     'total_surf_time_minutes': current_user_stats[f'{prefix}_total_surf_time_minutes'] if current_user_stats else 0
                 }
-            
-            # Add top locations to current user data
-            current_user_data['top_locations'] = [dict(loc) for loc in user_top_locations] if user_top_locations else []
+                
+                # Fetch top 3 locations for the current user for this specific year
+                cur.execute("""
+                    SELECT location, COUNT(*) as session_count 
+                    FROM surf_sessions_duplicate 
+                    WHERE user_id = %s AND EXTRACT(YEAR FROM date) = %s
+                    GROUP BY location 
+                    ORDER BY session_count DESC 
+                    LIMIT 3
+                """, (current_user_id, year))
+                
+                top_locations_for_year = cur.fetchall()
+                current_user_data['yearly_stats'][year]['top_locations'] = [dict(loc) for loc in top_locations_for_year] if top_locations_for_year else []
             
             other_users_data = []
             if other_users_stats:
