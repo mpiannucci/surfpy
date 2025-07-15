@@ -35,7 +35,7 @@ export default function LoginPage() {
     try {
       const result = await login(email, password)
       if (result.success) {
-        router.push("/")
+        router.push("/dashboard-new")
       } else {
         setError(result.error || "Login failed. Please check your credentials and try again.")
       }
