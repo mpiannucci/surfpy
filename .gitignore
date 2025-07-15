@@ -106,3 +106,43 @@ grippy
 # Test data
 forecast.json
 .vercel
+
+# Node.js (Frontend)
+frontend/slapp/node_modules/
+frontend/slapp/.next/
+frontend/slapp/dist/
+frontend/slapp/.env.local
+frontend/slapp/.env.production.local
+frontend/slapp/.vercel
+frontend/slapp/.eslintcache
+
+# General Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
