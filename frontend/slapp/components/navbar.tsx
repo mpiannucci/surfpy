@@ -34,7 +34,7 @@ export function Navbar() {
     { href: "/sessions", label: "All Sessions" },
     { href: "/forecast", label: "Forecast" },
     { href: "/add", label: "Add Session" },
-    { href: "/add-v2", label: "Add Session V2" },
+    
     { href: "/comparison", label: "Comparison" },
   ]
 
