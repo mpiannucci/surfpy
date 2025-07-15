@@ -11,7 +11,7 @@ import { MeteorologicalDataDisplay } from "@/components/meteorological-data-disp
 import { TideDataDisplay } from "@/components/tide-data-display"
 import { ArrowLeft, Loader2, AlertCircle, User, Edit } from "lucide-react"
 import { DeleteSessionButton } from "@/components/delete-session-button"
-import { EditSessionModal } from "@/components/edit-session-modal"
+import { EditSessionModalNew } from "@/components/edit-session-modal-new"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { isSessionOwner } from "@/lib/api"
@@ -438,7 +438,7 @@ export function ClientSessionDetail() {
 
       {/* Edit Session Modal */}
       {session && (
-        <EditSessionModal
+        <EditSessionModalNew
           session={session}
           isOpen={isEditModalOpen}
           onClose={handleCloseEditModal}

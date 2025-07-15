@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Edit } from "lucide-react"
-import { EditSessionModal } from "./edit-session-modal"
+import { EditSessionModalNew } from "./edit-session-modal-new"
 import { DeleteSessionButton } from "./delete-session-button"
 import type { SurfSession } from "@/lib/types"
 
@@ -201,7 +201,7 @@ export function MySessionsTable({ sessions, onSessionsChange }: MySessionsTableP
 
       {/* Edit Modal */}
       {editingSession && (
-        <EditSessionModal
+        <EditSessionModalNew
           session={editingSession}
           isOpen={isEditModalOpen}
           onClose={handleEditClose}
