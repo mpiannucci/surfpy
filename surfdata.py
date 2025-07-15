@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_caching import Cache
 from datetime import datetime, timezone, timedelta
 import surfpy
+import database_utils
 from database_utils import get_db_connection, create_session, update_session, get_session, get_all_sessions, delete_session, verify_user_session, get_dashboard_stats, get_sessions_by_location
 import json
 from json_utils import CustomJSONEncoder
@@ -705,6 +706,26 @@ def get_forecast_endpoint(user_id, spot_name):
             "status": "error",
             "message": f"An error occurred while generating the forecast: {str(e)}"
         }), 500
+
+@app.route('/api/surf-spots', methods=['GET'])
+def get_surf_spots():
+    """
+    API endpoint to get a list of all supported surf spots (slug and name).
+    """
+    try:
+        spots = database_utils.get_all_surf_spots()
+        formatted_spots = []
+        for spot in spots:
+            formatted_spots.append({
+                "slug": spot["slug"],
+                "name": spot["name"]
+            })
+        return jsonify({"status": "success", "data": formatted_spots}), 200
+    except Exception as e:
+        print(f"Error retrieving surf spots: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
