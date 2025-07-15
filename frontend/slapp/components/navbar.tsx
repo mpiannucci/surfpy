@@ -29,7 +29,7 @@ export function Navbar() {
   }
 
   const navItems = [
-    { href: "/", label: "Dashboard" },
+    { href: "/dashboard-new", label: "Dashboard" },
     { href: "/my-sessions", label: "My Sessions" },
     { href: "/sessions", label: "All Sessions" },
     { href: "/forecast", label: "Forecast" },
@@ -42,7 +42,7 @@ export function Navbar() {
     <header className="border-b">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/dashboard-new" className="flex items-center gap-2">
             <Waves className="h-6 w-6 text-primary" />
             <span className="text-lg font-bold">Surf Tracker</span>
           </Link>
