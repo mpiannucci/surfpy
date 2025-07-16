@@ -395,11 +395,11 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
                     scale="time"
                     type="number"
                     domain={[
-                      new Date(filteredForecastData[0].timestamp).getTime(),
-                      new Date(filteredForecastData[filteredForecastData.length - 1].timestamp).getTime(),
+                      new Date(filteredForecastData[0].timestamp).getTime() - (30 * 60 * 1000),
+                      new Date(filteredForecastData[filteredForecastData.length - 1].timestamp).getTime() + (30 * 60 * 1000),
                     ]}
                   />
-                  <YAxis label={{ value: 'Wave Height (ft)', angle: -90, position: 'insideLeft' }} />
+                  <YAxis label={{ value: 'Wave Height (ft)', angle: -90, position: 'insideLeft' }} domain={[0, (dataMax: number) => dataMax + 0.5]} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.1)' }} />
                   <Bar dataKey={getAverageWaveHeight} fill="#3b82f6" />
 
@@ -479,8 +479,8 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
                   scale="time"
                   type="number"
                   domain={[
-                    new Date(filteredForecastData[0].timestamp).getTime(),
-                    new Date(filteredForecastData[filteredForecastData.length - 1].timestamp).getTime(),
+                    new Date(filteredForecastData[0].timestamp).getTime() - (30 * 60 * 1000),
+                    new Date(filteredForecastData[filteredForecastData.length - 1].timestamp).getTime() + (30 * 60 * 1000),
                   ]}
                 />
                 <YAxis label={{ value: 'Tide Height (ft)', angle: -90, position: 'insideLeft' }} />
