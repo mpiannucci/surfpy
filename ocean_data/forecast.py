@@ -99,10 +99,6 @@ def _merge_forecast_data(wave_data, tide_data, wind_data):
         if wind_data:
             # Find the wind data point with the minimum time difference
             closest_wind = min(wind_data, key=lambda x: abs(x.date - wave_entry.date))
-
-            # Ensure the closest data is within a reasonable time window (e.g., +/- 31 minutes)
-            if abs(closest_wind.date - wave_entry.date) > datetime.timedelta(minutes=31):
-                closest_wind = None
         
         merged.append({
             'wave': wave_entry,
@@ -174,7 +170,7 @@ def _format_for_api(processed_data, timezone_str='UTC'):
 
         api_hour = {
             "timestamp": local_time.isoformat(),
-            "type": hour.get('type', 'forecast'),  # Include the type in the final output
+            "type": hour.get('type', 'forecast'),
             "breaking_wave_height": {
                 "min": round(min_break * 3.28084, 1),
                 "max": round(max_break * 3.28084, 1),
