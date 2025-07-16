@@ -123,10 +123,11 @@ def _process_forecast(merged_data, breaking_wave_params):
         if not wave or not wave.swell_components:
             continue
 
-        # Convert swell direction from "coming from" to "going toward"
+        # Convert swell direction from "coming from" to "going toward" for FORECAST data only
         for component in wave.swell_components:
             if not math.isnan(component.direction):
-                component.direction = (component.direction + 180) % 360
+                if hour_data['type'] == 'forecast':
+                    component.direction = (component.direction + 180) % 360
                 component.compass_direction = surfpy.units.degree_to_direction(component.direction)
 
         wave.solve_breaking_wave_heights(spot_location_details)
