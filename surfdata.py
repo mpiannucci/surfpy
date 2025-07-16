@@ -55,9 +55,6 @@ def token_required(f):
         try:
             # Decode the token (without verification first just to get the user ID)
             payload = jwt.decode(token, options={"verify_signature": False})
-            print(f"Decoded token payload: {payload}")  # Debug: print payload
-            
-            # In Supabase tokens, the user ID is in the 'sub' claim
             user_id = payload.get('sub')
             
             if not user_id:
@@ -268,7 +265,7 @@ def create_surf_session(user_id):
             # Convert to UTC for data retrieval
             target_datetime = localized_datetime.astimezone(timezone.utc)
     
-            print(f"Eastern time: {localized_datetime}, converted to UTC: {target_datetime}")
+            
         except ValueError:
             return jsonify({
                 "status": "fail", 
