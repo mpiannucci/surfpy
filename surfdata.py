@@ -17,8 +17,13 @@ from psycopg2.extras import RealDictCursor
 from ocean_data.swell import fetch_swell_data
 from ocean_data.meteorology import fetch_meteorological_data
 from ocean_data.tide import fetch_tide_data
-from ocean_data.location import get_buoys_for_location, is_valid_location
+from ocean_data.location import get_buoys_for_location, is_valid_location, get_spot_config
 from ocean_data.forecast import get_surf_forecast
+
+# Import the new historical functions
+from ocean_data.swell import fetch_historical_swell_data
+from ocean_data.meteorology import fetch_historical_met_data
+from ocean_data.tide import fetch_historical_tide_data
 
 app = Flask(__name__)
 
@@ -726,6 +731,55 @@ def get_surf_spots():
         import traceback
         traceback.print_exc()
         return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
+
+@app.route('/api/test/historical/<string:spot_name>', methods=['GET'])
+@token_required
+def test_historical_data(user_id, spot_name):
+    """
+    Temporary test endpoint to verify historical data fetching.
+    """
+    try:
+        # 1. Get spot configuration
+        spot_config = get_spot_config(spot_name)
+        if not spot_config:
+            return jsonify({"status": "fail", "message": f"Invalid surf spot: {spot_name}"}), 404
+
+        # 2. Define time window (e.g., last 24 hours)
+        now_utc = datetime.now(timezone.utc)
+        start_date_utc = now_utc - timedelta(hours=24)
+
+        # 3. Fetch historical data using the new functions
+        swell_data = fetch_historical_swell_data(spot_config['swell_buoy_id'], start_date_utc, now_utc)
+        met_data = fetch_historical_met_data(spot_config['swell_buoy_id'], start_date_utc, now_utc)
+        tide_data = fetch_historical_tide_data(spot_config['tide_station_id'], start_date_utc, now_utc)
+
+        return jsonify({
+            "status": "success",
+            "spot_name": spot_name,
+            "time_window_utc": {
+                "start": start_date_utc.isoformat(),
+                "end": now_utc.isoformat()
+            },
+            "data_counts": {
+                "swell": len(swell_data),
+                "met": len(met_data),
+                "tide": len(tide_data)
+            },
+            "data": {
+                "swell": swell_data,
+                "met": met_data,
+                "tide": tide_data
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"Error in historical test endpoint: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "status": "error",
+            "message": f"An error occurred: {str(e)}"
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

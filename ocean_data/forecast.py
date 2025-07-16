@@ -1,56 +1,75 @@
 import datetime
 import math
 import surfpy
+import pytz
 from surfpy.wavemodel import atlantic_gfs_wave_model
 from surfpy.buoystation import BuoyStation
 from surfpy.tidestation import TideStation
 from surfpy.weatherapi import WeatherApi
 from surfpy.location import Location
 from ocean_data.location import get_spot_config
+from .swell import fetch_historical_swell_data
+from .meteorology import fetch_historical_met_data
+from .tide import fetch_historical_tide_data
 
 def get_surf_forecast(spot_name):
     """
-    Orchestrates the fetching, merging, and processing of a 7-day surf forecast.
-
-    Args:
-        spot_name (str): The slug of the surf spot.
-
-    Returns:
-        list: A list of hourly forecast dictionaries, or None if the spot is invalid.
+    Orchestrates fetching, merging, and processing a surf forecast that combines
+    historical "actuals" with future "forecasts".
     """
-    # 1. Get surf spot configuration
     spot_config = get_spot_config(spot_name)
     if not spot_config:
         return None
 
-    # 2. Fetch all required data
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    historical_start_utc = now_utc - datetime.timedelta(hours=24)
+    forecast_end_utc = now_utc + datetime.timedelta(days=7)
+
+    # 1. Fetch Historical Data ("Actuals")
+    actual_wave_data = fetch_historical_swell_data(spot_config['swell_buoy_id'], historical_start_utc, now_utc)
+    actual_wind_data = fetch_historical_met_data(spot_config['swell_buoy_id'], historical_start_utc, now_utc)
+    actual_tide_data = fetch_historical_tide_data(spot_config['tide_station_id'], historical_start_utc, now_utc)
+
+    # 2. Fetch Forecast Data
     buoy_station = BuoyStation(station_id=spot_config['swell_buoy_id'], location=None)
     wave_model = atlantic_gfs_wave_model()
-    forecast_generated_at = wave_model.latest_model_time().strftime('%Y-%m-%d %H:%M UTC') # Capture and format timestamp
-    wave_forecast = buoy_station.fetch_wave_forecast_bulletin(wave_model)
+    forecast_generated_at = wave_model.latest_model_time().strftime('%Y-%m-%d %H:%M UTC')
+    forecast_wave_data = buoy_station.fetch_wave_forecast_bulletin(wave_model) or []
 
     tide_station = TideStation(station_id=spot_config['tide_station_id'], location=None)
-    start_date = datetime.datetime.now(datetime.timezone.utc)
-    end_date = start_date + datetime.timedelta(days=7)
-    tide_data_result = tide_station.fetch_tide_data(start_date, end_date, interval='h', unit='english')
-    hourly_tide_data = []
+    tide_data_result = tide_station.fetch_tide_data(now_utc, forecast_end_utc, interval='h', unit='english')
+    forecast_tide_data = []
     if tide_data_result:
-        _, hourly_tide_data = tide_data_result
+        _, forecast_tide_data = tide_data_result
 
     wind_location = Location(latitude=spot_config['wind_location']['lat'], longitude=spot_config['wind_location']['lon'])
-    wind_forecast = WeatherApi.fetch_hourly_forecast(wind_location)
+    forecast_wind_data = WeatherApi.fetch_hourly_forecast(wind_location) or []
 
-    # 3. Merge data into a single timeline
-    merged_forecast = _merge_forecast_data(wave_forecast, hourly_tide_data, wind_forecast)
+    # 3. Tag and Combine Data
+    # Helper function to combine actual and forecast data, prioritizing actuals
+    def combine_data(actual_data, forecast_data):
+        combined = {entry.date: entry for entry in forecast_data}
+        for entry in actual_data:
+            combined[entry.date] = entry  # Actuals overwrite forecasts for same timestamp
+        return sorted(combined.values(), key=lambda x: x.date)
 
-    # 4. Process the merged data (calculate breaking wave height)
+    all_wave_data = combine_data(actual_wave_data, forecast_wave_data)
+    all_wind_data = combine_data(actual_wind_data, forecast_wind_data)
+    all_tide_data = combine_data(actual_tide_data, forecast_tide_data)
+
+    # Ensure all data points have a 'type' attribute
+    for data in all_wave_data: data.type = 'actual' if data in actual_wave_data else 'forecast'
+    for data in all_wind_data: data.type = 'actual' if data in actual_wind_data else 'forecast'
+    for data in all_tide_data: data.type = 'actual' if data in actual_tide_data else 'forecast'
+
+    # 4. Merge, Process, and Format
+    merged_forecast = _merge_forecast_data(all_wave_data, all_tide_data, all_wind_data)
     processed_forecast = _process_forecast(merged_forecast, spot_config['breaking_wave_params'])
-
-    # 5. Format for API response
-    formatted_api_response = _format_for_api(processed_forecast)
+    formatted_api_response = _format_for_api(processed_forecast, spot_config.get('timezone'))
 
     return {
         "forecast_generated_at": forecast_generated_at,
+        "timezone": spot_config.get('timezone', 'UTC'),
         "forecast_data": formatted_api_response
     }
 
@@ -88,7 +107,8 @@ def _merge_forecast_data(wave_data, tide_data, wind_data):
         merged.append({
             'wave': wave_entry,
             'tide': closest_tide,
-            'wind': closest_wind
+            'wind': closest_wind,
+            'type': getattr(wave_entry, 'type', 'forecast')  # Carry over the type
         })
         
     return merged
@@ -118,9 +138,16 @@ def _process_forecast(merged_data, breaking_wave_params):
         
     return processed
 
-def _format_for_api(processed_data):
+def _format_for_api(processed_data, timezone_str='UTC'):
     """Formats the processed data into the final API JSON structure."""
     api_response = []
+    
+    # Get the timezone object, default to UTC if invalid
+    try:
+        local_tz = pytz.timezone(timezone_str)
+    except pytz.UnknownTimeZoneError:
+        local_tz = pytz.utc
+
     for hour in processed_data:
         wave = hour['wave']
         tide = hour['tide']
@@ -141,8 +168,13 @@ def _format_for_api(processed_data):
         min_break = wave.minimum_breaking_height if wave and not math.isnan(wave.minimum_breaking_height) else 0.0
         max_break = wave.maximum_breaking_height if wave and not math.isnan(wave.maximum_breaking_height) else 0.0
 
+        # Convert timestamp to local timezone
+        utc_time = wave.date.replace(tzinfo=pytz.utc) if wave else datetime.datetime.now(pytz.utc)
+        local_time = utc_time.astimezone(local_tz)
+
         api_hour = {
-            "timestamp": wave.date.strftime('%Y-%m-%dT%H:00:00Z') if wave else "N/A",
+            "timestamp": local_time.isoformat(),
+            "type": hour.get('type', 'forecast'),  # Include the type in the final output
             "breaking_wave_height": {
                 "min": round(min_break * 3.28084, 1),
                 "max": round(max_break * 3.28084, 1),
@@ -155,7 +187,7 @@ def _format_for_api(processed_data):
                 "unit": "mph"
             },
             "tide": {
-                "height": round(tide.water_level, 1) if tide else 0,
+                "height": round(tide.water_level * 3.28084, 1) if tide else 0,
                 "unit": "ft"
             }
         }
