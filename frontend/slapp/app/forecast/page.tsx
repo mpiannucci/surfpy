@@ -4,13 +4,13 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MapPin, Waves } from "lucide-react"
-import { ForecastDashboard } from "@/components/forecast-dashboard"
+import { NewForecastDashboard } from "@/components/new-forecast-dashboard"
 
 const locations = [
   {
     id: "lido-beach",
     name: "Lido Beach",
-    description: "Popular surf spot with consistent waves",
+    description: "Long Island, New York",
     image: "/placeholder.svg?height=200&width=300",
   },
 ]
@@ -19,7 +19,7 @@ export default function ForecastPage() {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
 
   if (selectedLocation) {
-    return <ForecastDashboard location={selectedLocation} onBack={() => setSelectedLocation(null)} />
+    return <NewForecastDashboard location={selectedLocation} onBack={() => setSelectedLocation(null)} />
   }
 
   return (
