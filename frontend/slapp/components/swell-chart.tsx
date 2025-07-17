@@ -27,8 +27,9 @@ export function SwellChart({ dailyData, onHourHover }: SwellChartProps) {
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={dailyData} onMouseMove={(state) => {
-            if (state.isTooltipActive) {
-              onHourHover(state.activePayload && state.activePayload[0].payload)
+            if (state.isTooltipActive && state.activePayload && state.activePayload.length > 0) {
+              const hoveredData = state.activePayload[0].payload;
+              onHourHover(hoveredData);
             }
           }} onMouseLeave={() => onHourHover(null)}>
             <XAxis dataKey="timestamp" tickFormatter={formatXAxis} interval={2} />
