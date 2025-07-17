@@ -27,18 +27,15 @@ export function SwellChart({ dailyData, onHourHover }: SwellChartProps) {
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={dailyData} onMouseMove={(state) => {
-            console.log("SwellChart: Mouse moved, state:", state);
             // Check if activeIndex is available and valid
             if (state.activeIndex !== undefined && dailyData[state.activeIndex]) {
               const hoveredData = dailyData[state.activeIndex];
-              console.log("SwellChart: Mouse moved, hoveredData from activeIndex:", hoveredData);
               onHourHover(hoveredData);
             } else {
               // If no activeIndex or data, set to null
               onHourHover(null);
             }
           }} onMouseLeave={() => {
-            console.log("SwellChart: Mouse left chart, setting hoveredData to null");
             onHourHover(null);
           }}>
             <XAxis dataKey="timestamp" tickFormatter={formatXAxis} interval={2} />

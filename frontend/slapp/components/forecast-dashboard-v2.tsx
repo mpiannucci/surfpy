@@ -93,7 +93,6 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
   }
 
   const handleHourHover = (hourData: ForecastEntry | null) => {
-    console.log("ForecastDashboardV2: handleHourHover called with:", hourData);
     setHoveredHourData(hourData)
   }
 

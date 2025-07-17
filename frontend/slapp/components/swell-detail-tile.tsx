@@ -22,7 +22,6 @@ interface SwellDetailTileProps {
 }
 
 export function SwellDetailTile({ hourData, surfSpotTimezone }: SwellDetailTileProps) {
-  console.log("SwellDetailTile: hourData prop received:", hourData);
   if (!hourData) {
     return (
       <Card>
