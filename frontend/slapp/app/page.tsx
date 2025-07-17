@@ -1,5 +1,5 @@
 import { AuthChecker } from "@/components/auth-checker"
-import { ClientDashboard } from "@/components/client-dashboard"
+import { DashboardNew } from "@/components/dashboard-new"
 
 export const dynamic = "force-dynamic" // Disable caching for this page
 export const revalidate = 0 // Revalidate on every request
@@ -13,7 +13,7 @@ export default async function Home() {
       </div>
 
       <AuthChecker>
-        <ClientDashboard />
+        <DashboardNew />
       </AuthChecker>
     </div>
   )
