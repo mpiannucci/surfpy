@@ -112,6 +112,7 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
 
   return (
     <div className="space-y-6 p-4">
+      <h1 className="text-3xl font-bold tracking-tight capitalize">{location.replace("-", " ")} Forecast</h1>
       <DayNavigator 
         currentDayIndex={currentDayIndex} 
         onDayChange={handleDayChange} 
