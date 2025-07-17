@@ -187,9 +187,23 @@ def _format_for_api(processed_data, timezone_str='UTC'):
         max_break = wave.maximum_breaking_height if wave and not math.isnan(wave.maximum_breaking_height) else 0.0
 
         # Convert timestamp to local timezone
-        # Use the grid_hour as the primary timestamp, as it's already aligned
-        utc_time = hour_data['grid_hour'].replace(tzinfo=pytz.utc) # Assuming grid_hour is passed in hour_data
+        utc_time = hour_data['grid_hour'].replace(tzinfo=pytz.utc)
         local_time = utc_time.astimezone(local_tz)
+
+        # Handle wind speed conversion to knots
+        wind_speed_knots = 0
+        wind_direction = "N/A"
+        if wind:
+            if wind.unit == surfpy.units.Units.metric:
+                # Convert from m/s to knots
+                wind_speed_knots = surfpy.units.convert(wind.wind_speed, surfpy.units.Measurement.speed, surfpy.units.Units.metric, surfpy.units.Units.knots)
+            elif wind.unit == surfpy.units.Units.english:
+                # Convert from mph to knots
+                wind_speed_knots = surfpy.units.convert(wind.wind_speed, surfpy.units.Measurement.speed, surfpy.units.Units.english, surfpy.units.Units.knots)
+            else:
+                # Should not happen, but as a fallback
+                wind_speed_knots = wind.wind_speed
+            wind_direction = wind.wind_compass_direction
 
         api_hour = {
             "timestamp": local_time.isoformat(),
@@ -201,9 +215,9 @@ def _format_for_api(processed_data, timezone_str='UTC'):
             },
             "swell_components": swell_components,
             "wind": {
-                "speed": wind.wind_speed if wind else 0,
-                "direction": wind.wind_compass_direction if wind else "N/A",
-                "unit": "mph"
+                "speed": round(wind_speed_knots, 1) if wind else 0,
+                "direction": wind_direction if wind else "N/A",
+                "unit": "knots"
             },
             "tide": {
                 "height": round(tide.water_level * 3.28084, 1) if tide else 0,
