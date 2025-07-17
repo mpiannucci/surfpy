@@ -207,6 +207,9 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
   }
 
   const formatTimestamp = (timestamp: string) => {
+    if (!isValidDate(timestamp)) {
+      return "Invalid Date";
+    }
     return format(new Date(timestamp), "MMM d, h a")
   }
 
@@ -218,8 +221,21 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
     return { transform: `rotate(${degrees}deg)` }
   }
 
+  const isValidDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return !isNaN(date.getTime());
+    } catch (e) {
+      return false;
+    }
+  };
+
   // Filter forecast data for 3 days
   const filteredForecastData = forecastData?.data.forecast_data.filter(entry => {
+    if (!isValidDate(entry.timestamp)) {
+      console.warn("Invalid timestamp found in forecast data:", entry.timestamp);
+      return false;
+    }
     const entryDate = new Date(entry.timestamp);
     const today = startOfDay(new Date());
     const threeDaysFromNow = addDays(today, 3);
@@ -232,6 +248,10 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
   let dayCount = 0;
 
   filteredForecastData.forEach((entry, index) => {
+    if (!isValidDate(entry.timestamp)) {
+      console.warn("Invalid timestamp found when creating day markers:", entry.timestamp);
+      return; // Skip this entry if timestamp is invalid
+    }
     const currentDate = startOfDay(new Date(entry.timestamp));
     if (!lastDay || !isSameDay(currentDate, lastDay)) {
       dayCount++;
@@ -264,6 +284,10 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
     const { x, y, payload } = props;
     const marker = dayMarkers.find(m => m.timestamp === payload.value);
 
+    if (!isValidDate(payload.value)) {
+      return null; // Skip rendering if the date is invalid
+    }
+
     if (marker && marker.isNewDay) {
       return (
         <g transform={`translate(${x},${y})`}>
@@ -288,6 +312,9 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const entry = payload[0].payload as ForecastEntry;
+      if (!entry || !isValidDate(entry.timestamp)) {
+        return null; // Do not render tooltip for invalid entries
+      }
       return (
         <Card className="shadow-lg max-w-sm overflow-y-auto max-h-[300px]">
           <CardHeader className="pb-2">
@@ -354,7 +381,7 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
           </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight capitalize">{capitalizeLocation(location)} Forecast</h1>
-            {forecastData?.data?.forecast_generated_at && (
+            {forecastData?.data?.forecast_generated_at && isValidDate(forecastData.data.forecast_generated_at) && (
               <p className="text-muted-foreground text-sm">
                 Forecast generated: {format(new Date(forecastData.data.forecast_generated_at), "MMM d, yyyy h:mm a z")}
               </p>
@@ -395,15 +422,15 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
                     scale="time"
                     type="number"
                     domain={[
-                      new Date(filteredForecastData[0].timestamp).getTime() - (30 * 60 * 1000),
-                      new Date(filteredForecastData[filteredForecastData.length - 1].timestamp).getTime() + (30 * 60 * 1000),
+                      filteredForecastData.length > 0 && isValidDate(filteredForecastData[0].timestamp) ? new Date(filteredForecastData[0].timestamp).getTime() - (30 * 60 * 1000) : 'auto',
+                      filteredForecastData.length > 0 && isValidDate(filteredForecastData[filteredForecastData.length - 1].timestamp) ? new Date(filteredForecastData[filteredForecastData.length - 1].timestamp).getTime() + (30 * 60 * 1000) : 'auto',
                     ]}
                   />
                   <YAxis label={{ value: 'Wave Height (ft)', angle: -90, position: 'insideLeft' }} domain={[0, (dataMax: number) => dataMax + 0.5]} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.1)' }} />
                   <Bar dataKey={getAverageWaveHeight} fill="#3b82f6" />
 
-                  {dayMarkers.filter(marker => marker.isNewDay).map((marker, index) => (
+                  {/* {dayMarkers.filter(marker => marker.isNewDay).map((marker, index) => (
                     <ReferenceLine key={`line-${index}`} x={marker.timestamp} stroke="#ccc" strokeDasharray="3 3" />
                   ))}
                   {dayMarkers.map((marker, index) => {
@@ -437,7 +464,7 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
                       );
                     }
                     return null;
-                  })}
+                  })} */}
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -479,15 +506,15 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
                   scale="time"
                   type="number"
                   domain={[
-                    new Date(filteredForecastData[0].timestamp).getTime() - (30 * 60 * 1000),
-                    new Date(filteredForecastData[filteredForecastData.length - 1].timestamp).getTime() + (30 * 60 * 1000),
+                    filteredForecastData.length > 0 && isValidDate(filteredForecastData[0].timestamp) ? new Date(filteredForecastData[0].timestamp).getTime() - (30 * 60 * 1000) : 'auto',
+                    filteredForecastData.length > 0 && isValidDate(filteredForecastData[filteredForecastData.length - 1].timestamp) ? new Date(filteredForecastData[filteredForecastData.length - 1].timestamp).getTime() + (30 * 60 * 1000) : 'auto',
                   ]}
                 />
                 <YAxis label={{ value: 'Tide Height (ft)', angle: -90, position: 'insideLeft' }} />
                 <Tooltip formatter={(value: number) => [`${value.toFixed(2)} ft`, 'Tide Height']} />
                 <Line type="monotone" dataKey="tide.height" stroke="#8884d8" activeDot={{ r: 8 }} />
 
-                {dayMarkers.filter(marker => marker.isNewDay).map((marker, index) => (
+                {/* {dayMarkers.filter(marker => marker.isNewDay).map((marker, index) => (
                     <ReferenceLine key={`line-${index}`} x={marker.timestamp} stroke="#ccc" strokeDasharray="3 3" />
                   ))}
                   {dayMarkers.map((marker, index) => {
@@ -520,7 +547,7 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
                       );
                     }
                     return null;
-                  })}
+                  })} */}
               </LineChart>
             </ResponsiveContainer>
           ) : (
@@ -566,7 +593,7 @@ export function NewForecastDashboard({ location, onBack }: NewForecastDashboardP
                   <CardContent className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
                       <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                      <span>{format(new Date(session.date), "MMM d, yyyy")}</span>
+                      <span>{isValidDate(session.date) ? format(new Date(session.date), "MMM d, yyyy") : "Invalid Date"}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Star className="h-4 w-4 text-yellow-500" />
