@@ -23,6 +23,7 @@ interface ForecastEntry {
 interface ForecastApiResponse {
   data: {
     forecast_data: ForecastEntry[]
+    timezone: string // Add timezone to the API response interface
   }
 }
 
@@ -35,6 +36,7 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
   const [allForecastData, setAllForecastData] = useState<ForecastEntry[]>([])
   const [currentDayIndex, setCurrentDayIndex] = useState(0)
   const [hoveredHourData, setHoveredHourData] = useState<ForecastEntry | null>(null)
+  const [surfSpotTimezone, setSurfSpotTimezone] = useState<string | null>(null) // New state for timezone
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -61,6 +63,7 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
         const result: ForecastApiResponse = await response.json()
         if (result.data && result.data.forecast_data) {
           setAllForecastData(result.data.forecast_data)
+          setSurfSpotTimezone(result.data.timezone) // Set the timezone
           // Set initial hovered data to the current hour of the first day
           const now = new Date()
           const currentHour = getHours(now)
@@ -90,9 +93,8 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
   }
 
   const handleHourHover = (hourData: ForecastEntry | null) => {
-    if (hourData) {
-      setHoveredHourData(hourData)
-    }
+    console.log("ForecastDashboardV2: handleHourHover called with:", hourData);
+    setHoveredHourData(hourData)
   }
 
   const dailyForecastData = allForecastData.filter(d => 
@@ -123,7 +125,7 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
           <TideChart dailyData={dailyForecastData} />
         </div>
         <div>
-          <SwellDetailTile hourData={hoveredHourData} />
+          <SwellDetailTile hourData={hoveredHourData} surfSpotTimezone={surfSpotTimezone} />
         </div>
       </div>
       <WindDisplay dailyData={dailyForecastData} />
