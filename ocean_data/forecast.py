@@ -183,8 +183,35 @@ def _format_for_api(processed_data, timezone_str='UTC'):
                         "unit": "ft"
                     })
 
-        min_break = wave.minimum_breaking_height if wave and not math.isnan(wave.minimum_breaking_height) else 0.0
-        max_break = wave.maximum_breaking_height if wave and not math.isnan(wave.maximum_breaking_height) else 0.0
+        # Breaking Wave Height Logic
+        min_break_ft = (wave.minimum_breaking_height * 3.28084) if wave and not math.isnan(wave.minimum_breaking_height) else 0.0
+        max_break_ft = (wave.maximum_breaking_height * 3.28084) if wave and not math.isnan(wave.maximum_breaking_height) else 0.0
+
+        rounded_min = round(min_break_ft)
+        rounded_max = round(max_break_ft)
+
+        range_text = ""
+        if rounded_max <= 0:
+            range_text = "Flat"
+            # Ensure max is also 0 for consistency in the JSON
+            json_max = 0
+        else:
+            final_min = rounded_min
+            if rounded_min >= rounded_max:
+                final_min = rounded_max - 1
+            
+            # Ensure the floor is 0
+            if final_min < 0:
+                final_min = 0
+            
+            range_text = f"{final_min}-{rounded_max} ft"
+            json_max = rounded_max
+
+        breaking_wave_height_json = {
+            "max": json_max,
+            "range_text": range_text,
+            "unit": "ft"
+        }
 
         # Convert timestamp to local timezone
         utc_time = hour_data['grid_hour'].replace(tzinfo=pytz.utc)
@@ -212,11 +239,7 @@ def _format_for_api(processed_data, timezone_str='UTC'):
         api_hour = {
             "timestamp": local_time.isoformat(),
             "type": hour_data.get('type', 'forecast'),
-            "breaking_wave_height": {
-                "min": round(min_break * 3.28084, 1),
-                "max": round(max_break * 3.28084, 1),
-                "unit": "ft"
-            },
+            "breaking_wave_height": breaking_wave_height_json,
             "swell_components": swell_components,
             "wind": {
                 "speed": round(wind_speed_knots, 1) if wind else 0,
