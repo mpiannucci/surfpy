@@ -1,12 +1,17 @@
 "use client"
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface ForecastEntry {
   timestamp: string
   breaking_wave_height: { max: number; range_text: string; unit: string }
+  type?: string // Add the type property
 }
+
+const ACTUAL_COLOR = "#009FB7";
+const FORECAST_COLOR = "#E6E6EA";
+const DEFAULT_COLOR = "grey";
 
 interface SwellChartProps {
   dailyData: ForecastEntry[]
@@ -41,9 +46,10 @@ export function SwellChart({ dailyData, onHourHover }: SwellChartProps) {
             <XAxis dataKey="timestamp" tickFormatter={formatXAxis} interval={2} />
             <YAxis label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft' }} domain={[0, 10]} />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="breaking_wave_height.max" fill="#3b82f6">
+            <Legend content={<CustomChartLegend />} />
+            <Bar dataKey="breaking_wave_height.max">
               {dailyData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#3b82f6' : '#60a5fa'} />
+                <Cell key={`cell-${index}`} fill={entry.type === "actual" ? ACTUAL_COLOR : (entry.type === "forecast" ? FORECAST_COLOR : DEFAULT_COLOR)} />
               ))}
             </Bar>
           </BarChart>
@@ -52,6 +58,23 @@ export function SwellChart({ dailyData, onHourHover }: SwellChartProps) {
     </Card>
   )
 }
+
+const CustomChartLegend = (props: any) => {
+  const { payload } = props;
+
+  return (
+    <ul className="flex justify-center gap-4 mt-4">
+      <li className="flex items-center gap-1">
+        <span className="w-3 h-3 inline-block rounded-full" style={{ backgroundColor: ACTUAL_COLOR }}></span>
+        <span>Actual</span>
+      </li>
+      <li className="flex items-center gap-1">
+        <span className="w-3 h-3 inline-block rounded-full" style={{ backgroundColor: FORECAST_COLOR }}></span>
+        <span>Forecast</span>
+      </li>
+    </ul>
+  );
+};
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
