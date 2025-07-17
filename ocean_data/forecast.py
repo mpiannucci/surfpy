@@ -75,7 +75,7 @@ def get_surf_forecast(spot_name):
     forecast_wave_data = buoy_station.fetch_wave_forecast_bulletin(wave_model) or []
 
     tide_station = TideStation(station_id=spot_config['tide_station_id'], location=None)
-    tide_data_result = tide_station.fetch_tide_data(now_utc, forecast_end_utc, interval='h', unit='english')
+    tide_data_result = tide_station.fetch_tide_data(now_utc, forecast_end_utc, interval='h', unit='metric')
     forecast_tide_data = []
     if tide_data_result:
         _, forecast_tide_data = tide_data_result
