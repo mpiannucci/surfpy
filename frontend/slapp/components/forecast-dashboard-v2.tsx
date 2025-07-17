@@ -119,12 +119,19 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
         onDayChange={handleDayChange} 
       />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+        {/* Swell Chart - order 1 on mobile, col-span-2 on large */}
+        <div className="order-1 lg:col-span-2">
           <SwellChart dailyData={dailyForecastData} onHourHover={handleHourHover} />
-          <TideChart dailyData={dailyForecastData} />
         </div>
-        <div>
+
+        {/* Swell Detail Tile - order 2 on mobile, col-span-1 on large */}
+        <div className="order-2 lg:col-span-1">
           <SwellDetailTile hourData={hoveredHourData} surfSpotTimezone={surfSpotTimezone} />
+        </div>
+
+        {/* Tide Chart - order 3 on mobile, col-span-2 on large */}
+        <div className="order-3 lg:col-span-2">
+          <TideChart dailyData={dailyForecastData} />
         </div>
       </div>
       <WindDisplay dailyData={dailyForecastData} />

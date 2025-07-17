@@ -58,13 +58,7 @@ export function SwellDetailTile({ hourData, surfSpotTimezone }: SwellDetailTileP
           <p className="text-muted-foreground">No detailed swell components available.</p>
         )}
         
-        {/* Display breaking wave height separately */}
-        {hourData.breaking_wave_height && (
-          <div className="space-y-1 mt-4">
-            <p className="font-semibold">Breaking Wave Height:</p>
-            <p className="ml-2">{hourData.breaking_wave_height.range_text}</p>
-          </div>
-        )}
+        
       </CardContent>
     </Card>
   )
