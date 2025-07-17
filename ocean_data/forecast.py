@@ -11,6 +11,36 @@ from ocean_data.location import get_spot_config
 from .swell import fetch_historical_swell_data
 from .meteorology import fetch_historical_met_data
 from .tide import fetch_historical_tide_data
+import requests
+
+def _fetch_gfs_wave_bulletin(station_id, model_run_time):
+    """
+    Fetches and parses a GFS wave model bulletin for a specific model run time.
+    Returns None if the bulletin is not available.
+    """
+    try:
+        # Create a temporary buoy station to generate the URL and parse
+        buoy_station = BuoyStation(station_id=station_id, location=None)
+
+        # Manually construct the URL for the specific model_run_time
+        model_run_str = str(model_run_time.hour).rjust(2, '0')
+        date_str = model_run_time.strftime('%Y%m%d')
+        # This URL structure is based on surfpy's BuoyStation logic
+        url = f'https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gfs.{date_str}/{model_run_str}/wave/station/bulls.t{model_run_str}z/gfswave.{station_id}.bull'
+        
+        response = requests.get(url, timeout=10) # Increased timeout for reliability
+        if response.status_code != 200 or not response.text:
+            print(f"Bulletin for {station_id} at {model_run_time} not found (status: {response.status_code}).")
+            return None
+        
+        # Use the existing parser from surfpy
+        return buoy_station.parse_wave_forecast_bulletin(response.text, None)
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed for GFS bulletin at {model_run_time}: {e}")
+        return None
+    except Exception as e:
+        print(f"An error occurred in _fetch_gfs_wave_bulletin: {e}")
+        return None
 
 def _find_closest_entry(data_list, target_datetime, max_minutes_diff=None):
     """
@@ -69,10 +99,23 @@ def get_surf_forecast(spot_name):
     actual_tide_data = fetch_historical_tide_data(spot_config['tide_station_id'], historical_start_utc, now_utc)
 
     # 2. Fetch Forecast Data
-    buoy_station = BuoyStation(station_id=spot_config['swell_buoy_id'], location=None)
     wave_model = atlantic_gfs_wave_model()
-    forecast_generated_at = wave_model.latest_model_time().strftime('%Y-%m-%d %H:%M UTC')
-    forecast_wave_data = buoy_station.fetch_wave_forecast_bulletin(wave_model) or []
+    latest_run_time = wave_model.latest_model_time()
+
+    # Attempt to fetch the latest forecast, with a fallback to the previous run
+    forecast_wave_data = _fetch_gfs_wave_bulletin(spot_config['swell_buoy_id'], latest_run_time)
+    if forecast_wave_data:
+        forecast_generated_at = latest_run_time.strftime('%Y-%m-%d %H:%M UTC')
+    else:
+        print(f"Latest forecast not available. Falling back to previous model run.")
+        previous_run_time = latest_run_time - datetime.timedelta(hours=6)
+        forecast_wave_data = _fetch_gfs_wave_bulletin(spot_config['swell_buoy_id'], previous_run_time)
+        if forecast_wave_data:
+            forecast_generated_at = previous_run_time.strftime('%Y-%m-%d %H:%M UTC')
+        else:
+            print(f"Fallback forecast also failed. No wave forecast data available.")
+            forecast_wave_data = []
+            forecast_generated_at = "N/A"
 
     tide_station = TideStation(station_id=spot_config['tide_station_id'], location=None)
     tide_data_result = tide_station.fetch_tide_data(now_utc, forecast_end_utc, interval='h', unit='metric')
