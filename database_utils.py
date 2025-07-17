@@ -7,8 +7,8 @@ from psycopg2.extras import Json
 from ocean_data.location import LEGACY_LOCATION_MAP
 
 # Database connection string
-# db_url = "postgresql://postgres:kooksinthekitchen@db.ehrfwjekssrnbgmgxctg.supabase.co:5432/postgres"
-db_url = "postgresql://postgres.ehrfwjekssrnbgmgxctg:kooksinthekitchen@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
+db_url = "postgresql://postgres:kooksinthekitchen@db.ehrfwjekssrnbgmgxctg.supabase.co:5432/postgres" # direct connection
+# db_url = "postgresql://postgres.ehrfwjekssrnbgmgxctg:kooksinthekitchen@aws-0-us-east-1.pooler.supabase.com:6543/postgres" # pooled connection
 
 def get_db_connection():
     """Create and return a database connection"""
