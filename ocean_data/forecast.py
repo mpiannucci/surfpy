@@ -193,6 +193,7 @@ def _format_for_api(processed_data, timezone_str='UTC'):
         # Handle wind speed conversion to knots
         wind_speed_knots = 0
         wind_direction = "N/A"
+        wind_direction_degrees = 0
         if wind:
             if wind.unit == surfpy.units.Units.metric:
                 # Convert from m/s to knots
@@ -203,7 +204,10 @@ def _format_for_api(processed_data, timezone_str='UTC'):
             else:
                 # Should not happen, but as a fallback
                 wind_speed_knots = wind.wind_speed
+            
             wind_direction = wind.wind_compass_direction
+            if hasattr(wind, 'wind_direction') and not math.isnan(wind.wind_direction):
+                wind_direction_degrees = int(wind.wind_direction)
 
         api_hour = {
             "timestamp": local_time.isoformat(),
@@ -217,6 +221,7 @@ def _format_for_api(processed_data, timezone_str='UTC'):
             "wind": {
                 "speed": round(wind_speed_knots, 1) if wind else 0,
                 "direction": wind_direction if wind else "N/A",
+                "direction_degrees": wind_direction_degrees,
                 "unit": "knots"
             },
             "tide": {
