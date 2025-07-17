@@ -32,7 +32,7 @@ export function Navbar() {
     { href: "/dashboard-new", label: "Dashboard" },
     { href: "/my-sessions", label: "My Sessions" },
     { href: "/sessions", label: "All Sessions" },
-    { href: "/forecast", label: "Forecast" },
+    { href: "/forecast-v2", label: "Forecast" },
     { href: "/add", label: "Add Session" },
     
     { href: "/comparison", label: "Comparison" },
