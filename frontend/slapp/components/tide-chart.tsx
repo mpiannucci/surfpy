@@ -26,8 +26,8 @@ export function TideChart({ dailyData }: TideChartProps) {
       <CardContent>
         <ResponsiveContainer width="100%" height={150}>
           <LineChart data={dailyData}>
-            <XAxis dataKey="timestamp" tickFormatter={formatXAxis} interval={2} />
-            <YAxis label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft' }} />
+            <XAxis dataKey="timestamp" tickFormatter={formatXAxis} />
+            <YAxis hide={true} domain={[0, 7]} />
             <Tooltip content={<CustomTooltip />} />
             <Line type="monotone" dataKey="tide.height" stroke="#8884d8" dot={false} />
           </LineChart>
