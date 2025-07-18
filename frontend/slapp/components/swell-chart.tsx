@@ -43,8 +43,9 @@ export function SwellChart({ dailyData, onHourHover }: SwellChartProps) {
           }} onMouseLeave={() => {
             onHourHover(null);
           }}>
-            <XAxis dataKey="timestamp" tickFormatter={formatXAxis} interval={2} />
-            <YAxis label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft' }} domain={[0, 10]} />
+            <XAxis dataKey="timestamp" tickFormatter={formatXAxis} />
+            <YAxis hide={true} domain={[0, 12]} label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft' }} width={30} />
+            
             <Tooltip content={<CustomTooltip />} />
             <Legend content={<CustomChartLegend />} />
             <Bar dataKey="breaking_wave_height.max">
