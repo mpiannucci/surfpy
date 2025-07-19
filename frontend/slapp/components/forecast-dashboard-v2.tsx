@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getAuthToken } from "@/lib/auth"
 import { addDays, startOfDay, isSameDay, getHours } from "date-fns"
 
+import { ClientSessionsByLocation } from "./client-sessions-by-location"
+
 // Types need to be defined here or imported
 interface ForecastEntry {
   timestamp: string
@@ -135,6 +137,10 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
         </div>
       </div>
       <WindDisplay dailyData={dailyForecastData} />
+
+      <div className="mt-8">
+        <ClientSessionsByLocation location={location} />
+      </div>
     </div>
   )
 }
