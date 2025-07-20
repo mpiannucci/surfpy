@@ -151,7 +151,6 @@ export function UserDashboardStats({
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="text-2xl font-bold">{totalSessionsAllTime}</div>
-              <p className="text-xs text-muted-foreground">Across all years</p>
             </CardContent>
           </Card>
 
@@ -165,7 +164,6 @@ export function UserDashboardStats({
               <div className="text-2xl font-bold">
                 {parseFloat(currentUserYearStats.sessions_per_week).toFixed(1)}
               </div>
-              <p className="text-xs text-muted-foreground">This year</p>
             </CardContent>
           </Card>
 
@@ -179,7 +177,6 @@ export function UserDashboardStats({
               <div className="text-2xl font-bold">
                 {formatMinutesToHours(currentUserYearStats.avg_session_duration_minutes)}
               </div>
-              <p className="text-xs text-muted-foreground">This year</p>
             </CardContent>
           </Card>
 
