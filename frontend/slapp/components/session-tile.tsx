@@ -20,8 +20,8 @@ const formatTime = (timeStr: string) => {
 }
 
 export function SessionTile({ session }: SessionTileProps) {
-  const primarySwell = session.raw_swell?.[0]?.swell_components?.swell_1
-  const tideLevel = session.raw_tide?.water_level
+  
+  
 
   return (
     <Link href={`/sessions/${session.id}`} passHref>
@@ -39,28 +39,22 @@ export function SessionTile({ session }: SessionTileProps) {
 
         {/* Core Conditions */}
         <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-          <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-            <Waves className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-bold">
-                {primarySwell?.height ? `${primarySwell.height.toFixed(1)}ft` : "N/A"}
-                <span className="font-normal text-muted-foreground"> @ </span>
-                {primarySwell?.period ? `${primarySwell.period.toFixed(0)}s` : "N/A"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {primarySwell?.direction ? `${primarySwell.direction.toFixed(0)}°` : ""}
-              </p>
+          {session.raw_swell?.[0]?.swell_components && (
+            <div className="col-span-2">
+              <p className="font-bold text-sm mb-1">Swell Components:</p>
+              {Object.entries(session.raw_swell[0].swell_components)
+                .filter(([, swell]) => swell !== undefined)
+                .map(([key, swell]) => (
+                  <div key={key} className="flex items-center gap-2 text-xs mb-1">
+                    <Waves className="h-4 w-4 text-blue-500" />
+                    <span>
+                      {swell.height?.toFixed(1) ?? 'N/A'}ft @ {swell.period?.toFixed(0) ?? 'N/A'}s from {swell.direction?.toFixed(0) ?? 'N/A'}°
+                    </span>
+                  </div>
+                ))}
             </div>
-          </div>
-          <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-bold">
-                {tideLevel !== undefined ? `${tideLevel.toFixed(1)}ft` : "N/A"}
-              </p>
-              <p className="text-xs text-muted-foreground">Tide Level</p>
-            </div>
-          </div>
+          )}
+          
         </div>
 
         {/* Session Notes */}
