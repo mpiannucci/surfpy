@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation"
 import { formatDate, formatTime } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { SwellDataDisplay } from "@/components/swell-data-display"
-import { SwellComponentsVisualization } from "@/components/swell-components-visualization"
+
 import { MeteorologicalDataDisplay } from "@/components/meteorological-data-display"
 import { TideDataDisplay } from "@/components/tide-data-display"
 import { ArrowLeft, Loader2, AlertCircle, User, Edit } from "lucide-react"
@@ -424,17 +424,7 @@ export function ClientSessionDetail() {
       {/* Display tide data if available - handle null gracefully */}
       {session.raw_tide && session.raw_tide !== null && <TideDataDisplay tideData={session.raw_tide} />}
 
-      {/* Add the swell components visualization if available - handle null gracefully */}
-      {swellComponents && swellComponents !== null && (
-        <Card className="bg-background/10 border-border/30">
-          <CardHeader>
-            <CardTitle>Swell Components Visualization</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SwellComponentsVisualization swellComponents={swellComponents} />
-          </CardContent>
-        </Card>
-      )}
+      
 
       {/* Edit Session Modal */}
       {session && (
