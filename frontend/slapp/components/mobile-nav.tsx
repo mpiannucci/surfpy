@@ -17,7 +17,7 @@ export function MobileNav() {
     { href: "/sessions-v2", label: "Sessions", icon: List },
     { href: "/forecast-v2", label: "Forecast", icon: Waves },
     { href: "/add", label: "Add Session", icon: Plus },
-    { href: "/comparison", label: "Comparison", icon: BarChart3 },
+    
   ]
 
   return (

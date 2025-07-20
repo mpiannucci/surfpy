@@ -34,7 +34,7 @@ export function Navbar() {
     { href: "/forecast-v2", label: "Forecast" },
     
     
-    { href: "/comparison", label: "Comparison" },
+    
   ]
 
   return (

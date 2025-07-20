@@ -15,10 +15,9 @@ export function BottomNav() {
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: Home },
-    { href: "/sessions-v2", label: "Sessions", icon: List },
     { href: "/add", label: "Add", icon: Plus },
+    { href: "/sessions-v2", label: "Sessions", icon: List },
     { href: "/forecast-v2", label: "Forecast", icon: Waves },
-    { href: "/comparison", label: "Compare", icon: BarChart3 },
   ]
 
   return (
@@ -35,6 +34,7 @@ export function BottomNav() {
               className={cn(
                 "flex flex-col items-center gap-1 px-3 py-2 text-xs transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground hover:text-primary",
+                item.href === "/add" && "bg-primary text-primary-foreground p-3 shadow-lg"
               )}
             >
               <Icon className={cn("h-5 w-5", isActive && "fill-current")} />
