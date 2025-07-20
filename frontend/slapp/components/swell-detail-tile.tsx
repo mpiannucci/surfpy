@@ -52,10 +52,9 @@ export function SwellDetailTile({ hourData, surfSpotTimezone, isMobile }: SwellD
         {hourData.swell_components && hourData.swell_components.length > 0 ? (
           hourData.swell_components.map((swell, index) => (
             <div key={index} className="space-y-1">
-              <p className="font-semibold">Swell {index + 1}:</p>
               <div className="flex items-center gap-2 ml-2">
                 <span>{swell.height.toFixed(1)}{swell.unit} @ {swell.period.toFixed(1)}s from {swell.direction} ({swell.direction_degrees}°)</span>
-                <ArrowUpRight style={{ transform: `rotate(${swell.direction_degrees}deg)` }} className="h-4 w-4 text-blue-500" />
+                <ArrowUpRight style={{ transform: `rotate(${(swell.direction_degrees + 180) % 360}deg)` }} className="h-4 w-4 text-blue-500" />
               </div>
             </div>
           ))
