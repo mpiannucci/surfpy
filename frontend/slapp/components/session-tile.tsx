@@ -33,6 +33,20 @@ const getDirectionArrow = (degrees: number | undefined) => {
   return null;
 };
 
+// Helper to get cardinal direction from degrees
+const getCardinalDirection = (degrees: number | undefined) => {
+  if (degrees === undefined || degrees === null) return "N/A";
+  if (degrees >= 337.5 || degrees < 22.5) return "N";
+  if (degrees >= 22.5 && degrees < 67.5) return "NE";
+  if (degrees >= 67.5 && degrees < 112.5) return "E";
+  if (degrees >= 112.5 && degrees < 157.5) return "SE";
+  if (degrees >= 157.5 && degrees < 202.5) return "S";
+  if (degrees >= 202.5 && degrees < 247.5) return "SW";
+  if (degrees >= 247.5 && degrees < 292.5) return "W";
+  if (degrees >= 292.5 && degrees < 337.5) return "NW";
+  return "N/A";
+};
+
 export function SessionTile({ session }: SessionTileProps) {
   
   
@@ -64,7 +78,7 @@ export function SessionTile({ session }: SessionTileProps) {
                   <div key={key} className="flex items-center gap-2 text-xs mb-1">
                     <Waves className="h-4 w-4 text-blue-500" />
                     <span>
-                      {swell.height?.toFixed(1) ?? 'N/A'}ft @ {swell.period?.toFixed(0) ?? 'N/A'}s from {swell.direction?.toFixed(0) ?? 'N/A'}° {getDirectionArrow((swell.direction + 180) % 360)}
+                      {swell.height?.toFixed(1) ?? 'N/A'}ft @ {swell.period?.toFixed(0) ?? 'N/A'}s from {getCardinalDirection(swell.direction)} ({swell.direction?.toFixed(0) ?? 'N/A'})° {getDirectionArrow((swell.direction + 180) % 360)}
                     </span>
                   </div>
                 ))}
