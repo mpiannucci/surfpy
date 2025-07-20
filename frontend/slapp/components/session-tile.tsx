@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
-import { Waves, TrendingUp, User, Calendar, Clock, ArrowUp, ArrowUpRight, ArrowRight, ArrowDownRight, ArrowDown, ArrowDownLeft, ArrowLeft, ArrowUpLeft } from "lucide-react"
+import { Waves, TrendingUp, User, Calendar, Clock, ArrowUp, ArrowUpRight, ArrowRight, ArrowDownRight, ArrowDown, ArrowDownLeft, ArrowLeft, ArrowUpLeft, MapPin } from "lucide-react"
 import type { SurfSession } from "@/app/sessions-v2/page"
 
 interface SessionTileProps {
@@ -44,7 +44,9 @@ export function SessionTile({ session }: SessionTileProps) {
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1">
             <h3 className="text-xl font-bold truncate">{session.session_name}</h3>
-            <p className="text-sm text-muted-foreground">{session.location}</p>
+            <div className="flex items-center text-base font-semibold text-foreground mt-1">
+              <MapPin className="mr-1 h-4 w-4" /> {session.location}
+            </div>
           </div>
           <div className="ml-4 text-4xl font-extrabold text-primary">
             {session.fun_rating}
@@ -74,7 +76,7 @@ export function SessionTile({ session }: SessionTileProps) {
         {/* Session Notes */}
         {session.session_notes && (
           <div className="mb-4 flex-grow">
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="text-sm text-muted-foreground line-clamp-4">
               {session.session_notes}
             </p>
           </div>
