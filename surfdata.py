@@ -237,34 +237,32 @@ def create_surf_session(user_id):
                 "message": "Invalid time format. Use HH:MM:SS format for both time and end_time"
             }), 400
 
-        # Validate location using the ocean_data module
-        if not is_valid_location(location):
+        # Validate location and get spot configuration
+        spot_config = get_spot_config(location)
+        if not spot_config:
             return jsonify({
                 "status": "fail", 
                 "message": f"Invalid location: {location}. Please provide a valid surf spot."
             }), 400
             
-        # Get buoy mapping using the ocean_data module
-        buoy_mapping = get_buoys_for_location(location)
-        swell_buoy_id = buoy_mapping["swell"]
-        met_buoy_id = buoy_mapping["met"]
-        tide_station_id = buoy_mapping["tide"]
+        # Get buoy mapping using the ocean_data module (can use spot_config directly)
+        swell_buoy_id = spot_config["swell_buoy_id"]
+        met_buoy_id = spot_config["swell_buoy_id"] # Assuming met and swell are from the same buoy
+        tide_station_id = spot_config["tide_station_id"]
 
-        # Combine date and time to create a datetime object (using start time for oceanographic data)
+        # Combine date and time to create a datetime object, localized to the spot's timezone
         try:
-            # Combining date and time strings
             datetime_str = f"{session_date}T{session_time}"
-            
-            # Parse as naive datetime
             naive_datetime = datetime.fromisoformat(datetime_str)
             
-            # Assume this is Eastern Time
-            eastern = pytz.timezone('America/New_York')
-            # Localize to Eastern Time
-            localized_datetime = eastern.localize(naive_datetime)
+            # Get the spot's timezone from the configuration
+            spot_timezone_str = spot_config.get('timezone', 'UTC') # Default to UTC if not found
+            spot_tz = pytz.timezone(spot_timezone_str)
+            
+            # Localize to the spot's timezone
+            localized_datetime = spot_tz.localize(naive_datetime)
             # Convert to UTC for data retrieval
             target_datetime = localized_datetime.astimezone(timezone.utc)
-    
             
         except ValueError:
             return jsonify({
@@ -465,19 +463,18 @@ def update_surf_session(user_id, session_id):
                         "message": "Invalid time format. Use HH:MM:SS format for both time and end_time"
                     }), 400
         
-        if location:
-            # Validate location using the ocean_data module
-            if not is_valid_location(location):
-                return jsonify({
-                    "status": "fail", 
-                    "message": f"Invalid location: {location}. Please provide a valid surf spot."
-                }), 400
-                
-            # Get buoy mapping using the ocean_data module
-            buoy_mapping = get_buoys_for_location(location)
-            session_data['swell_buoy_id'] = buoy_mapping["swell"]
-            session_data['met_buoy_id'] = buoy_mapping["met"]
-            session_data['tide_station_id'] = buoy_mapping["tide"]
+        # Validate location and get spot configuration
+        spot_config = get_spot_config(location)
+        if not spot_config:
+            return jsonify({
+                "status": "fail", 
+                "message": f"Invalid location: {location}. Please provide a valid surf spot."
+            }), 400
+            
+        # Get buoy mapping using the ocean_data module (can use spot_config directly)
+        session_data['swell_buoy_id'] = spot_config["swell_buoy_id"]
+        session_data['met_buoy_id'] = spot_config["swell_buoy_id"] # Assuming met and swell are from the same buoy
+        session_data['tide_station_id'] = spot_config["tide_station_id"]
         
         # If date or time changed, update oceanographic data
         if (session_date != existing_session.get('date') or 
@@ -488,9 +485,13 @@ def update_surf_session(user_id, session_id):
                 datetime_str = f"{session_date}T{session_time}"
                 naive_datetime = datetime.fromisoformat(datetime_str)
                 
-                # Convert to Eastern Time, then UTC
-                eastern = pytz.timezone('America/New_York')
-                localized_datetime = eastern.localize(naive_datetime)
+                # Get the spot's timezone from the configuration
+                spot_timezone_str = spot_config.get('timezone', 'UTC') # Default to UTC if not found
+                spot_tz = pytz.timezone(spot_timezone_str)
+                
+                # Localize to the spot's timezone
+                localized_datetime = spot_tz.localize(naive_datetime)
+                # Convert to UTC for data retrieval
                 target_datetime = localized_datetime.astimezone(timezone.utc)
             except ValueError:
                 return jsonify({
