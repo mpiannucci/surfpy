@@ -284,7 +284,7 @@ export default function SessionsV2Page() {
         </div>
       </div>
 
-      <SessionFilters filters={filters} setFilters={setFilters} />
+      <SessionFilters filters={filters} setFilters={setFilters} initialState={initialFilterState} />
 
       {/* Display Grid or Loading/Error States */}
       {loading ? (

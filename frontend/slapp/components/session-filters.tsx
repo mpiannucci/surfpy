@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Filter, ChevronDown } from "lucide-react"
+import { Filter, ChevronDown, X } from "lucide-react"
 
 // --- Filter Types ---
 export interface SessionFiltersState {
@@ -25,9 +25,10 @@ export interface SessionFiltersState {
 interface SessionFiltersProps {
   filters: SessionFiltersState
   setFilters: (filters: SessionFiltersState) => void
+  initialState: SessionFiltersState // New prop
 }
 
-export function SessionFilters({ filters, setFilters }: SessionFiltersProps) {
+export function SessionFilters({ filters, setFilters, initialState }: SessionFiltersProps) {
   const [isMoreFiltersOpen, setIsMoreFiltersOpen] = useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,6 +42,10 @@ export function SessionFilters({ filters, setFilters }: SessionFiltersProps) {
 
   const handleSliderCommit = (value: number[]) => {
     setFilters({ ...filters, funRating: value[0] })
+  }
+
+  const handleClearFilters = () => {
+    setFilters(initialState)
   }
 
   return (
@@ -66,13 +71,19 @@ export function SessionFilters({ filters, setFilters }: SessionFiltersProps) {
             </SelectContent>
           </Select>
         </div>
-        <CollapsibleTrigger asChild>
-            <Button variant="outline" className="w-full lg:w-auto">
-              <Filter className="mr-2 h-4 w-4" />
-              More Filters
-              <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${isMoreFiltersOpen ? 'rotate-180' : ''}`} />
+        <div className="flex gap-2">
+            <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full lg:w-auto">
+                  <Filter className="mr-2 h-4 w-4" />
+                  More Filters
+                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${isMoreFiltersOpen ? 'rotate-180' : ''}`} />
+                </Button>
+            </CollapsibleTrigger>
+            <Button variant="outline" onClick={handleClearFilters} className="w-full lg:w-auto">
+                <X className="mr-2 h-4 w-4" />
+                Clear
             </Button>
-        </CollapsibleTrigger>
+        </div>
       </div>
 
       <CollapsibleContent className="pt-6">
