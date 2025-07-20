@@ -42,7 +42,7 @@ export function SessionTile({ session }: SessionTileProps) {
       <Card className="h-full flex flex-col p-4 border rounded-lg hover:shadow-lg transition-shadow duration-200 cursor-pointer">
         {/* Header */}
         <div className="flex justify-between items-start mb-3">
-          <div className="flex-1">
+          <div className="flex-1 overflow-hidden">
             <h3 className="text-xl font-bold truncate">{session.session_name}</h3>
             <div className="flex items-center text-base font-semibold text-foreground mt-1">
               <MapPin className="mr-1 h-4 w-4" /> {session.location}
