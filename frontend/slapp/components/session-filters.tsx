@@ -49,11 +49,23 @@ export function SessionFilters({ filters, setFilters, initialState, availableSur
   }
 
   return (
-    <Collapsible open={isMoreFiltersOpen} onOpenChange={setIsMoreFiltersOpen} className="p-4 border rounded-lg bg-card text-card-foreground mb-8">
+    <div className="p-4 border rounded-lg bg-card text-card-foreground mb-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
         <div>
           <Label htmlFor="location">Location</Label>
           <Input id="location" name="location" placeholder="e.g., Lido Beach" value={filters.location} onChange={handleInputChange} />
+        </div>
+        <div>
+            <Label>Surfer Name</Label>
+            <Select name="surfer" onValueChange={(v) => handleSelectChange("surfer", v)} value={filters.surfer}>
+                <SelectTrigger><SelectValue placeholder="Select Surfer" /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="any">Any Surfer</SelectItem>
+                    {availableSurferNames.map(name => (
+                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
         </div>
         <div>
           <Label htmlFor="dateRange">Date</Label>
@@ -71,85 +83,61 @@ export function SessionFilters({ filters, setFilters, initialState, availableSur
             </SelectContent>
           </Select>
         </div>
-        <div className="flex gap-2">
-            <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full lg:w-auto">
-                  <Filter className="mr-2 h-4 w-4" />
-                  More Filters
-                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${isMoreFiltersOpen ? 'rotate-180' : ''}`} />
-                </Button>
-            </CollapsibleTrigger>
-            <Button variant="outline" onClick={handleClearFilters} className="w-full lg:w-auto">
+        
+        <div>
+            <Label>Primary Swell Height</Label>
+            <Select name="swellHeight" onValueChange={(v) => handleSelectChange("swellHeight", v)} value={filters.swellHeight}>
+                <SelectTrigger><SelectValue placeholder="Swell Height" /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="any">Any Height</SelectItem>
+                    <SelectItem value="1-2">1-2 ft</SelectItem>
+                    <SelectItem value="2-3">2-3 ft</SelectItem>
+                    <SelectItem value="3-5">3-5 ft</SelectItem>
+                    <SelectItem value="5+">5+ ft</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+        <div>
+            <Label>Primary Swell Period</Label>
+            <Select name="swellPeriod" onValueChange={(v) => handleSelectChange("swellPeriod", v)} value={filters.swellPeriod}>
+                <SelectTrigger><SelectValue placeholder="Swell Period" /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="any">Any Period</SelectItem>
+                    <SelectItem value="1-5">1-5 s</SelectItem>
+                    <SelectItem value="5-8">5-8 s</SelectItem>
+                    <SelectItem value="8-12">8-12 s</SelectItem>
+                    <SelectItem value="12+">12+ s</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+        <div>
+            <Label>Primary Swell Direction</Label>
+            <Select name="swellDirection" onValueChange={(v) => handleSelectChange("swellDirection", v)} value={filters.swellDirection}>
+                <SelectTrigger><SelectValue placeholder="Swell Direction" /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="any">Any Direction</SelectItem>
+                    <SelectItem value="N">N</SelectItem>
+                    <SelectItem value="NE">NE</SelectItem>
+                    <SelectItem value="E">E</SelectItem>
+                    <SelectItem value="SE">SE</SelectItem>
+                    <SelectItem value="S">S</SelectItem>
+                    <SelectItem value="SW">SW</SelectItem>
+                    <SelectItem value="W">W</SelectItem>
+                    <SelectItem value="NW">NW</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+        <div className="space-y-2 pt-2">
+            <Label>Min Fun Rating: {filters.funRating}</Label>
+            <Slider defaultValue={[filters.funRating]} max={10} step={1} onValueCommit={handleSliderCommit} />
+        </div>
+        <div className="flex gap-2 col-span-full justify-end">
+            <Button variant="outline" onClick={handleClearFilters} className="w-full md:w-auto">
                 <X className="mr-2 h-4 w-4" />
-                Clear
+                Clear Filters
             </Button>
         </div>
       </div>
-
-      <CollapsibleContent className="pt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-                <Label>Swell Height</Label>
-                <Select name="swellHeight" onValueChange={(v) => handleSelectChange("swellHeight", v)} value={filters.swellHeight}>
-                    <SelectTrigger><SelectValue placeholder="Swell Height" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="any">Any Height</SelectItem>
-                        <SelectItem value="1-2">1-2 ft</SelectItem>
-                        <SelectItem value="2-3">2-3 ft</SelectItem>
-                        <SelectItem value="3-5">3-5 ft</SelectItem>
-                        <SelectItem value="5+">5+ ft</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-            <div>
-                <Label>Swell Period</Label>
-                <Select name="swellPeriod" onValueChange={(v) => handleSelectChange("swellPeriod", v)} value={filters.swellPeriod}>
-                    <SelectTrigger><SelectValue placeholder="Swell Period" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="any">Any Period</SelectItem>
-                        <SelectItem value="1-5">1-5 s</SelectItem>
-                        <SelectItem value="5-8">5-8 s</SelectItem>
-                        <SelectItem value="8-12">8-12 s</SelectItem>
-                        <SelectItem value="12+">12+ s</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-            <div>
-                <Label>Swell Direction</Label>
-                <Select name="swellDirection" onValueChange={(v) => handleSelectChange("swellDirection", v)} value={filters.swellDirection}>
-                    <SelectTrigger><SelectValue placeholder="Swell Direction" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="any">Any Direction</SelectItem>
-                        <SelectItem value="N">N (338-22°)</SelectItem>
-                        <SelectItem value="NE">NE (23-67°)</SelectItem>
-                        <SelectItem value="E">E (68-112°)</SelectItem>
-                        <SelectItem value="SE">SE (113-157°)</SelectItem>
-                        <SelectItem value="S">S (158-202°)</SelectItem>
-                        <SelectItem value="SW">SW (203-247°)</SelectItem>
-                        <SelectItem value="W">W (248-292°)</SelectItem>
-                        <SelectItem value="NW">NW (293-337°)</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-            <div className="space-y-2 pt-2">
-                <Label>Min Fun Rating: {filters.funRating}</Label>
-                <Slider defaultValue={[filters.funRating]} max={10} step={1} onValueCommit={handleSliderCommit} />
-            </div>
-            
-            <div>
-                <Label>Surfer Name</Label>
-                <Select name="surfer" onValueChange={(v) => handleSelectChange("surfer", v)} value={filters.surfer}>
-                    <SelectTrigger><SelectValue placeholder="Select Surfer" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="any">Any Surfer</SelectItem>
-                        {availableSurferNames.map(name => (
-                            <SelectItem key={name} value={name}>{name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+    </div>
   )
 }
