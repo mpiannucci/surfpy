@@ -91,19 +91,19 @@ const CustomTooltip = ({ active, payload, label, isMobile }: any) => {
 
     return (
       <div className="p-2 bg-background border rounded-md shadow-lg">
-        <p className="font-bold">{`${new Date(label).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}`}</p>
-        <p className="text-sm">{`Wave Height: ${rangeText}`}</p>
+        <p className="font-bold">{`${rangeText}`}</p>
 
         {isMobile && data.swell_components && data.swell_components.length > 0 && (
           <div className="mt-2 space-y-1">
             <p className="font-semibold">Swell Components:</p>
             {data.swell_components.map((swell: any, index: number) => (
               <p key={index} className="text-xs">
-                {`Swell ${index + 1}: ${swell.height.toFixed(1)}${swell.unit} @ ${swell.period.toFixed(1)}s from ${getSwellCardinalDirection(swell.direction_degrees)} (${swell.direction_degrees}°)`}
+                {`${swell.height.toFixed(1)}${swell.unit} @ ${swell.period.toFixed(1)}s from ${getSwellCardinalDirection(swell.direction_degrees)} (${swell.direction_degrees}°)`}
               </p>
             ))}
           </div>
         )}
+        <p className="text-xs text-muted-foreground mt-2">{`${new Date(label).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}`}</p>
       </div>
     );
   }
