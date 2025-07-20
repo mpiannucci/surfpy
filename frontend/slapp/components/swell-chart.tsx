@@ -1,6 +1,7 @@
 "use client"
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts'
+import { ArrowUpRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface ForecastEntry {
@@ -97,8 +98,9 @@ const CustomTooltip = ({ active, payload, label, isMobile }: any) => {
           <div className="mt-2 space-y-1">
             <p className="font-semibold">Swell Components:</p>
             {data.swell_components.map((swell: any, index: number) => (
-              <p key={index} className="text-xs">
+              <p key={index} className="text-xs flex items-center gap-1">
                 {`${swell.height.toFixed(1)}${swell.unit} @ ${swell.period.toFixed(1)}s from ${getSwellCardinalDirection(swell.direction_degrees)} (${swell.direction_degrees}°)`}
+                <ArrowUpRight style={{ transform: `rotate(${(swell.direction_degrees + 180) % 360}deg)` }} className="h-3 w-3 text-blue-500" />
               </p>
             ))}
           </div>
