@@ -5,30 +5,17 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Waves, Users, Trophy, Clock, Timer, MapPin } from "lucide-react"
+import { Users, Trophy, Clock, Timer, MapPin } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-
-// Helper function to format minutes to hours
-function formatMinutesToHours(minutes: string | number | null): string {
-  if (!minutes || minutes === "0") return "0.0 hours"
-  const hours = parseFloat(minutes.toString()) / 60
-  return `${hours.toFixed(1)} hours`
-}
+import { UserDashboardStats } from "@/components/user-dashboard-stats"
+import { capitalizeLocation, formatMinutesToHours } from "@/lib/utils"
 
 // Helper function to format minutes to hours (without "hours" text)
 function formatMinutesToHoursValue(minutes: string | number | null): string {
   if (!minutes || minutes === "0") return "0.0"
   const hours = parseFloat(minutes.toString()) / 60
   return hours.toFixed(1)
-}
-
-// Helper function to capitalize first letter of each word
-function capitalizeLocation(location: string): string {
-  return location
-    .split(" ")
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ")
 }
 
 interface YearlyStats {
@@ -207,9 +194,9 @@ export function DashboardNew() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        {/* Loading skeleton for hero section */}
+        {/* Loading skeleton for Your Stats section */}
         <div className="space-y-4">
-          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-8 w-48 mb-4" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[...Array(4)].map((_, i) => (
               <Card key={i}>
@@ -221,12 +208,12 @@ export function DashboardNew() {
                   <div className="space-y-3">
                     <Skeleton className="h-8 w-16" />
                     <Skeleton className="h-6 w-20" />
-                    <Skeleton className="h-6 w-24" />
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
+          <Skeleton className="h-10 w-full md:w-48 mx-auto mt-4" />
         </div>
 
         {/* Loading skeleton for table */}
@@ -290,104 +277,11 @@ export function DashboardNew() {
 
   return (
     <div className="space-y-8">
-      {/* Section 1: Your Stats (Hero Section) */}
-      <div className="space-y-4">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Your Stats ({selectedYear})</h1>
-          <p className="text-muted-foreground">Your personal surf session statistics for the selected year</p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* Sessions Tile */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sessions</CardTitle>
-              <Waves className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <div className="text-2xl font-bold">{currentUserYearStats.total_sessions}</div>
-                <p className="text-xs text-muted-foreground">This year ({selectedYear})</p>
-              </div>
-              <div>
-                <div className="text-lg font-semibold">
-                  {parseFloat(currentUserYearStats.sessions_per_week).toFixed(1)}
-                </div>
-                <p className="text-xs text-muted-foreground">Sessions per week</p>
-              </div>
-              <div>
-                <div className="text-lg font-semibold">{dashboardData.data.current_user.total_sessions_all_time}</div>
-                <p className="text-xs text-muted-foreground">All-time sessions</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Fun Tile */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Fun</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <div className="text-2xl font-bold">
-                  {parseFloat(currentUserYearStats.avg_fun_rating).toFixed(1)}/10
-                </div>
-                <p className="text-xs text-muted-foreground">Average fun rating</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Time Tile */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Time</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <div className="text-2xl font-bold">
-                  {formatMinutesToHours(currentUserYearStats.total_surf_time_minutes)}
-                </div>
-                <p className="text-xs text-muted-foreground">Total surf time this year</p>
-              </div>
-              <div>
-                <div className="text-lg font-semibold">
-                  {formatMinutesToHours(currentUserYearStats.avg_session_duration_minutes)}
-                </div>
-                <p className="text-xs text-muted-foreground">Average session</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Top Spots Tile */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Top Spots</CardTitle>
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {currentUserYearStats.top_locations && currentUserYearStats.top_locations.length > 0 ? (
-                currentUserYearStats.top_locations.slice(0, 3).map((location, index) => (
-                  <div key={index}>
-                    <div className={`${index === 0 ? "text-2xl font-bold" : "text-lg font-semibold"}`}>
-                      {capitalizeLocation(location.location)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {location.session_count} session{location.session_count !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <div>
-                  <div className="text-2xl font-bold">No sessions</div>
-                  <p className="text-xs text-muted-foreground">logged yet</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <UserDashboardStats
+        currentUserYearStats={currentUserYearStats}
+        totalSessionsAllTime={dashboardData.data.current_user.total_sessions_all_time}
+        selectedYear={selectedYear}
+      />
 
       {/* Section 2: Sessions Leaderboard with Year Toggle */}
       <div className="space-y-4">
@@ -502,7 +396,7 @@ export function DashboardNew() {
               <MapPin className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {dashboardData.data.community.top_location ? (
+              {dashboardData.data.community.top_location && dashboardData.data.community.top_location.location ? (
                 <>
                   <div className="text-2xl font-bold">
                     {capitalizeLocation(dashboardData.data.community.top_location.location)}
