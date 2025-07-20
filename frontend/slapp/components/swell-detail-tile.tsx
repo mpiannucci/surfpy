@@ -19,9 +19,14 @@ interface ForecastEntry {
 interface SwellDetailTileProps {
   hourData: ForecastEntry | null
   surfSpotTimezone: string | null
+  isMobile: boolean
 }
 
-export function SwellDetailTile({ hourData, surfSpotTimezone }: SwellDetailTileProps) {
+export function SwellDetailTile({ hourData, surfSpotTimezone, isMobile }: SwellDetailTileProps) {
+  if (isMobile) {
+    return null; // Hide the tile on mobile
+  }
+
   if (!hourData) {
     return (
       <Card>

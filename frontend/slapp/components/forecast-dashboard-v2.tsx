@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getAuthToken } from "@/lib/auth"
 import { addDays, startOfDay, isSameDay, getHours } from "date-fns"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 import { ClientSessionsByLocation } from "./client-sessions-by-location"
 
@@ -41,6 +42,7 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
   const [surfSpotTimezone, setSurfSpotTimezone] = useState<string | null>(null) // New state for timezone
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchForecast = async () => {
@@ -123,12 +125,12 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Swell Chart - order 1 on mobile, col-span-2 on large */}
         <div className="order-1 lg:col-span-2">
-          <SwellChart dailyData={dailyForecastData} onHourHover={handleHourHover} />
+          <SwellChart dailyData={dailyForecastData} onHourHover={handleHourHover} isMobile={isMobile} />
         </div>
 
         {/* Swell Detail Tile - order 2 on mobile, col-span-1 on large */}
         <div className="order-2 lg:col-span-1">
-          <SwellDetailTile hourData={hoveredHourData} surfSpotTimezone={surfSpotTimezone} />
+          <SwellDetailTile hourData={hoveredHourData} surfSpotTimezone={surfSpotTimezone} isMobile={isMobile} />
         </div>
 
         {/* Tide Chart - order 3 on mobile, col-span-2 on large */}

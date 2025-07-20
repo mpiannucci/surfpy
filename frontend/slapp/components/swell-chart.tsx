@@ -16,9 +16,10 @@ const DEFAULT_COLOR = "grey";
 interface SwellChartProps {
   dailyData: ForecastEntry[]
   onHourHover: (data: ForecastEntry | null) => void
+  isMobile: boolean
 }
 
-export function SwellChart({ dailyData, onHourHover }: SwellChartProps) {
+export function SwellChart({ dailyData, onHourHover, isMobile }: SwellChartProps) {
   const formatXAxis = (tickItem: string) => {
     const date = new Date(tickItem)
     return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })
@@ -37,7 +38,6 @@ export function SwellChart({ dailyData, onHourHover }: SwellChartProps) {
               const hoveredData = dailyData[state.activeIndex];
               onHourHover(hoveredData);
             } else {
-              // If no activeIndex or data, set to null
               onHourHover(null);
             }
           }} onMouseLeave={() => {
@@ -46,7 +46,7 @@ export function SwellChart({ dailyData, onHourHover }: SwellChartProps) {
             <XAxis dataKey="timestamp" tickFormatter={formatXAxis} />
             <YAxis hide={true} domain={[0, 12]} label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft' }} width={30} />
             
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip isMobile={isMobile} />} />
             <Legend content={<CustomChartLegend />} />
             <Bar dataKey="breaking_wave_height.max">
               {dailyData.map((entry, index) => (
@@ -77,13 +77,33 @@ const CustomChartLegend = (props: any) => {
   );
 };
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+// Helper to get cardinal direction from degrees for swell
+const getSwellCardinalDirection = (degrees: number): string => {
+  const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  const index = Math.round(degrees / 22.5) % 16;
+  return directions[index];
+};
+
+const CustomTooltip = ({ active, payload, label, isMobile }: any) => {
   if (active && payload && payload.length) {
-    const rangeText = payload[0].payload.breaking_wave_height.range_text;
+    const data = payload[0].payload;
+    const rangeText = data.breaking_wave_height.range_text;
+
     return (
       <div className="p-2 bg-background border rounded-md shadow-lg">
         <p className="font-bold">{`${new Date(label).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}`}</p>
         <p className="text-sm">{`Wave Height: ${rangeText}`}</p>
+
+        {isMobile && data.swell_components && data.swell_components.length > 0 && (
+          <div className="mt-2 space-y-1">
+            <p className="font-semibold">Swell Components:</p>
+            {data.swell_components.map((swell: any, index: number) => (
+              <p key={index} className="text-xs">
+                {`Swell ${index + 1}: ${swell.height.toFixed(1)}${swell.unit} @ ${swell.period.toFixed(1)}s from ${getSwellCardinalDirection(swell.direction_degrees)} (${swell.direction_degrees}°)`}
+              </p>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
