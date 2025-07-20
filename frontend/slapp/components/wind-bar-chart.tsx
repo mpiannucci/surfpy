@@ -1,6 +1,6 @@
 "use client"
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowUp } from "lucide-react"
 
@@ -8,11 +8,16 @@ import { ArrowUp } from "lucide-react"
 interface ForecastEntry {
   timestamp: string
   wind: { speed: number; direction: string; direction_degrees: number; unit: string }
+  type?: string // Add the type property
 }
 
 interface WindBarChartProps {
   dailyData: ForecastEntry[]
 }
+
+const ACTUAL_COLOR = "#009FB7";
+const FORECAST_COLOR = "#E6E6EA";
+const DEFAULT_COLOR = "grey";
 
 // Helper to get cardinal direction from degrees
 const getCardinalDirection = (degrees: number): string => {
@@ -26,13 +31,15 @@ const CustomWindBar = (props: any) => {
   const { x, y, width, height, payload } = props;
   const windDirectionDegrees = payload.wind.direction_degrees;
 
+  const barColor = payload.type === "actual" ? ACTUAL_COLOR : (payload.type === "forecast" ? FORECAST_COLOR : DEFAULT_COLOR);
+
   // Calculate rotation: 0 degrees is North (up), 90 East, 180 South, 270 West
   // Lucide-react ArrowUp points upwards (North), so we just rotate by the wind direction
   const rotation = (windDirectionDegrees + 180) % 360; 
 
   return (
     <g>
-      <rect x={x} y={y} width={width} height={height} fill="#8884d8" /> {/* Bar color */}
+      <rect x={x} y={y} width={width} height={height} fill={barColor} /> {/* Bar color */}
       {payload.wind.speed > 0 && ( // Only show arrow if there's wind
         <g transform={`translate(${x + width / 2}, ${y + height / 2}) rotate(${rotation}) translate(-${width / 2}, -${height / 2})`}>
           <ArrowUp 
@@ -62,6 +69,23 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+const CustomChartLegend = (props: any) => {
+  const { payload } = props;
+
+  return (
+    <ul className="flex justify-center gap-4 mt-4">
+      <li className="flex items-center gap-1">
+        <span className="w-3 h-3 inline-block rounded-full" style={{ backgroundColor: ACTUAL_COLOR }}></span>
+        <span>Actual</span>
+      </li>
+      <li className="flex items-center gap-1">
+        <span className="w-3 h-3 inline-block rounded-full" style={{ backgroundColor: FORECAST_COLOR }}></span>
+        <span>Forecast</span>
+      </li>
+    </ul>
+  );
+};
+
 export function WindBarChart({ dailyData }: WindBarChartProps) {
   const formatXAxis = (tickItem: string) => {
     const date = new Date(tickItem)
@@ -77,8 +101,9 @@ export function WindBarChart({ dailyData }: WindBarChartProps) {
         <ResponsiveContainer width="100%" height={150}>
           <BarChart data={dailyData}>
             <XAxis dataKey="timestamp" tickFormatter={formatXAxis} />
-            <YAxis hide={true} domain={[0, 25]} />
+            <YAxis hide={true} domain={[0, 20]} />
             <Tooltip content={<CustomTooltip />} />
+            <Legend content={<CustomChartLegend />} />
             <Bar dataKey="wind.speed" shape={<CustomWindBar />} />
           </BarChart>
         </ResponsiveContainer>
