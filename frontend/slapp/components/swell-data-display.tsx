@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Waves } from "lucide-react"
+import { Waves, ArrowUp } from "lucide-react"
 import { SwellDataTable } from "@/components/swell-data-table"
 
 interface SwellComponent {
@@ -63,7 +63,13 @@ export function SwellDataDisplay({ swellData, swells, buoyId }: SwellDataDisplay
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Direction</h3>
-                  <p>{swell.direction.toFixed(0)}°</p>
+                  <div className="flex items-center gap-1">
+                    <ArrowUp
+                      className="h-4 w-4 text-muted-foreground"
+                      style={{ transform: `rotate(${(swell.direction + 180) % 360}deg)` }}
+                    />
+                    <p>{swell.direction.toFixed(0)}°</p>
+                  </div>
                 </div>
               </div>
             ))}

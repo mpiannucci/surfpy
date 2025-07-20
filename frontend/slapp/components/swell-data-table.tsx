@@ -1,7 +1,7 @@
 "use client"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, ArrowUp } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 
 interface SwellComponent {
@@ -68,7 +68,15 @@ export function SwellDataTable({ swellData, buoyId }: SwellDataTableProps) {
                   <TableCell className="font-medium">{component.name}</TableCell>
                   <TableCell>{component.height.toFixed(2)}</TableCell>
                   <TableCell>{component.period.toFixed(2)}</TableCell>
-                  <TableCell>{component.direction}°</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <ArrowUp
+                        className="h-4 w-4 text-muted-foreground"
+                        style={{ transform: `rotate(${(component.direction + 180) % 360}deg)` }}
+                      />
+                      {component.direction}°
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
