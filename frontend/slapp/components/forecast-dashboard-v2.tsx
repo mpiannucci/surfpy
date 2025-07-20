@@ -5,7 +5,7 @@ import { DayNavigator } from "./day-navigator"
 import { SwellChart } from "./swell-chart"
 import { SwellDetailTile } from "./swell-detail-tile"
 import { TideChart } from "./tide-chart"
-import { WindDisplay } from "./wind-display"
+import { WindBarChart } from "./wind-bar-chart"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getAuthToken } from "@/lib/auth"
@@ -135,8 +135,11 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
         <div className="order-3 lg:col-span-2">
           <TideChart dailyData={dailyForecastData} />
         </div>
+        {/* Wind Chart - order 4 on mobile, col-span-2 on large */}
+        <div className="order-4 lg:col-span-2">
+          <WindBarChart dailyData={dailyForecastData} />
+        </div>
       </div>
-      <WindDisplay dailyData={dailyForecastData} />
 
       {/* <div className="mt-8">
         <ClientSessionsByLocation location={location} />
