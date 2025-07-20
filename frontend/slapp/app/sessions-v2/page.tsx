@@ -299,7 +299,7 @@ export default function SessionsV2Page() {
           </AlertDescription>
         </Alert>
       ) : (
-        <SessionGrid sessions={filteredSessions} />
+        <SessionGrid sessions={filteredSessions} currentUserId={currentUser?.userId} />
       )}
     </div>
   )

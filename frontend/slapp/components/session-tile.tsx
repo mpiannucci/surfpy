@@ -3,10 +3,17 @@
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Waves, TrendingUp, User, Calendar, Clock, ArrowUp, ArrowUpRight, ArrowRight, ArrowDownRight, ArrowDown, ArrowDownLeft, ArrowLeft, ArrowUpLeft, MapPin } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import type { SurfSession } from "@/app/sessions-v2/page"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { MoreVertical } from "lucide-react"
+import { DeleteSessionButton } from "./delete-session-button"
+import { EditSessionModalNew } from "./edit-session-modal-new"
+import { useState } from "react"
 
 interface SessionTileProps {
   session: SurfSession
+  currentUserId: string | undefined
 }
 
 // Helper to format time from HH:MM:SS to H:MM AM/PM
@@ -47,17 +54,21 @@ const getCardinalDirection = (degrees: number | undefined) => {
   return "N/A";
 };
 
-export function SessionTile({ session }: SessionTileProps) {
+export function SessionTile({ session, currentUserId }: SessionTileProps) {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   
 
   return (
-    <Link href={`/sessions/${session.id}`} passHref>
-      <Card className="h-full flex flex-col p-4 border rounded-lg hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+          <Card className="h-full flex flex-col p-4 border rounded-lg hover:shadow-lg transition-shadow duration-200 cursor-pointer">
         {/* Header */}
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1 overflow-hidden">
-            <h3 className="text-xl font-bold truncate">{session.session_name}</h3>
+            <h3 className="text-xl font-bold truncate">
+              <Link href={`/sessions/${session.id}`}>
+                {session.session_name}
+              </Link>
+            </h3>
             <div className="flex items-center text-base font-semibold text-foreground mt-1">
               <MapPin className="mr-1 h-4 w-4" /> {session.location}
             </div>
@@ -65,6 +76,37 @@ export function SessionTile({ session }: SessionTileProps) {
           <div className="ml-4 text-4xl font-extrabold text-primary">
             {session.fun_rating}
           </div>
+          {currentUserId && session.user_id === currentUserId && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="w-8 h-8" onClick={(e) => e.stopPropagation()}>
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsEditModalOpen(true);
+                }}>
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}>
+                  <DeleteSessionButton sessionId={session.id} />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {currentUserId && session.user_id === currentUserId && (
+            <EditSessionModalNew
+              isOpen={isEditModalOpen}
+              onClose={() => setIsEditModalOpen(false)}
+              session={session}
+            />
+          )}
         </div>
 
         {/* Core Conditions */}
@@ -110,6 +152,5 @@ export function SessionTile({ session }: SessionTileProps) {
            </div>
         </div>
       </Card>
-    </Link>
   )
 }
