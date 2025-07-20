@@ -1,17 +1,65 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { LocationSessionsTable } from "./location-sessions-table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, ListFilter } from "lucide-react"
-import { subDays, startOfDay } from "date-fns"
 import type { SurfSession } from "@/lib/types"
+
+// --- Helper Functions and Data Definitions ---
+
+const getCardinalDirection = (angle: number): string => {
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  return directions[Math.round(angle / 45) % 8];
+}
+
+const heightRanges = [
+  { label: "0-2 ft", min: 0, max: 2 },
+  { label: "2-4 ft", min: 2, max: 4 },
+  { label: "4-6 ft", min: 4, max: 6 },
+  { label: "6+ ft", min: 6, max: Infinity },
+]
+
+const periodRanges = [
+  { label: "0-5 s", min: 0, max: 5 },
+  { label: "5-8 s", min: 5, max: 8 },
+  { label: "8-12 s", min: 8, max: 12 },
+  { label: "12+ s", min: 12, max: Infinity },
+]
+
+const directionRanges = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+
+interface FilterToggleGroupProps {
+  label: string;
+  options: readonly string[];
+  selected: string[];
+  onToggle: (option: string) => void;
+}
+
+const FilterToggleGroup: React.FC<FilterToggleGroupProps> = ({ label, options, selected, onToggle }) => (
+  <div className="space-y-2">
+    <Label>{label}</Label>
+    <div className="flex flex-wrap gap-2">
+      {options.map(option => (
+        <Button
+          key={option}
+          variant={selected.includes(option) ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => onToggle(option)}
+        >
+          {option}
+        </Button>
+      ))}
+    </div>
+  </div>
+);
+
+
+// --- Main Component ---
 
 interface ClientSessionsByLocationProps {
   location: string
@@ -23,18 +71,16 @@ export function ClientSessionsByLocation({ location }: ClientSessionsByLocationP
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Filter states
-  const [dateRange, setDateRange] = useState("all")
-  const [minRating, setMinRating] = useState(0)
-  const [sortBy, setSortBy] = useState("newest")
+  // New filter states
+  const [selectedHeights, setSelectedHeights] = useState<string[]>([])
+  const [selectedPeriods, setSelectedPeriods] = useState<string[]>([])
+  const [selectedDirections, setSelectedDirections] = useState<string[]>([])
 
   useEffect(() => {
     const fetchSessionsByLocation = async () => {
       if (!location) return
-
       setIsLoading(true)
       setError(null)
-
       try {
         const token = localStorage.getItem("auth_token")
         if (!token) throw new Error("Authentication token not found.")
@@ -51,19 +97,19 @@ export function ClientSessionsByLocation({ location }: ClientSessionsByLocationP
 
         if (!response.ok) {
           if (response.status === 404) {
-            setMasterSessionList([]) // No sessions found, not an error
+            setMasterSessionList([])
           } else {
             throw new Error(`Failed to fetch sessions: ${response.statusText}`)
           }
         } else {
-            const result = await response.json()
-            if (result.status === 'success') {
-                 setMasterSessionList(result.data || [])
-            } else if (result.message === 'No sessions found for location') {
-                setMasterSessionList([])
-            } else {
-                throw new Error(result.message || 'Invalid data format from API')
-            }
+          const result = await response.json()
+          if (result.status === 'success') {
+            setMasterSessionList(result.data || [])
+          } else if (result.message === 'No sessions found for location') {
+            setMasterSessionList([])
+          } else {
+            throw new Error(result.message || 'Invalid data format from API')
+          }
         }
       } catch (err: any) {
         setError(err.message)
@@ -71,35 +117,48 @@ export function ClientSessionsByLocation({ location }: ClientSessionsByLocationP
         setIsLoading(false)
       }
     }
-
     fetchSessionsByLocation()
   }, [location])
 
   useEffect(() => {
     let filtered = [...masterSessionList]
 
-    // Apply date range filter
-    if (dateRange !== "all") {
-      const now = new Date()
-      const days = parseInt(dateRange, 10)
-      const cutoffDate = startOfDay(subDays(now, days))
-      filtered = filtered.filter(s => new Date(s.date) >= cutoffDate)
-    }
+    // Helper function to check if a value is within any of the selected ranges
+    const isInRange = (value: number, selectedRanges: string[], rangeDefs: { label: string, min: number, max: number }[]) => {
+      if (selectedRanges.length === 0) return true;
+      return selectedRanges.some(label => {
+        const range = rangeDefs.find(r => r.label === label);
+        return range && value >= range.min && value < range.max;
+      });
+    };
 
-    // Apply minimum rating filter
-    if (minRating > 0) {
-      filtered = filtered.filter(s => parseInt(s.fun_rating, 10) >= minRating)
-    }
+    // Apply filters
+    filtered = filtered.filter(session => {
+      // Ensure swell data exists, otherwise exclude from filtered results
+      const primarySwell = session.raw_swell?.[0]?.swell_components?.swell_1;
+      if (!primarySwell) {
+        return false;
+      }
 
-    // Apply sorting
-    if (sortBy === "newest") {
-      filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    } else if (sortBy === "highest_rated") {
-      filtered.sort((a, b) => parseInt(b.fun_rating, 10) - parseInt(a.fun_rating, 10))
-    }
+      const heightMatch = isInRange(primarySwell.height, selectedHeights, heightRanges);
+      const periodMatch = isInRange(primarySwell.period, selectedPeriods, periodRanges);
+      
+      const directionMatch = selectedDirections.length === 0 || selectedDirections.includes(getCardinalDirection(primarySwell.direction));
+
+      return heightMatch && periodMatch && directionMatch;
+    });
+    
+    // Default sort by newest first
+    filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     setDisplayedSessions(filtered)
-  }, [masterSessionList, dateRange, minRating, sortBy])
+  }, [masterSessionList, selectedHeights, selectedPeriods, selectedDirections])
+
+  const handleToggle = (setter: React.Dispatch<React.SetStateAction<string[]>>, option: string) => {
+    setter(prev => 
+      prev.includes(option) ? prev.filter(item => item !== option) : [...prev, option]
+    );
+  };
 
   if (isLoading) {
     return <Skeleton className="h-48 w-full" />
@@ -117,43 +176,37 @@ export function ClientSessionsByLocation({ location }: ClientSessionsByLocationP
 
   return (
     <div className="space-y-6">
-        <h2 className="text-2xl font-bold tracking-tight">Logged Sessions at this Spot</h2>
-        <Card className="p-4 bg-background/20 border-border/30">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                 <div className="col-span-1 md:col-span-3 font-semibold flex items-center gap-2">
-                    <ListFilter className="h-5 w-5"/>
-                    Filter & Sort
-                </div>
-                <div>
-                    <Label htmlFor="date-range">Date Range</Label>
-                    <Select value={dateRange} onValueChange={setDateRange}>
-                        <SelectTrigger id="date-range"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Time</SelectItem>
-                            <SelectItem value="30">Last 30 Days</SelectItem>
-                            <SelectItem value="90">Last 90 Days</SelectItem>
-                            <SelectItem value="365">Last Year</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div>
-                    <Label htmlFor="min-rating">Min Fun Rating: {minRating}</Label>
-                    <Slider id="min-rating" min={0} max={10} step={1} value={[minRating]} onValueChange={(value) => setMinRating(value[0])} />
-                </div>
-                <div>
-                    <Label htmlFor="sort-by">Sort By</Label>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                        <SelectTrigger id="sort-by"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="newest">Newest First</SelectItem>
-                            <SelectItem value="highest_rated">Highest Rated</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-        </Card>
+      <h2 className="text-2xl font-bold tracking-tight">Logged Sessions at this Spot</h2>
+      <Card className="p-4 bg-background/20 border-border/30">
+        <div className="space-y-4">
+          <div className="font-semibold flex items-center gap-2">
+            <ListFilter className="h-5 w-5" />
+            Filter by Swell Conditions
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FilterToggleGroup
+              label="Swell Height"
+              options={heightRanges.map(r => r.label)}
+              selected={selectedHeights}
+              onToggle={(option) => handleToggle(setSelectedHeights, option)}
+            />
+            <FilterToggleGroup
+              label="Swell Period"
+              options={periodRanges.map(r => r.label)}
+              selected={selectedPeriods}
+              onToggle={(option) => handleToggle(setSelectedPeriods, option)}
+            />
+            <FilterToggleGroup
+              label="Swell Direction"
+              options={directionRanges}
+              selected={selectedDirections}
+              onToggle={(option) => handleToggle(setSelectedDirections, option)}
+            />
+          </div>
+        </div>
+      </Card>
 
-        <LocationSessionsTable sessions={displayedSessions} />
+      <LocationSessionsTable sessions={displayedSessions} />
     </div>
   )
 }

@@ -138,9 +138,9 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
       </div>
       <WindDisplay dailyData={dailyForecastData} />
 
-      <div className="mt-8">
+      {/* <div className="mt-8">
         <ClientSessionsByLocation location={location} />
-      </div>
+      </div> */}
     </div>
   )
 }
