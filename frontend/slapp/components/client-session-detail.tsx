@@ -9,6 +9,7 @@ import { SwellDataDisplay } from "@/components/swell-data-display"
 
 import { MeteorologicalDataDisplay } from "@/components/meteorological-data-display"
 import { TideDataDisplay } from "@/components/tide-data-display"
+import { TideChart } from "@/components/tide-chart"
 import { ArrowLeft, Loader2, AlertCircle, User, Edit } from "lucide-react"
 import { DeleteSessionButton } from "@/components/delete-session-button"
 import { EditSessionModalNew } from "@/components/edit-session-modal-new"
@@ -421,8 +422,26 @@ export function ClientSessionDetail() {
       {/* Display meteorological data if available - handle null gracefully */}
       {session.raw_met && session.raw_met !== null && <MeteorologicalDataDisplay metData={session.raw_met} />}
 
-      {/* Display tide data if available - handle null gracefully */}
-      {session.raw_tide && session.raw_tide !== null && <TideDataDisplay tideData={session.raw_tide} />}
+      {/* Tide Data Section */}
+      {/* For new sessions, display the tide chart */}
+      {session.raw_tide && Array.isArray(session.raw_tide) && session.raw_tide.length > 0 && (
+        <TideChart
+          dailyData={session.raw_tide}
+          sessionDate={session.date}
+          sessionStartTime={session.time}
+          sessionEndTime={session.end_time}
+        />
+      )}
+
+      {/* For new sessions, also display the specific tide data point */}
+      {session.session_tide_data && (
+        <TideDataDisplay tideData={session.session_tide_data} />
+      )}
+
+      {/* For historical sessions, display the single tide data point from the old raw_tide object */}
+      {session.raw_tide && !Array.isArray(session.raw_tide) && (
+        <TideDataDisplay tideData={session.raw_tide} />
+      )}
 
       
 
