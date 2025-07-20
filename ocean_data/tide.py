@@ -135,6 +135,30 @@ def water_level_to_json(water_level, station, use_imperial_units=True):
         "units": units
     }
 
+def tide_data_list_to_json(tide_data_list, use_imperial_units=True):
+    """
+    Convert a list of tide data objects to a JSON-serializable list of dictionaries.
+    """
+    tide_json = []
+    if not tide_data_list:
+        return tide_json
+    
+    for entry in tide_data_list:
+        height_meters = entry.water_level
+        if use_imperial_units and is_valid_data(height_meters):
+            height_value = round(meters_to_feet(height_meters), 2)
+            units = "feet"
+        else:
+            height_value = height_meters
+            units = "meters"
+            
+        tide_json.append({
+            "date": entry.date.isoformat(),
+            "water_level": height_value,
+            "units": units
+        })
+    return tide_json
+
 def generate_dummy_tide_data(target_datetime, station_id, use_imperial_units=True):
     """
     Generate dummy tide data for testing.

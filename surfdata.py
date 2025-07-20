@@ -16,7 +16,7 @@ from psycopg2.extras import RealDictCursor
 # Import ocean data modules
 from ocean_data.swell import fetch_swell_data
 from ocean_data.meteorology import fetch_meteorological_data
-from ocean_data.tide import fetch_tide_data
+from ocean_data.tide import fetch_tide_data, fetch_historical_tide_data, tide_data_list_to_json
 from ocean_data.location import get_buoys_for_location, is_valid_location, get_spot_config
 from ocean_data.forecast import get_surf_forecast
 
@@ -263,6 +263,21 @@ def create_surf_session(user_id):
             localized_datetime = spot_tz.localize(naive_datetime)
             # Convert to UTC for data retrieval
             target_datetime = localized_datetime.astimezone(timezone.utc)
+
+            # Get the start and end of the day in the local timezone
+            local_start_of_day = spot_tz.localize(datetime.combine(naive_datetime.date(), datetime.min.time()))
+            local_end_of_day = spot_tz.localize(datetime.combine(naive_datetime.date(), datetime.max.time()))
+
+            # Convert to UTC for fetching historical data
+            utc_start_of_day = local_start_of_day.astimezone(pytz.utc)
+            utc_end_of_day = local_end_of_day.astimezone(pytz.utc)
+
+            # Logging for verification
+            print(f"Spot: {location}, Timezone: {spot_timezone_str}")
+            print(f"Local Start of Day: {local_start_of_day}")
+            print(f"Local End of Day: {local_end_of_day}")
+            print(f"UTC Start of Day for Fetch: {utc_start_of_day}")
+            print(f"UTC End of Day for Fetch: {utc_end_of_day}")
             
         except ValueError:
             return jsonify({
@@ -278,9 +293,9 @@ def create_surf_session(user_id):
         met_data = fetch_meteorological_data(met_buoy_id, target_datetime, count=500, use_imperial_units=True)
         session_data['raw_met'] = met_data
 
-        # 3. Fetch tide station data using the ocean_data module
-        tide_data = fetch_tide_data(tide_station_id, target_datetime, use_imperial_units=True)
-        session_data['raw_tide'] = tide_data
+        # 3. Fetch historical tide data for the entire day
+        tide_data_list = fetch_historical_tide_data(tide_station_id, utc_start_of_day, utc_end_of_day, use_imperial_units=True)
+        session_data['raw_tide'] = tide_data_list_to_json(tide_data_list)
 
         # Add buoy IDs to session data
         session_data['swell_buoy_id'] = swell_buoy_id
