@@ -281,6 +281,8 @@ export function DashboardNew() {
         currentUserYearStats={currentUserYearStats}
         totalSessionsAllTime={dashboardData.data.current_user.total_sessions_all_time}
         selectedYear={selectedYear}
+        availableYears={availableYears}
+        setSelectedYear={setSelectedYear}
       />
 
       {/* Leaderboards Section */}
@@ -289,19 +291,7 @@ export function DashboardNew() {
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Leaderboards ({selectedYear})</h2>
           </div>
-          <div className="flex items-center gap-4">
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Select a year" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableYears.map(year => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-          </div>
+          
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

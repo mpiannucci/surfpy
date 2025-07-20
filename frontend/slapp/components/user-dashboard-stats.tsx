@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Waves, Trophy, Clock, MapPin, ChevronDown, ChevronUp, Timer } from "lucide-react"
 
@@ -38,12 +39,16 @@ interface UserDashboardStatsProps {
   currentUserYearStats: YearlyStats;
   totalSessionsAllTime: number;
   selectedYear: string;
+  availableYears: string[];
+  setSelectedYear: (year: string) => void;
 }
 
 export function UserDashboardStats({
   currentUserYearStats,
   totalSessionsAllTime,
   selectedYear,
+  availableYears,
+  setSelectedYear,
 }: UserDashboardStatsProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -57,8 +62,18 @@ export function UserDashboardStats({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Your Stats ({selectedYear})</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Your Stats</h1>
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Select a year" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableYears.map(year => (
+              <SelectItem key={year} value={year}>{year}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* At a Glance View */}
