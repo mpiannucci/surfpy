@@ -293,9 +293,14 @@ def create_surf_session(user_id):
         met_data = fetch_meteorological_data(met_buoy_id, target_datetime, count=500, use_imperial_units=True)
         session_data['raw_met'] = met_data
 
-        # 3. Fetch historical tide data for the entire day
-        tide_data_list = fetch_historical_tide_data(tide_station_id, utc_start_of_day, utc_end_of_day, use_imperial_units=True)
-        session_data['raw_tide'] = tide_data_list_to_json(tide_data_list)
+        # 3. Fetch tide data
+        # Fetch the single tide data point for the session start (for the new column)
+        session_start_tide_data = fetch_tide_data(tide_station_id, target_datetime, use_imperial_units=True)
+        session_data['session_tide_data'] = session_start_tide_data
+
+        # Fetch the full day of historical tide data (for the existing raw_tide column)
+        daily_tide_data_list = fetch_historical_tide_data(tide_station_id, utc_start_of_day, utc_end_of_day, use_imperial_units=True)
+        session_data['raw_tide'] = tide_data_list_to_json(daily_tide_data_list)
 
         # Add buoy IDs to session data
         session_data['swell_buoy_id'] = swell_buoy_id
