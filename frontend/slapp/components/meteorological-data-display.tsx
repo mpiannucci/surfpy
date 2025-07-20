@@ -90,15 +90,7 @@ export function MeteorologicalDataDisplay({ metData }: MeteorologicalDataDisplay
             </div>
           )}
 
-          {data.pressure !== undefined && (
-            <div className="flex items-start gap-2">
-              <Cloud className="h-5 w-5 text-primary mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pressure</p>
-                <p className="text-lg font-semibold">{data.pressure.toFixed(1)} hPa</p>
-              </div>
-            </div>
-          )}
+          
         </div>
       </CardContent>
     </Card>
