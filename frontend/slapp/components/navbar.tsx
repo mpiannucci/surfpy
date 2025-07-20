@@ -30,8 +30,7 @@ export function Navbar() {
 
   const navItems = [
     { href: "/dashboard-new", label: "Dashboard" },
-    { href: "/my-sessions", label: "My Sessions" },
-    { href: "/sessions", label: "All Sessions" },
+    { href: "/sessions-v2", label: "Sessions" },
     { href: "/forecast-v2", label: "Forecast" },
     { href: "/add", label: "Add Session" },
     
