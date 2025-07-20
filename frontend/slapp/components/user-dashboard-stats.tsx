@@ -59,7 +59,6 @@ export function UserDashboardStats({
     <div className="space-y-4">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Your Stats ({selectedYear})</h1>
-        <p className="text-muted-foreground">Your personal surf session statistics for the selected year</p>
       </div>
 
       {/* At a Glance View */}

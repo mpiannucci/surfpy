@@ -287,8 +287,7 @@ export function DashboardNew() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Leaderboards</h2>
-            <p className="text-muted-foreground">Statistics for {selectedYear}</p>
+            <h2 className="text-3xl font-bold tracking-tight">Leaderboards ({selectedYear})</h2>
           </div>
           <div className="flex items-center gap-4">
             <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -301,19 +300,14 @@ export function DashboardNew() {
                 ))}
               </SelectContent>
             </Select>
-            <Link
-              href="/sessions"
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-            >
-              View All Sessions
-            </Link>
+            
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Sessions Leaderboard */}
           <div className="space-y-2">
-            <h3 className="text-xl font-semibold">Sessions Leaderboard</h3>
+            <h3 className="text-xl font-semibold">Sessions</h3>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -350,7 +344,7 @@ export function DashboardNew() {
 
           {/* Total Surf Time Leaderboard */}
           <div className="space-y-2">
-            <h3 className="text-xl font-semibold">Total Surf Time Leaderboard</h3>
+            <h3 className="text-xl font-semibold">Total Surf Time</h3>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -385,7 +379,7 @@ export function DashboardNew() {
 
           {/* Average Fun Rating Leaderboard */}
           <div className="space-y-2">
-            <h3 className="text-xl font-semibold">Average Fun Rating Leaderboard</h3>
+            <h3 className="text-xl font-semibold">Fun</h3>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -423,8 +417,7 @@ export function DashboardNew() {
       {/* Section 3: Community Stats (Footer Section) */}
       <div className="space-y-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Community Stats</h2>
-          <p className="text-muted-foreground">Overall community metrics</p>
+          <h2 className="text-3xl font-bold tracking-tight">Community Stats</h2>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
