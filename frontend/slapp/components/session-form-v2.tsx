@@ -27,7 +27,7 @@ interface User {
   email: string
 }
 
-const API_BASE_URL = "https://surfdata-bl6zpe9fu-martins-projects-383d438b.vercel.app"
+const API_BASE_URL = "https://surfdata-3jbxpd53s-martins-projects-383d438b.vercel.app"
 
 export function SessionFormV2() {
   const [isSubmitting, setIsSubmitting] = useState(false)
