@@ -92,12 +92,56 @@ export default function SessionsV2Page() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [availableSurferNames, setAvailableSurferNames] = useState<string[]>([])
 
+  const fetchSessions = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const token = localStorage.getItem("auth_token")
+
+      const response = await fetch("/api/auth/cors-proxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: API_URL,
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      const sessions = result.data || []
+
+      // Sort by date descending by default
+      sessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+      setAllSessions(sessions)
+
+      // Extract unique surfer names
+      const uniqueSurfers = Array.from(new Set(sessions.map(s => s.display_name)))
+      setAvailableSurferNames(uniqueSurfers)
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unknown error occurred.")
+      console.error("Failed to fetch surf sessions:", err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  // Callback for when a session is updated
+  const handleSessionUpdate = useCallback(() => {
+    fetchSessions(); // Re-fetch all sessions to update the list
+  }, [fetchSessions]);
+
   useEffect(() => {
     // --- Get Current User Info ---
     try {
       const userDataString = localStorage.getItem("user_data")
       if (userDataString) {
-        if (userDataString) {
         const userData = JSON.parse(userDataString)
         console.log("DEBUG: User data from localStorage:", userData);
         setCurrentUser({
@@ -105,54 +149,12 @@ export default function SessionsV2Page() {
           displayName: userData.display_name,
         })
       }
-      }
     } catch (e) {
       console.error("Failed to parse user data from localStorage", e)
     }
 
-    // --- Fetch All Session Data ---
-    const fetchSessions = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const token = localStorage.getItem("auth_token")
-
-        const response = await fetch("/api/auth/cors-proxy", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            url: API_URL,
-            method: "GET",
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.statusText}`)
-        }
-
-        const result = await response.json()
-        const sessions = result.data || []
-
-        // Sort by date descending by default
-        sessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-        setAllSessions(sessions)
-
-        // Extract unique surfer names
-        const uniqueSurfers = Array.from(new Set(sessions.map(s => s.display_name)))
-        setAvailableSurferNames(uniqueSurfers)
-
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An unknown error occurred.")
-        console.error("Failed to fetch surf sessions:", err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchSessions()
-  }, [])
+    fetchSessions() // Initial fetch when component mounts
+  }, [fetchSessions])
 
   // --- Filtering Logic ---
   const applyFilters = useCallback(() => {
@@ -299,7 +301,7 @@ export default function SessionsV2Page() {
           </AlertDescription>
         </Alert>
       ) : (
-        <SessionGrid sessions={filteredSessions} currentUserId={currentUser?.userId} />
+        <SessionGrid sessions={filteredSessions} currentUserId={currentUser?.userId} onUpdate={handleSessionUpdate} />
       )}
     </div>
   )

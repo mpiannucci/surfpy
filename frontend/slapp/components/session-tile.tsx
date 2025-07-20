@@ -14,6 +14,7 @@ import { useState } from "react"
 interface SessionTileProps {
   session: SurfSession
   currentUserId: string | undefined
+  onUpdate: (updatedSession: SurfSession) => void
 }
 
 // Helper to format time from HH:MM:SS to H:MM AM/PM
@@ -54,7 +55,7 @@ const getCardinalDirection = (degrees: number | undefined) => {
   return "N/A";
 };
 
-export function SessionTile({ session, currentUserId }: SessionTileProps) {
+export function SessionTile({ session, currentUserId, onUpdate }: SessionTileProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   
@@ -105,6 +106,7 @@ export function SessionTile({ session, currentUserId }: SessionTileProps) {
               isOpen={isEditModalOpen}
               onClose={() => setIsEditModalOpen(false)}
               session={session}
+              onUpdate={onUpdate}
             />
           )}
         </div>

@@ -1102,3 +1102,26 @@ def get_surf_spots_by_slugs(slugs):
         return []
     finally:
         conn.close()
+
+def get_surf_spot_by_name(name):
+    """Retrieve a single surf spot by its name from the database."""
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT 
+                    id, created_at, slug, name, swell_buoy_id, tide_station_id, 
+                    wind_lat, wind_long, breaking_wave_depth, breaking_wave_angle, 
+                    breaking_wave_slope, timezone
+                FROM surf_spots
+                WHERE name = %s
+            """, (name,))
+            spot = cur.fetchone()
+            return spot
+    except Exception as e:
+        print(f"Error retrieving surf spot by name: {e}")
+        return None
+    finally:
+        conn.close()

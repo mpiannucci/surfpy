@@ -29,7 +29,12 @@ def get_spot_config(spot_name):
     Returns:
         dict: The configuration dictionary for the spot, or None if not found.
     """
+    # Try to find by slug first
     spot = database_utils.get_surf_spot_by_slug(spot_name)
+    if not spot:
+        # If not found by slug, try to find by name
+        spot = database_utils.get_surf_spot_by_name(spot_name)
+
     if spot:
         # Convert database record to the expected format
         return {
@@ -68,15 +73,15 @@ def is_valid_location(location):
     """
     location_lower = location.lower() if location else ""
     
-    # First, check if it's a direct slug in the database
-    spot = database_utils.get_surf_spot_by_slug(location_lower)
+    # First, check if it's a direct slug or name in the database using the enhanced get_spot_config
+    spot = get_spot_config(location_lower)
     if spot:
         return True
         
     # If not, check if it's a legacy name that can be mapped to a slug in the database
     spot_slug = LEGACY_LOCATION_MAP.get(location_lower)
     if spot_slug:
-        spot = database_utils.get_surf_spot_by_slug(spot_slug)
+        spot = get_spot_config(spot_slug) # Use get_spot_config to check the mapped slug
         if spot:
             return True
             

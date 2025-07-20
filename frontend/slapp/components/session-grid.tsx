@@ -6,9 +6,10 @@ import type { SurfSession } from "@/app/sessions-v2/page"
 interface SessionGridProps {
   sessions: SurfSession[]
   currentUserId: string | undefined
+  onUpdate: (updatedSession: SurfSession) => void
 }
 
-export function SessionGrid({ sessions, currentUserId }: SessionGridProps) {
+export function SessionGrid({ sessions, currentUserId, onUpdate }: SessionGridProps) {
   if (sessions.length === 0) {
     return (
       <div className="text-center py-16">
@@ -21,7 +22,7 @@ export function SessionGrid({ sessions, currentUserId }: SessionGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {sessions.map((session) => (
-        <SessionTile key={session.id} session={session} currentUserId={currentUserId} />
+        <SessionTile key={session.id} session={session} currentUserId={currentUserId} onUpdate={onUpdate} />
       ))}
     </div>
   )
