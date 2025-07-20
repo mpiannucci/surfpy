@@ -244,11 +244,15 @@ export default function SessionsV2Page() {
         sessionsToFilter = sessionsToFilter.filter(s => {
             const d = s.raw_swell?.[0]?.swell_components?.swell_1?.direction
             if (d === undefined) return false
-            // Simple N/E/S/W check
-            if (filters.swellDirection === 'N') return (d >= 315 || d < 45)
-            if (filters.swellDirection === 'E') return (d >= 45 && d < 135)
-            if (filters.swellDirection === 'S') return (d >= 135 && d < 225)
-            if (filters.swellDirection === 'W') return (d >= 225 && d < 315)
+            // 8-point compass check
+            if (filters.swellDirection === 'N') return (d >= 337.5 || d < 22.5)
+            if (filters.swellDirection === 'NE') return (d >= 22.5 && d < 67.5)
+            if (filters.swellDirection === 'E') return (d >= 67.5 && d < 112.5)
+            if (filters.swellDirection === 'SE') return (d >= 112.5 && d < 157.5)
+            if (filters.swellDirection === 'S') return (d >= 157.5 && d < 202.5)
+            if (filters.swellDirection === 'SW') return (d >= 202.5 && d < 247.5)
+            if (filters.swellDirection === 'W') return (d >= 247.5 && d < 292.5)
+            if (filters.swellDirection === 'NW') return (d >= 292.5 && d < 337.5)
             return false
         })
     }

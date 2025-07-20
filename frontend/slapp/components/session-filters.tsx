@@ -120,10 +120,14 @@ export function SessionFilters({ filters, setFilters, initialState, availableSur
                     <SelectTrigger><SelectValue placeholder="Swell Direction" /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="any">Any Direction</SelectItem>
-                        <SelectItem value="N">N</SelectItem>
-                        <SelectItem value="E">E</SelectItem>
-                        <SelectItem value="S">S</SelectItem>
-                        <SelectItem value="W">W</SelectItem>
+                        <SelectItem value="N">N (338-22°)</SelectItem>
+                        <SelectItem value="NE">NE (23-67°)</SelectItem>
+                        <SelectItem value="E">E (68-112°)</SelectItem>
+                        <SelectItem value="SE">SE (113-157°)</SelectItem>
+                        <SelectItem value="S">S (158-202°)</SelectItem>
+                        <SelectItem value="SW">SW (203-247°)</SelectItem>
+                        <SelectItem value="W">W (248-292°)</SelectItem>
+                        <SelectItem value="NW">NW (293-337°)</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
