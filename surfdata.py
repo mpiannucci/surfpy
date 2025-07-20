@@ -244,6 +244,7 @@ def create_surf_session(user_id):
                 "status": "fail", 
                 "message": f"Invalid location: {location}. Please provide a valid surf spot."
             }), 400
+        session_data['location'] = spot_config['name']
             
         # Get buoy mapping using the ocean_data module (can use spot_config directly)
         swell_buoy_id = spot_config["swell_buoy_id"]
@@ -338,7 +339,7 @@ def create_surf_session(user_id):
                             for s in created_sessions[1:]
                         ],
                         "participants": len(participants),
-                        "location": location,
+                        "location": session_data['location'],
                         "date": session_date,
                         "time": session_time,
                         "end_time": end_time,
@@ -362,7 +363,7 @@ def create_surf_session(user_id):
                 "message": "Surf session created successfully",
                 "data": {
                     "session_id": created_session["id"],
-                    "location": location,
+                    "location": created_session['location'],
                     "date": session_date,
                     "time": session_time,
                     "end_time": end_time,
@@ -490,6 +491,7 @@ def update_surf_session(user_id, session_id):
                 "status": "fail", 
                 "message": f"Invalid location: {location}. Please provide a valid surf spot."
             }), 400
+        session_data['location'] = spot_config['name']
             
         # Get buoy mapping using the ocean_data module (can use spot_config directly)
         session_data['swell_buoy_id'] = spot_config["swell_buoy_id"]
@@ -546,7 +548,7 @@ def update_surf_session(user_id, session_id):
                 "message": "Surf session updated successfully",
                 "data": {
                     "session_id": session_id,
-                    "location": updated_session.get('location'),
+                    "location": session_data['location'],
                     "date": updated_session.get('date'),
                     "time": updated_session.get('time'),
                     "end_time": updated_session.get('end_time'),
