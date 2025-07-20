@@ -283,11 +283,11 @@ export function DashboardNew() {
         selectedYear={selectedYear}
       />
 
-      {/* Section 2: Sessions Leaderboard with Year Toggle */}
+      {/* Leaderboards Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Sessions Leaderboard</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Leaderboards</h2>
             <p className="text-muted-foreground">Statistics for {selectedYear}</p>
           </div>
           <div className="flex items-center gap-4">
@@ -310,51 +310,113 @@ export function DashboardNew() {
           </div>
         </div>
 
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Rank</TableHead>
-                <TableHead>Surfer</TableHead>
-                <TableHead>Sessions</TableHead>
-                <TableHead>Total Time (hours)</TableHead>
-                <TableHead>Sessions/Week</TableHead>
-                <TableHead>Avg Rating</TableHead>
-                <TableHead>Avg Duration (hours)</TableHead>
-                <TableHead>All-Time Sessions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {allUsersWithYearData.length > 0 ? (
-                allUsersWithYearData.map((user, index) => (
-                  <TableRow
-                    key={user.user_id}
-                    className={user.user_id === "current" ? "bg-muted/50" : ""}
-                  >
-                    <TableCell className="font-medium">#{index + 1}</TableCell>
-                    <TableCell className="font-medium">
-                      {user.display_name}
-                      {user.user_id === "current" && (
-                        <span className="ml-2 text-xs text-muted-foreground">(You)</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-semibold">{user.yearStats.total_sessions}</TableCell>
-                    <TableCell>{formatMinutesToHoursValue(user.yearStats.total_surf_time_minutes)}</TableCell>
-                    <TableCell>{parseFloat(user.yearStats.sessions_per_week).toFixed(2)}</TableCell>
-                    <TableCell>{parseFloat(user.yearStats.avg_fun_rating).toFixed(1)}</TableCell>
-                    <TableCell>{formatMinutesToHoursValue(user.yearStats.avg_session_duration_minutes)}</TableCell>
-                    <TableCell>{user.total_sessions_all_time}</TableCell>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Sessions Leaderboard */}
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold">Sessions Leaderboard</h3>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">Rank</TableHead>
+                    <TableHead className="w-48">Surfer</TableHead>
+                    <TableHead>Sessions</TableHead>
+                    <TableHead>Sessions/Week</TableHead>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
-                    No surfers found for {selectedYear}.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                  {allUsersWithYearData.sort((a, b) => b.yearStats.total_sessions - a.yearStats.total_sessions).map((user, index) => (
+                    <TableRow key={user.user_id} className={user.user_id === "current" ? "bg-muted/50" : ""}>
+                      <TableCell className="font-medium">#{index + 1}</TableCell>
+                      <TableCell className="font-medium">
+                        {user.display_name}
+                        {user.user_id === "current" && (<span className="ml-2 text-xs text-muted-foreground">(You)</span>)}
+                      </TableCell>
+                      <TableCell className="font-semibold">{user.yearStats.total_sessions}</TableCell>
+                      <TableCell>{parseFloat(user.yearStats.sessions_per_week).toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {allUsersWithYearData.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="h-24 text-center">
+                        No surfers found for {selectedYear}.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Total Surf Time Leaderboard */}
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold">Total Surf Time Leaderboard</h3>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">Rank</TableHead>
+                    <TableHead className="w-48">Surfer</TableHead>
+                    <TableHead>Total Time (hours)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allUsersWithYearData.sort((a, b) => parseFloat(b.yearStats.total_surf_time_minutes) - parseFloat(a.yearStats.total_surf_time_minutes)).map((user, index) => (
+                    <TableRow key={user.user_id} className={user.user_id === "current" ? "bg-muted/50" : ""}>
+                      <TableCell className="font-medium">#{index + 1}</TableCell>
+                      <TableCell className="font-medium">
+                        {user.display_name}
+                        {user.user_id === "current" && (<span className="ml-2 text-xs text-muted-foreground">(You)</span>)}
+                      </TableCell>
+                      <TableCell>{formatMinutesToHoursValue(user.yearStats.total_surf_time_minutes)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {allUsersWithYearData.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="h-24 text-center">
+                        No surfers found for {selectedYear}.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Average Fun Rating Leaderboard */}
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold">Average Fun Rating Leaderboard</h3>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">Rank</TableHead>
+                    <TableHead className="w-48">Surfer</TableHead>
+                    <TableHead>Avg Rating</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allUsersWithYearData.sort((a, b) => parseFloat(b.yearStats.avg_fun_rating) - parseFloat(a.yearStats.avg_fun_rating)).map((user, index) => (
+                    <TableRow key={user.user_id} className={user.user_id === "current" ? "bg-muted/50" : ""}>
+                      <TableCell className="font-medium">#{index + 1}</TableCell>
+                      <TableCell className="font-medium">
+                        {user.display_name}
+                        {user.user_id === "current" && (<span className="ml-2 text-xs text-muted-foreground">(You)</span>)}
+                      </TableCell>
+                      <TableCell>{parseFloat(user.yearStats.avg_fun_rating).toFixed(1)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {allUsersWithYearData.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="h-24 text-center">
+                        No surfers found for {selectedYear}.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </div>
       </div>
 
