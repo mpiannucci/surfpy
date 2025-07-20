@@ -53,7 +53,7 @@ export function ClientSessionDetail() {
         console.log("ClientSessionDetail - Fetching session ID:", params.id)
 
         // Use the correct API URL
-        const apiUrl = `https://surfdata-hs9191va8-martins-projects-383d438b.vercel.app/api/surf-sessions/${params.id}`
+        const apiUrl = `https://surfdata-by8nw3s9x-martins-projects-383d438b.vercel.app/api/surf-sessions/${params.id}`
 
         // Try with CORS proxy first
         try {
