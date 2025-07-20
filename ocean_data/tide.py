@@ -137,7 +137,8 @@ def water_level_to_json(water_level, station, use_imperial_units=True):
 
 def tide_data_list_to_json(tide_data_list, use_imperial_units=True):
     """
-    Convert a list of tide data objects to a JSON-serializable list of dictionaries.
+    Convert a list of tide data objects to a JSON-serializable list of dictionaries
+    that matches the format expected by the frontend TideChart component.
     """
     tide_json = []
     if not tide_data_list:
@@ -147,15 +148,17 @@ def tide_data_list_to_json(tide_data_list, use_imperial_units=True):
         height_meters = entry.water_level
         if use_imperial_units and is_valid_data(height_meters):
             height_value = round(meters_to_feet(height_meters), 2)
-            units = "feet"
+            unit_str = "ft"
         else:
             height_value = height_meters
-            units = "meters"
+            unit_str = "meters"
             
         tide_json.append({
-            "date": entry.date.isoformat(),
-            "water_level": height_value,
-            "units": units
+            "timestamp": entry.date.isoformat(),
+            "tide": {
+                "height": height_value,
+                "unit": unit_str
+            }
         })
     return tide_json
 

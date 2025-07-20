@@ -1,6 +1,6 @@
 "use client"
 
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface ForecastEntry {
@@ -10,13 +10,31 @@ interface ForecastEntry {
 
 interface TideChartProps {
   dailyData: ForecastEntry[]
+  sessionDate?: string
+  sessionStartTime?: string
+  sessionEndTime?: string
 }
 
-export function TideChart({ dailyData }: TideChartProps) {
+export function TideChart({ dailyData, sessionDate, sessionStartTime, sessionEndTime }: TideChartProps) {
   const formatXAxis = (tickItem: string) => {
     const date = new Date(tickItem)
     return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })
   }
+
+  let formattedSessionStartTimestamp: string | undefined;
+  let formattedSessionEndTimestamp: string | undefined;
+
+  if (sessionDate && sessionStartTime && sessionEndTime) {
+    const sessionStartDateTime = new Date(`${sessionDate}T${sessionStartTime}`);
+    const sessionEndDateTime = new Date(`${sessionDate}T${sessionEndTime}`);
+
+    formattedSessionStartTimestamp = sessionStartDateTime.toISOString().split('.')[0] + '+00:00';
+    formattedSessionEndTimestamp = sessionEndDateTime.toISOString().split('.')[0] + '+00:00';
+  }
+
+  console.log('TideChart - dailyData timestamps (first 5):', dailyData.slice(0, 5).map(d => d.timestamp));
+  console.log('TideChart - formattedSessionStartTimestamp:', formattedSessionStartTimestamp);
+  console.log('TideChart - formattedSessionEndTimestamp:', formattedSessionEndTimestamp);
 
   return (
     <Card>
@@ -30,6 +48,12 @@ export function TideChart({ dailyData }: TideChartProps) {
             <YAxis hide={true} domain={[0, 7]} />
             <Tooltip content={<CustomTooltip />} />
             <Line type="monotone" dataKey="tide.height" stroke="#8884d8" dot={false} />
+            {formattedSessionStartTimestamp && (
+              <ReferenceLine x={formattedSessionStartTimestamp} stroke="#FF0000" label="Start" />
+            )}
+            {formattedSessionEndTimestamp && (
+              <ReferenceLine x={formattedSessionEndTimestamp} stroke="#00FF00" label="End" />
+            )}
           </LineChart>
         </ResponsiveContainer>
       </CardContent>
