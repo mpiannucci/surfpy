@@ -79,8 +79,7 @@ const initialFilterState: SessionFiltersState = {
   swellPeriod: "any",
   swellDirection: "any",
   funRating: 1,
-  
-  
+  surfer: "any",
 }
 
 // --- Main Page Component ---
@@ -91,6 +90,7 @@ export default function SessionsV2Page() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+  const [availableSurferNames, setAvailableSurferNames] = useState<string[]>([])
 
   useEffect(() => {
     // --- Get Current User Info ---
@@ -138,6 +138,11 @@ export default function SessionsV2Page() {
         sessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
         setAllSessions(sessions)
+
+        // Extract unique surfer names
+        const uniqueSurfers = Array.from(new Set(sessions.map(s => s.display_name)))
+        setAvailableSurferNames(uniqueSurfers)
+
       } catch (err) {
         setError(err instanceof Error ? err.message : "An unknown error occurred.")
         console.error("Failed to fetch surf sessions:", err)
@@ -212,12 +217,8 @@ export default function SessionsV2Page() {
     
 
     // Surfer
-    if (filters.surfer) {
-        const surfer = filters.surfer.toLowerCase()
-        sessionsToFilter = sessionsToFilter.filter(s => 
-            s.display_name.toLowerCase().includes(surfer) ||
-            s.participants.some(p => p.display_name.toLowerCase().includes(surfer))
-        )
+    if (filters.surfer !== 'any') {
+        sessionsToFilter = sessionsToFilter.filter(s => s.display_name === filters.surfer)
     }
 
     // Swell Filters
@@ -277,7 +278,7 @@ export default function SessionsV2Page() {
         </div>
       </div>
 
-      <SessionFilters filters={filters} setFilters={setFilters} initialState={initialFilterState} />
+      <SessionFilters filters={filters} setFilters={setFilters} initialState={initialFilterState} availableSurferNames={availableSurferNames} />
 
       {/* Display Grid or Loading/Error States */}
       {loading ? (

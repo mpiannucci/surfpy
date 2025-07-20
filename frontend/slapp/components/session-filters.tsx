@@ -18,17 +18,17 @@ export interface SessionFiltersState {
   swellPeriod: string
   swellDirection: string
   funRating: number
-  
-  surfer: string
+  surfer: string // This will now hold the selected surfer's display_name or "any"
 }
 
 interface SessionFiltersProps {
   filters: SessionFiltersState
   setFilters: (filters: SessionFiltersState) => void
-  initialState: SessionFiltersState // New prop
+  initialState: SessionFiltersState
+  availableSurferNames: string[] // New prop for the dropdown options
 }
 
-export function SessionFilters({ filters, setFilters, initialState }: SessionFiltersProps) {
+export function SessionFilters({ filters, setFilters, initialState, availableSurferNames }: SessionFiltersProps) {
   const [isMoreFiltersOpen, setIsMoreFiltersOpen] = useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,7 +134,15 @@ export function SessionFilters({ filters, setFilters, initialState }: SessionFil
             
             <div>
                 <Label>Surfer Name</Label>
-                <Input name="surfer" placeholder="Surfer name..." value={filters.surfer} onChange={handleInputChange} />
+                <Select name="surfer" onValueChange={(v) => handleSelectChange("surfer", v)} value={filters.surfer}>
+                    <SelectTrigger><SelectValue placeholder="Select Surfer" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="any">Any Surfer</SelectItem>
+                        {availableSurferNames.map(name => (
+                            <SelectItem key={name} value={name}>{name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
         </div>
       </CollapsibleContent>
