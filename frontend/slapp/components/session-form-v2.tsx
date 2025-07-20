@@ -207,7 +207,7 @@ export function SessionFormV2() {
           title: "Success!",
           description: "Your surf session has been added.",
         })
-        router.push("/sessions")
+        router.push("/sessions-v2")
       } else {
         const errorData = await response.json()
         toast({
