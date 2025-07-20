@@ -79,8 +79,8 @@ const initialFilterState: SessionFiltersState = {
   swellPeriod: "any",
   swellDirection: "any",
   funRating: 1,
-  keywords: "",
-  surfer: "",
+  
+  
 }
 
 // --- Main Page Component ---
@@ -209,14 +209,7 @@ export default function SessionsV2Page() {
     // Fun Rating
     sessionsToFilter = sessionsToFilter.filter(s => parseInt(s.fun_rating, 10) >= filters.funRating)
 
-    // Keywords
-    if (filters.keywords) {
-        const keywords = filters.keywords.toLowerCase()
-        sessionsToFilter = sessionsToFilter.filter(s => 
-            s.session_name.toLowerCase().includes(keywords) || 
-            s.session_notes.toLowerCase().includes(keywords)
-        )
-    }
+    
 
     // Surfer
     if (filters.surfer) {

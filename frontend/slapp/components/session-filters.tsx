@@ -18,7 +18,7 @@ export interface SessionFiltersState {
   swellPeriod: string
   swellDirection: string
   funRating: number
-  keywords: string
+  
   surfer: string
 }
 
@@ -131,10 +131,7 @@ export function SessionFilters({ filters, setFilters, initialState }: SessionFil
                 <Label>Min Fun Rating: {filters.funRating}</Label>
                 <Slider defaultValue={[filters.funRating]} max={10} step={1} onValueCommit={handleSliderCommit} />
             </div>
-            <div>
-                <Label>Keywords</Label>
-                <Input name="keywords" placeholder="Keywords in notes..." value={filters.keywords} onChange={handleInputChange} />
-            </div>
+            
             <div>
                 <Label>Surfer Name</Label>
                 <Input name="surfer" placeholder="Surfer name..." value={filters.surfer} onChange={handleInputChange} />
