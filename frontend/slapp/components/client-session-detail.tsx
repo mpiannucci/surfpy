@@ -246,6 +246,22 @@ export function ClientSessionDetail() {
     setRetryCount((prev) => prev + 1)
   }
 
+  // Helper function to round time to the nearest hour
+  const roundTimeToNearestHour = (timeString: string): string => {
+    const [hours, minutes, seconds] = timeString.split(':').map(Number);
+    let date = new Date();
+    date.setHours(hours, minutes, seconds, 0);
+
+    // Round to the nearest hour
+    if (date.getMinutes() >= 30) {
+      date.setHours(date.getHours() + 1);
+    }
+    date.setMinutes(0, 0, 0);
+
+    // Format back to HH:MM:SS
+    return date.toTimeString().split(' ')[0];
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -428,8 +444,8 @@ export function ClientSessionDetail() {
         <TideChart
           dailyData={session.raw_tide}
           sessionDate={session.date}
-          sessionStartTime={session.time}
-          sessionEndTime={session.end_time}
+          sessionStartTime={roundTimeToNearestHour(session.time)}
+          sessionEndTime={roundTimeToNearestHour(session.end_time)}
         />
       )}
 
