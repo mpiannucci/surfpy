@@ -16,8 +16,8 @@ export function BottomNav() {
   const navItems = [
     { href: "/", label: "Dashboard", icon: Home },
     { href: "/sessions-v2", label: "Sessions", icon: List },
-    { href: "/forecast-v2", label: "Forecast", icon: Waves },
     { href: "/add", label: "Add", icon: Plus },
+    { href: "/forecast-v2", label: "Forecast", icon: Waves },
     { href: "/comparison", label: "Compare", icon: BarChart3 },
   ]
 

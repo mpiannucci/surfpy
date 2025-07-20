@@ -29,10 +29,10 @@ export function Navbar() {
   }
 
   const navItems = [
-    { href: "/dashboard-new", label: "Dashboard" },
+    
     { href: "/sessions-v2", label: "Sessions" },
     { href: "/forecast-v2", label: "Forecast" },
-    { href: "/add", label: "Add Session" },
+    
     
     { href: "/comparison", label: "Comparison" },
   ]

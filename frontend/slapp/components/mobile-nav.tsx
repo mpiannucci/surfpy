@@ -14,11 +14,9 @@ export function MobileNav() {
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: Home },
-    { href: "/my-sessions", label: "My Sessions", icon: List },
-    { href: "/sessions", label: "All Sessions", icon: List },
-    { href: "/forecast", label: "Forecast", icon: Waves },
+    { href: "/sessions-v2", label: "Sessions", icon: List },
+    { href: "/forecast-v2", label: "Forecast", icon: Waves },
     { href: "/add", label: "Add Session", icon: Plus },
-    
     { href: "/comparison", label: "Comparison", icon: BarChart3 },
   ]
 
