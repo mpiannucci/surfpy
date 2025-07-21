@@ -26,7 +26,7 @@ export default function ForecastV3Page() {
     const fetchSurfSpots = async () => {
       try {
         setLoading(true)
-        const response = await fetch("https://surfdata-ct3iff2py-martins-projects-383d438b.vercel.app/api/surf-spots-by-region")
+        const response = await fetch("https://surfdata-martins-projects-383d438b.vercel.app/api/surf-spots-by-region")
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }

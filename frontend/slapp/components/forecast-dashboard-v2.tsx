@@ -56,7 +56,7 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            url: `https://surfdata-gp0q3aq48-martins-projects-383d438b.vercel.app/api/forecast/${location}`,
+            url: `https://surfdata-martins-projects-383d438b.vercel.app/api/forecast/${location}`,
             method: "GET",
             headers: { Authorization: `Bearer ${authToken}` },
           }),
