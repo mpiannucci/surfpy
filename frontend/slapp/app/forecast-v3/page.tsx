@@ -68,7 +68,7 @@ export default function ForecastV3Page() {
     <div className="container mx-auto px-4 py-8">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Surf Forecast V3</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Surf Forecast</h1>
           <p className="text-muted-foreground">Select a location to view the new forecast dashboard</p>
         </div>
 

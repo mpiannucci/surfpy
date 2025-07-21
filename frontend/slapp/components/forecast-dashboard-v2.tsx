@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getAuthToken } from "@/lib/auth"
 import { addDays, startOfDay, isSameDay, getHours } from "date-fns"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
 
 import { ClientSessionsByLocation } from "./client-sessions-by-location"
 
@@ -117,7 +119,12 @@ export function ForecastDashboardV2({ location, onBack }: ForecastDashboardV2Pro
 
   return (
     <div className="space-y-6 p-4">
-      <h1 className="text-3xl font-bold tracking-tight capitalize">{location.replace("-", " ")} Forecast</h1>
+      <div className="flex items-center gap-2 mb-4">
+        <Button variant="ghost" size="icon" onClick={onBack} aria-label="Go back">
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-3xl font-bold tracking-tight capitalize">{location.replace("-", " ")} Forecast</h1>
+      </div>
       <DayNavigator 
         currentDayIndex={currentDayIndex} 
         onDayChange={handleDayChange} 

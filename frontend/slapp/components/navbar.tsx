@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
@@ -21,6 +21,7 @@ import { MobileNav } from "@/components/mobile-nav"
 
 export function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
   const { user, logout, isAuthenticated } = useAuth()
 
   // Don't show navbar on login and signup pages
@@ -46,18 +47,31 @@ export function Navbar() {
             <span className="text-lg font-bold">Surf Tracker</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  pathname === item.href ? "text-primary" : "text-muted-foreground",
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              const isForecastTab = item.href === "/forecast-v3";
+
+              const handleClick = (e: React.MouseEvent) => {
+                if (isActive && isForecastTab) {
+                  e.preventDefault(); // Prevent default link navigation
+                  router.refresh(); // Force a refresh to reset the page state
+                }
+              };
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={handleClick}
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-primary",
+                    isActive ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
         <div className="flex items-center gap-2">
