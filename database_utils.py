@@ -1042,7 +1042,7 @@ def get_surf_spot_by_slug(slug):
                     wind_lat, wind_long, breaking_wave_depth, breaking_wave_angle, 
                     breaking_wave_slope, timezone
                 FROM surf_spots
-                WHERE slug = %s
+                WHERE slug ILIKE %s
             """, (slug,))
             spot = cur.fetchone()
             return spot
@@ -1116,7 +1116,7 @@ def get_surf_spot_by_name(name):
                     wind_lat, wind_long, breaking_wave_depth, breaking_wave_angle, 
                     breaking_wave_slope, timezone
                 FROM surf_spots
-                WHERE name = %s
+                WHERE name ILIKE %s
             """, (name,))
             spot = cur.fetchone()
             return spot

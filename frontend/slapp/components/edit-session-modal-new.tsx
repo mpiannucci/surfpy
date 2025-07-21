@@ -84,7 +84,7 @@ export function EditSessionModalNew({ session, isOpen, onClose, onUpdate }: Edit
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          url: `https://surfdata-bl6zpe9fu-martins-projects-383d438b.vercel.app/api/surf-sessions/${session.id}`,
+          url: `https://surfdata-2j07kap7c-martins-projects-383d438b.vercel.app/api/surf-sessions/${session.id}`,
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
