@@ -1063,7 +1063,7 @@ def get_all_surf_spots():
                 SELECT 
                     id, created_at, slug, name, swell_buoy_id, tide_station_id, 
                     wind_lat, wind_long, breaking_wave_depth, breaking_wave_angle, 
-                    breaking_wave_slope, timezone
+                    breaking_wave_slope, timezone, region
                 FROM surf_spots
                 ORDER BY name
             """)

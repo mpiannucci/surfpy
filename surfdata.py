@@ -747,5 +747,40 @@ def get_surf_spots():
         traceback.print_exc()
         return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
 
+@app.route('/api/surf-spots-by-region', methods=['GET'])
+def get_surf_spots_by_region():
+    """
+    API endpoint to get a list of all supported surf spots, grouped by region.
+    """
+    try:
+        all_spots = database_utils.get_all_surf_spots()
+        
+        # Group spots by region
+        regional_spots = {}
+        for spot in all_spots:
+            region = spot.get('region', 'Uncategorized') # Default to 'Uncategorized' if region is null
+            if region not in regional_spots:
+                regional_spots[region] = []
+            regional_spots[region].append({
+                "slug": spot["slug"],
+                "name": spot["name"]
+            })
+        
+        # Convert dictionary to a list of objects for ordered display on frontend
+        # You might want to define a specific order for regions if needed
+        formatted_regions = []
+        for region_name, spots_list in regional_spots.items():
+            formatted_regions.append({
+                "region": region_name,
+                "spots": spots_list
+            })
+            
+        return jsonify({"status": "success", "data": formatted_regions}), 200
+    except Exception as e:
+        print(f"Error retrieving surf spots by region: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
