@@ -31,7 +31,7 @@ export function Navbar() {
   const navItems = [
     
     { href: "/sessions-v2", label: "Sessions" },
-    { href: "/forecast-v2", label: "Forecast" },
+    { href: "/forecast-v3", label: "Forecast" },
     
     
     
