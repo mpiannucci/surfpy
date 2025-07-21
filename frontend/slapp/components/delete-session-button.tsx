@@ -36,7 +36,7 @@ export function DeleteSessionButton({ sessionId, iconOnly = false }: DeleteSessi
         title: "Success",
         description: "Session deleted successfully",
       })
-      router.push("/sessions")
+      router.push("/sessions-v2")
     } catch (error) {
       console.error("Error deleting session:", error)
       toast({
