@@ -128,7 +128,7 @@ export function EditSessionModalNew({ session, isOpen, onClose, onUpdate }: Edit
           <DialogTitle>Edit Session</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="space-y-6">
           {error && <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">{error}</div>}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,7 +222,7 @@ export function EditSessionModalNew({ session, isOpen, onClose, onUpdate }: Edit
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || isEndTimeBeforeStartTime}>
+            <Button type="submit" disabled={isLoading || isEndTimeBeforeStartTime} onClick={(e) => e.stopPropagation()}>
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
