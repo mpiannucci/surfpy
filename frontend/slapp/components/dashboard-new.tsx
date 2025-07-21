@@ -258,7 +258,10 @@ export function DashboardNew() {
   }
 
   const allUsersWithYearData = [
-    { ...dashboardData.data.current_user, user_id: "current", display_name: "You" }, 
+    ...(dashboardData.data.current_user.total_sessions_all_time > 0
+      ? [{ ...dashboardData.data.current_user, user_id: "current", display_name: "You" }]
+      : []
+    ),
     ...dashboardData.data.other_users
   ].map(user => {
     const yearStats = user.yearly_stats?.[selectedYear] || {

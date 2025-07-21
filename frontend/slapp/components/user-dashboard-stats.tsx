@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -59,6 +60,21 @@ export function UserDashboardStats({
   const topSpot = currentUserYearStats.top_locations && currentUserYearStats.top_locations.length > 0
     ? currentUserYearStats.top_locations[0]
     : null
+
+  if (totalSessionsAllTime === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4 text-center">
+        <Trophy className="h-16 w-16 text-muted-foreground" />
+        <h2 className="text-2xl font-bold">Welcome to Your Surf Dashboard!</h2>
+        <p className="text-muted-foreground">
+          It looks like you haven't logged any surf sessions yet.
+        </p>
+        <Link href="/add" passHref>
+          <Button size="lg">Log Your First Session</Button>
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
