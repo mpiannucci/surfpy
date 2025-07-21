@@ -140,18 +140,20 @@ export function SessionTile({ session, currentUserId, onUpdate }: SessionTilePro
 
         {/* Footer */}
         <div className="flex justify-between items-center text-xs text-muted-foreground border-t pt-3 mt-auto">
-           <div className="flex items-center gap-1">
-             <User className="h-3 w-3" />
-             <span>{session.display_name}</span>
-           </div>
-           {session.participants && session.participants.length > 0 && (
-             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-               <Users className="h-3 w-3" />
-               <span>
-                 {session.participants.map(p => p.display_name).join(', ')}
-               </span>
+           <div className="flex flex-col">
+             <div className="flex items-center gap-1">
+               <User className="h-3 w-3" />
+               <span>{session.display_name}</span>
              </div>
-           )}
+             {session.participants && session.participants.length > 0 && (
+               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                 <Users className="h-3 w-3" />
+                 <span>
+                   {session.participants.map(p => p.display_name).join(', ')}
+                 </span>
+               </div>
+             )}
+           </div>
            <div className="flex items-center gap-1">
              <Calendar className="h-3 w-3" />
              <span>{new Date(session.date).toLocaleDateString("en-US", { month: 'short', day: 'numeric' })}</span>
