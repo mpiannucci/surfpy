@@ -47,7 +47,8 @@ def get_spot_config(spot_name):
                 "angle": spot["breaking_wave_angle"],
                 "slope": spot["breaking_wave_slope"]
             },
-            "timezone": spot["timezone"]
+            "timezone": spot["timezone"],
+            "met_buoy_id": spot["met_buoy_id"]
         }
     return None
 
@@ -109,6 +110,6 @@ def get_buoys_for_location(location):
     # Return the structure expected by the old surf session endpoints
     return {
         "swell": config["swell_buoy_id"],
-        "met": config["swell_buoy_id"],  # Assuming met and swell are from the same buoy for now
+        "met": config.get("met_buoy_id", config["swell_buoy_id"]),
         "tide": config["tide_station_id"]
     }

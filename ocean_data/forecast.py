@@ -95,7 +95,7 @@ def get_surf_forecast(spot_name):
 
     # 1. Fetch Historical Data ("Actuals")
     actual_wave_data = fetch_historical_swell_data(spot_config['swell_buoy_id'], historical_start_utc, now_utc)
-    actual_wind_data = fetch_historical_met_data(spot_config['swell_buoy_id'], historical_start_utc, now_utc)
+    actual_wind_data = fetch_historical_met_data(spot_config.get('met_buoy_id', spot_config['swell_buoy_id']), historical_start_utc, now_utc)
     actual_tide_data = fetch_historical_tide_data(spot_config['tide_station_id'], historical_start_utc, now_utc)
 
     # 2. Fetch Forecast Data

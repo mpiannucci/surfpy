@@ -239,6 +239,7 @@ def create_surf_session(user_id):
 
         # Validate location and get spot configuration
         spot_config = get_spot_config(location)
+        print(f"Spot Config: {spot_config}")
         if not spot_config:
             return jsonify({
                 "status": "fail", 
@@ -248,7 +249,7 @@ def create_surf_session(user_id):
             
         # Get buoy mapping using the ocean_data module (can use spot_config directly)
         swell_buoy_id = spot_config["swell_buoy_id"]
-        met_buoy_id = spot_config["swell_buoy_id"] # Assuming met and swell are from the same buoy
+        met_buoy_id = spot_config.get("met_buoy_id", spot_config["swell_buoy_id"]) # Prioritize met_buoy_id, fallback to swell_buoy_id
         tide_station_id = spot_config["tide_station_id"]
 
         # Combine date and time to create a datetime object, localized to the spot's timezone
@@ -495,7 +496,7 @@ def update_surf_session(user_id, session_id):
             
         # Get buoy mapping using the ocean_data module (can use spot_config directly)
         session_data['swell_buoy_id'] = spot_config["swell_buoy_id"]
-        session_data['met_buoy_id'] = spot_config["swell_buoy_id"] # Assuming met and swell are from the same buoy
+        session_data['met_buoy_id'] = spot_config.get("met_buoy_id", spot_config["swell_buoy_id"]) # Prioritize met_buoy_id, fallback to swell_buoy_id
         session_data['tide_station_id'] = spot_config["tide_station_id"]
         
         # If date or time changed, update oceanographic data
