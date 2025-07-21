@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
-import { Waves, TrendingUp, User, Calendar, Clock, ArrowUp, ArrowUpRight, ArrowRight, ArrowDownRight, ArrowDown, ArrowDownLeft, ArrowLeft, ArrowUpLeft, MapPin } from "lucide-react"
+import { Waves, TrendingUp, User, Calendar, Clock, ArrowUp, ArrowUpRight, ArrowRight, ArrowDownRight, ArrowDown, ArrowDownLeft, ArrowLeft, ArrowUpLeft, MapPin, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { SurfSession } from "@/app/sessions-v2/page"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -144,6 +144,14 @@ export function SessionTile({ session, currentUserId, onUpdate }: SessionTilePro
              <User className="h-3 w-3" />
              <span>{session.display_name}</span>
            </div>
+           {session.participants && session.participants.length > 0 && (
+             <div className="flex items-center gap-1 text-xs text-muted-foreground">
+               <Users className="h-3 w-3" />
+               <span>
+                 {session.participants.map(p => p.display_name).join(', ')}
+               </span>
+             </div>
+           )}
            <div className="flex items-center gap-1">
              <Calendar className="h-3 w-3" />
              <span>{new Date(session.date).toLocaleDateString("en-US", { month: 'short', day: 'numeric' })}</span>
