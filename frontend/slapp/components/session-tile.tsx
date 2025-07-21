@@ -87,7 +87,7 @@ export function SessionTile({ session, currentUserId, onUpdate }: SessionTilePro
                   e.preventDefault();
                   e.stopPropagation();
                   setIsEditModalOpen(true);
-                }}>
+                }} onClick={(e) => e.stopPropagation()}>
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={(e) => {
