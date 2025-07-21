@@ -57,11 +57,12 @@ export function DeleteSessionButton({ sessionId, iconOnly = false }: DeleteSessi
             variant="outline"
             size="sm"
             className="text-destructive hover:text-destructive hover:bg-destructive/10 bg-transparent"
+            onClick={(e) => e.stopPropagation()}
           >
             <Trash2 className="h-3 w-3" />
           </Button>
         ) : (
-          <Button variant="destructive" size="sm">
+          <Button variant="destructive" size="sm" onClick={(e) => e.stopPropagation()}>
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
           </Button>
@@ -75,9 +76,9 @@ export function DeleteSessionButton({ sessionId, iconOnly = false }: DeleteSessi
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleDelete}
+            onClick={(e) => { e.stopPropagation(); handleDelete(); }}
             disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
