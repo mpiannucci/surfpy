@@ -58,17 +58,15 @@ const getCardinalDirection = (degrees: number | undefined) => {
 export function SessionTile({ session, currentUserId, onUpdate }: SessionTileProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
-  
 
   return (
-          <Card className="h-full flex flex-col p-4 border rounded-lg hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+    <Link href={`/sessions/${session.id}`} className="block h-full">
+      <Card className="h-full flex flex-col p-4 border rounded-lg hover:shadow-lg transition-shadow duration-200 cursor-pointer">
         {/* Header */}
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1 overflow-hidden">
             <h3 className="text-xl font-bold truncate">
-              <Link href={`/sessions/${session.id}`}>
                 {session.session_name}
-              </Link>
             </h3>
             <div className="flex items-center text-base font-semibold text-foreground mt-1">
               <MapPin className="mr-1 h-4 w-4" /> {session.location}
@@ -154,5 +152,6 @@ export function SessionTile({ session, currentUserId, onUpdate }: SessionTilePro
            </div>
         </div>
       </Card>
+    </Link>
   )
 }
